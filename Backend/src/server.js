@@ -1,27 +1,22 @@
 import express from "express";
-import { mapOrder } from "~/utils/sorts.js";
 import exitHook from "async-exit-hook";
 import { env } from "./config/environment";
+import { CONNECT_DB, CLOSE_DB, GET_DB } from "./config/mongodb.js";
+import { APIs_V1 } from "./routes/v1";
 
 const app = express();
 
 const SERVER_START = () => {
-  app.get("/", async (req, res) => {
-    console.log(await GET_DB().listCollections().toArray());
-    res.end("<h1>Hello World!</h1><hr>");
-  });
+  app.use("/api/v1", APIs_V1);
 
   app.listen(env.SERVER_PORT, env.SERVER_HOST, () => {
     console.log(`Server is running at http://localhost:${env.SERVER_PORT}/`);
   });
 
-  exitHook((done) => {
+  exitHook(() => {
     console.log("Server is shutting down...");
-    server.close(() => {
-      CLOSE_DB();
-      done();
-      console.log("Server closed.");
-    });
+    CLOSE_DB();
+    console.log("Server closed.");
   });
 };
 

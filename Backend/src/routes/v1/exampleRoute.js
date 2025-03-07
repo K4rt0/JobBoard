@@ -1,5 +1,28 @@
-/**
- * Updated by trungquandev.com's author on August 17 2023
- * YouTube: https://youtube.com/@trungquandev
- * "A bit of fragrance clings to the hand that gives flowers!"
- */
+import express from "express";
+
+const router = express.Router();
+
+router
+  .route("/")
+  .get((req, res) => {
+    res.json({
+      message: "Get Method",
+    });
+  })
+  .post((req, res) => {
+    res.json({
+      message: "Post Method",
+    });
+  })
+  .put((req, res) => {
+    res.json({
+      message: "Put Method",
+    });
+  })
+  .delete((req, res) => {
+    res.json({
+      message: "Delete Method",
+    });
+  });
+
+export const exampleRoutes = router;

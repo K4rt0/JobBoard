@@ -13,7 +13,6 @@ const mongoClientInstance = new MongoClient(env.DATABASE_URI, {
 
 export const CONNECT_DB = async () => {
   await mongoClientInstance.connect();
-
   jobBoardDatabaseInstance = mongoClientInstance.db(env.DATABASE_NAME);
 };
 
