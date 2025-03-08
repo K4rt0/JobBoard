@@ -1,3 +1,4 @@
+import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
 
 const Home = () => {
@@ -355,7 +356,7 @@ const Home = () => {
                             <div className="col-lg-6 col-12">
                                 {/* <!-- Single Job --> */}
                                 <SingleJobCard />
-                                <SingleJobCard />
+                                <SingleFreelancerCard />
                             </div>
                         </div>
                         {/* <!-- Pagination --> */}

@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SingleJobCard = () => {
+const SingleJobCard: React.FC = () => {
     return (
         <>
             <div className="single-job wow fadeInUp" data-wow-delay=".3s">
