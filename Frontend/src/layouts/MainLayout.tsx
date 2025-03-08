@@ -1,15 +1,20 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Header from '@/components/Header'
 
 const MainLayout = () => {
     return (
         <div>
-            <Navbar />
+            <div id="loading-area"></div>
+            <Header />
             <main>
                 <Outlet /> {/* Đây là nơi render các trang con */}
             </main>
             <Footer />
+            <a href="#" className="scroll-top btn-hover">
+                <i className="lni lni-chevron-up"></i>
+            </a>
         </div>
     )
 }

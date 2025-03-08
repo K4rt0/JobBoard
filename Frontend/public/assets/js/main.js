@@ -20,24 +20,26 @@ Author: GrayGrids
     ======================================= */
     window.onscroll = function () {
         var header_navbar = document.querySelector(".navbar-area");
-        var sticky = header_navbar.offsetTop;
-
-        if (window.pageYOffset > sticky) {
-            header_navbar.classList.add("sticky");
-        } else {
-            header_navbar.classList.remove("sticky");
+        if (header_navbar) { // Kiểm tra nếu tồn tại
+            var sticky = header_navbar.offsetTop;
+            if (window.pageYOffset > sticky) {
+                header_navbar.classList.add("sticky");
+            } else {
+                header_navbar.classList.remove("sticky");
+            }
         }
 
-
-
-        // show or hide the back-top-top button
+        // show or hide the back-to-top button
         var backToTo = document.querySelector(".scroll-top");
-        if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
-            backToTo.style.display = "flex";
-        } else {
-            backToTo.style.display = "none";
+        if (backToTo) { // Kiểm tra nếu tồn tại
+            if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+                backToTo.style.display = "flex";
+            } else {
+                backToTo.style.display = "none";
+            }
         }
     };
+
 
     // for menu scroll 
     var pageLink = document.querySelectorAll('.page-scroll');
