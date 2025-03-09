@@ -1,28 +1,14 @@
 import express from "express";
+import { exampleController } from "~/controllers/exampleController";
+import { exampleValidation } from "~/validations/exampleValidation";
 
 const router = express.Router();
 
 router
   .route("/")
   .get((req, res) => {
-    res.json({
-      message: "Get Method",
-    });
+    res.json({ message: "Get Method" });
   })
-  .post((req, res) => {
-    res.json({
-      message: "Post Method",
-    });
-  })
-  .put((req, res) => {
-    res.json({
-      message: "Put Method",
-    });
-  })
-  .delete((req, res) => {
-    res.json({
-      message: "Delete Method",
-    });
-  });
+  .post(exampleValidation.createExample, exampleController.createExample);
 
 export const exampleRoutes = router;

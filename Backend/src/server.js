@@ -1,13 +1,18 @@
 import express from "express";
 import exitHook from "async-exit-hook";
 import { env } from "./config/environment";
-import { CONNECT_DB, CLOSE_DB, GET_DB } from "./config/mongodb.js";
+import { CONNECT_DB, CLOSE_DB } from "./config/mongodb.js";
 import { APIs_V1 } from "./routes/v1";
-
-const app = express();
+import { exampleMiddleware } from "./middlewares/exampleMiddleware";
 
 const SERVER_START = () => {
+  const app = express();
+
+  app.use(express.json());
+
   app.use("/api/v1", APIs_V1);
+
+  app.use(exampleMiddleware);
 
   app.listen(env.SERVER_PORT, env.SERVER_HOST, () => {
     console.log(`Server is running at http://localhost:${env.SERVER_PORT}/`);
@@ -23,7 +28,7 @@ const SERVER_START = () => {
 (async () => {
   try {
     console.log("Server is connecting to Cloud Database...");
-    await CONNECT_DB();
+    // await CONNECT_DB();
     console.log("Database is connected !!!");
 
     SERVER_START();
