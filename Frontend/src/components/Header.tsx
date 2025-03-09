@@ -11,10 +11,7 @@ const Header = () => {
                         <div className="row align-items-center">
                             <div className="col-lg-12">
                                 <nav className="navbar navbar-expand-lg">
-                                    <a
-                                        className="navbar-brand logo"
-                                        href="index.html"
-                                    >
+                                    <a className="navbar-brand logo" href="/">
                                         <img
                                             className="logo1"
                                             src="assets/images/logo/logo.svg"
@@ -43,17 +40,14 @@ const Header = () => {
                                             className="navbar-nav ml-auto"
                                         >
                                             <li className="nav-item">
-                                                <a
-                                                    className="active"
-                                                    href="index.html"
-                                                >
+                                                <a className="active" href="/">
                                                     Home
                                                 </a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a
                                                             className="active"
-                                                            href="index.html"
+                                                            href="/"
                                                         >
                                                             Home 1
                                                         </a>
@@ -76,7 +70,7 @@ const Header = () => {
                                                 </ul>
                                             </li>
                                             <li className="nav-item">
-                                                <a href="index.html#">Pages</a>
+                                                <a href="/#">Pages</a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a href="about-us.html">
@@ -126,9 +120,7 @@ const Header = () => {
                                                 </ul>
                                             </li>
                                             <li className="nav-item">
-                                                <a href="index.html#">
-                                                    Candidates
-                                                </a>
+                                                <a href="/#">Candidates</a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a href="browse-jobs.html">
@@ -153,9 +145,7 @@ const Header = () => {
                                                 </ul>
                                             </li>
                                             <li className="nav-item">
-                                                <a href="index.html#">
-                                                    Employers{' '}
-                                                </a>
+                                                <a href="/#">Employers </a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a href="post-job.html">
@@ -185,7 +175,7 @@ const Header = () => {
                                                 </ul>
                                             </li>
                                             <li className="nav-item">
-                                                <a href="index.html#">Blog</a>
+                                                <a href="/#">Blog</a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a href="blog-grid-sidebar.html">
