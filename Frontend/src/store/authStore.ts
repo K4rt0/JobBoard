@@ -1,31 +1,31 @@
-import {create} from "zustand";
-import {persist, createJSONStorage} from "zustand/middleware";
-import {loginApi, loginGoogleApi, registerApi} from "@/services/authService";
-import axios from "axios";
-import {TokenResponse} from "@react-oauth/google";
-import { User } from "@/interfaces";
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
+import axios from 'axios'
+import { TokenResponse } from '@react-oauth/google'
+import { User } from '@/interfaces'
 
 interface AuthState {
-    user: User | null;
-    login: (username: string, password: string) => Promise<void>;
+    user: User | null
+    login: (username: string, password: string) => Promise<void>
     register: (
         username: string,
         email: string,
         password: string,
-    ) => Promise<void>;
-    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>;
-    refreshAccessToken: () => Promise<void>;
-    logout: () => void;
+    ) => Promise<void>
+    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
+    refreshAccessToken: () => Promise<void>
+    logout: () => void
 }
 
 // Hàm set Authorization vào Axios
 const setAuthHeader = (token: string | null) => {
     if (token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     } else {
-        delete axios.defaults.headers.common["Authorization"];
+        delete axios.defaults.headers.common['Authorization']
     }
-};
+}
 
 // Store Zustand với persist và JSON storage
 export const useAuthStore = create<AuthState>()(
@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>()(
              */
             login: async (username, password) => {
                 try {
-                    const response = await loginApi(username, password);
+                    const response = await loginApi(username, password)
 
                     const userData: User = {
                         id: response.userId,
@@ -46,17 +46,17 @@ export const useAuthStore = create<AuthState>()(
                         email: response.email,
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
-                        avatar: response.avatar || "",
-                        name: response.name || "",
-                    };
+                        avatar: response.avatar || '',
+                        name: response.name || '',
+                    }
 
-                    set({user: userData});
-                    setAuthHeader(userData.accessToken);
+                    set({ user: userData })
+                    setAuthHeader(userData.accessToken)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        throw error.response?.data?.message || "Login failed";
+                        throw error.response?.data?.message || 'Login failed'
                     }
-                    throw new Error("An unexpected error occurred");
+                    throw new Error('An unexpected error occurred')
                 }
             },
 
@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
                         username,
                         email,
                         password,
-                    });
+                    })
 
                     const userData: User = {
                         id: response.userId,
@@ -77,20 +77,20 @@ export const useAuthStore = create<AuthState>()(
                         email: response.email,
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
-                        avatar: response.avatar || "",
-                        name: response.name || "",
-                    };
+                        avatar: response.avatar || '',
+                        name: response.name || '',
+                    }
 
-                    set({user: userData});
-                    setAuthHeader(userData.accessToken);
+                    set({ user: userData })
+                    setAuthHeader(userData.accessToken)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw (
                             error.response?.data?.message ||
-                            "Registration failed"
-                        );
+                            'Registration failed'
+                        )
                     }
-                    throw new Error("An unexpected error occurred");
+                    throw new Error('An unexpected error occurred')
                 }
             },
 
@@ -101,14 +101,14 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     if (!tokenResponse.access_token) {
                         throw new Error(
-                            "Google login failed. No access token received.",
-                        );
+                            'Google login failed. No access token received.',
+                        )
                     }
 
                     // Gửi Access Token của Google đến backend để xác thực
                     const response = await loginGoogleApi(
                         tokenResponse.access_token,
-                    );
+                    )
 
                     const userData: User = {
                         id: response.userId,
@@ -116,14 +116,14 @@ export const useAuthStore = create<AuthState>()(
                         email: response.email,
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
-                        avatar: response.avatar || "",
-                        name: response.name || "",
-                    };
+                        avatar: response.avatar || '',
+                        name: response.name || '',
+                    }
 
-                    set({user: userData});
-                    setAuthHeader(userData.accessToken);
+                    set({ user: userData })
+                    setAuthHeader(userData.accessToken)
                 } catch (error) {
-                    throw new Error("Google login failed. Try again!");
+                    throw new Error('Google login failed. Try again!')
                 }
             },
 
@@ -132,9 +132,9 @@ export const useAuthStore = create<AuthState>()(
              */
             refreshAccessToken: async () => {
                 try {
-                    const user = get().user;
+                    const user = get().user
                     if (!user || !user.refreshToken) {
-                        throw new Error("No refresh token available");
+                        throw new Error('No refresh token available')
                     }
 
                     const response = await axios.post(
@@ -142,20 +142,20 @@ export const useAuthStore = create<AuthState>()(
                         {
                             refreshToken: user.refreshToken,
                         },
-                    );
+                    )
 
-                    const newAccessToken = response.data.accessToken;
+                    const newAccessToken = response.data.accessToken
 
                     set((state) => ({
                         user: state.user
-                            ? {...state.user, accessToken: newAccessToken}
+                            ? { ...state.user, accessToken: newAccessToken }
                             : null,
-                    }));
+                    }))
 
-                    setAuthHeader(newAccessToken);
+                    setAuthHeader(newAccessToken)
                 } catch (error) {
-                    console.error("Refresh token failed:", error);
-                    get().logout();
+                    console.error('Refresh token failed:', error)
+                    get().logout()
                 }
             },
 
@@ -163,13 +163,13 @@ export const useAuthStore = create<AuthState>()(
              * Đăng xuất người dùng
              */
             logout: () => {
-                set({user: null});
-                setAuthHeader(null);
+                set({ user: null })
+                setAuthHeader(null)
             },
         }),
         {
-            name: "auth-storage",
+            name: 'auth-storage',
             storage: createJSONStorage(() => localStorage),
         },
     ),
-);
+)

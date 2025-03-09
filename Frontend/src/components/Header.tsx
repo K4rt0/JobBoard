@@ -5,7 +5,7 @@ import SignupModal from './modals/SignUpModal'
 const Header = () => {
     return (
         <>
-            <header className="header">
+            <header className="header" style={{ zIndex: '1000' }}>
                 <div className="navbar-area">
                     <div className="container">
                         <div className="row align-items-center">

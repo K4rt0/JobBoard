@@ -356,7 +356,6 @@ const Home = () => {
                             <div className="col-lg-6 col-12">
                                 {/* <!-- Single Job --> */}
                                 <SingleJobCard />
-                                <SingleFreelancerCard />
                             </div>
                         </div>
                         {/* <!-- Pagination --> */}

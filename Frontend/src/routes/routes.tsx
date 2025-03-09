@@ -6,6 +6,7 @@ import ErrorPage from '@/pages/ErrorPage'
 import ProfilePage from '@/pages/ProfilePage'
 import ChangePasswordPage from '@/pages/ChangePasswordPage'
 import ManageApplicationPage from '@/pages/ManageApplicationPage'
+import FreelancerMarketplacePage from '@/pages/FreelancerMarketplacePage'
 
 const AppRoutes = () => {
     return (
@@ -15,6 +16,10 @@ const AppRoutes = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/job/:jobId" element={<JobDetailPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route
+                        path="/freelancer-marketplace"
+                        element={<FreelancerMarketplacePage />}
+                    />
                     <Route
                         path="/change-password"
                         element={<ChangePasswordPage />}

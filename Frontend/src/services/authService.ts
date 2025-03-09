@@ -1,10 +1,10 @@
-import axios from "axios";
-import { handleApiError } from "@/utils/apiHandlerError";
-import { UserRequestDTO } from "@/interfaces";
-import axiosInstance from "./axiosInstance";
-import { useAuthStore } from "@/store/authStore";
+import axios from 'axios'
+import { handleApiError } from '@/utils/apiHandlerError'
+import { UserRequestDTO } from '@/interfaces'
+import axiosInstance from './axiosInstance'
+import { useAuthStore } from '@/store/authStore'
 
-const API_URL = `${process.env.REACT_APP_BASE_API_URL}/auth`;
+const API_URL = `${process.env.REACT_APP_BASE_API_URL}/auth`
 
 // ✅ API đăng nhập
 export const loginApi = async (username: string, password: string) => {
@@ -12,12 +12,12 @@ export const loginApi = async (username: string, password: string) => {
         const response = await axiosInstance.post(`${API_URL}/login`, {
             username,
             password,
-        });
-        return response.data;
+        })
+        return response.data
     } catch (error) {
-        handleApiError(error, "Login failed");
+        handleApiError(error, 'Login failed')
     }
-};
+}
 
 // ✅ API đăng ký
 export const registerApi = async (userData: UserRequestDTO) => {
@@ -25,34 +25,34 @@ export const registerApi = async (userData: UserRequestDTO) => {
         const response = await axiosInstance.post(
             `${API_URL}/register`,
             userData,
-        );
-        return response.data;
+        )
+        return response.data
     } catch (error) {
-        handleApiError(error, "Registration failed");
+        handleApiError(error, 'Registration failed')
     }
-};
+}
 
 // ✅ API đăng nhập bằng Google
 export const loginGoogleApi = async (access_token: string) => {
     try {
         const response = await axiosInstance.post(
             `${API_URL}/google`,
-            {accessToken: access_token},
+            { accessToken: access_token },
             {
-                headers: {"Content-Type": "application/json"},
+                headers: { 'Content-Type': 'application/json' },
             },
-        );
-        return response.data;
+        )
+        return response.data
     } catch (error) {
-        handleApiError(error, "Google login failed");
+        handleApiError(error, 'Google login failed')
     }
-};
+}
 
 // ✅ API làm mới Access Token
 export const refreshToken = async (): Promise<string | null> => {
     try {
-        const refreshToken = useAuthStore.getState().user?.refreshToken;
-        if (!refreshToken) throw new Error("No refresh token available");
+        const refreshToken = useAuthStore.getState().user?.refreshToken
+        if (!refreshToken) throw new Error('No refresh token available')
         const response = await axiosInstance.post(
             `${API_URL}/refresh-token`,
             {
@@ -60,30 +60,30 @@ export const refreshToken = async (): Promise<string | null> => {
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
             },
-        );
-        console.log("response:", response);
-        const newAccessToken = response.data.accessToken;
+        )
+        console.log('response:', response)
+        const newAccessToken = response.data.accessToken
 
         // Cập nhật token mới vào Zustand
         useAuthStore.setState((state) => ({
             user: state.user
-                ? {...state.user, accessToken: newAccessToken}
+                ? { ...state.user, accessToken: newAccessToken }
                 : null,
-        }));
+        }))
 
         // Cập nhật header cho axiosInstance
-        axiosInstance.defaults.headers.common["Authorization"] =
-            `Bearer ${newAccessToken}`;
+        axiosInstance.defaults.headers.common['Authorization'] =
+            `Bearer ${newAccessToken}`
 
-        return newAccessToken;
+        return newAccessToken
     } catch (error) {
-        console.error("Lỗi khi refresh token:", error);
+        console.error('Lỗi khi refresh token:', error)
 
         // Nếu refresh token thất bại, logout user
-        useAuthStore.getState().logout();
-        return null;
+        useAuthStore.getState().logout()
+        return null
     }
-};
+}
