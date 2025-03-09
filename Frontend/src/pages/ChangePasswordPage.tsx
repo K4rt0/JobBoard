@@ -22,12 +22,12 @@ const ChangePasswordPage = () => {
         },
         {
             label: 'Manage Applications',
-            link: 'manage-applications.html',
+            link: 'manage-applications',
             icon: 'lni lni-envelope',
         },
         {
             label: 'Manage Resumes',
-            link: 'manage-resumes.html',
+            link: 'manage-resumes',
             icon: 'lni lni-files',
         },
         {

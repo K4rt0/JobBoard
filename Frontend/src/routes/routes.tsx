@@ -5,6 +5,7 @@ import JobDetailPage from '@/pages/JobDetailPage'
 import ErrorPage from '@/pages/ErrorPage'
 import ProfilePage from '@/pages/ProfilePage'
 import ChangePasswordPage from '@/pages/ChangePasswordPage'
+import ManageApplicationPage from '@/pages/ManageApplicationPage'
 
 const AppRoutes = () => {
     return (
@@ -17,6 +18,10 @@ const AppRoutes = () => {
                     <Route
                         path="/change-password"
                         element={<ChangePasswordPage />}
+                    />
+                    <Route
+                        path="/manage-applications"
+                        element={<ManageApplicationPage />}
                     />
                 </Route>
                 <Route path="*" element={<ErrorPage />} />
