@@ -528,9 +528,6 @@ const JobsPage: React.FC = () => {
             </EmptyIllustration>
             <ModalTitle>No Jobs Added Yet</ModalTitle>
             <EmptyText>Start adding jobs to build your job board</EmptyText>
-            <AddButton onClick={() => handleOpenModal()}>
-              <PlusIcon /> Add Your First Job
-            </AddButton>
           </NoJobs>
         )}
       </JobsContainer>

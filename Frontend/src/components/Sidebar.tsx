@@ -388,7 +388,7 @@ interface SidebarProps {
 }
 
 // Main Component
-const Sidebar: React.FC<SidebarProps> = ({ isAdmin = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isAdmin = true }) => {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
   const [showMobile, setShowMobile] = useState(false)
