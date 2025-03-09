@@ -1,10 +1,10 @@
 import React from 'react'
+import { useLocation } from 'react-router-dom'
 
 type MenuItem = {
     label: string
     link: string
     icon: string
-    active?: boolean
     notification?: number
 }
 
@@ -13,6 +13,9 @@ type DashboardSidebarProps = {
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ menuItems }) => {
+    const location = useLocation()
+    console.log(location.pathname)
+
     return (
         <div className="dashbord-sidebar">
             <ul>
@@ -21,7 +24,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ menuItems }) => {
                     <li key={index}>
                         <a
                             href={item.link}
-                            className={item.active ? 'active' : ''}
+                            className={
+                                location.pathname === `/${item.link}`
+                                    ? 'active'
+                                    : ''
+                            }
                         >
                             <i className={item.icon}></i> {item.label}
                             {item.notification && (

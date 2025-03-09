@@ -32,7 +32,7 @@ const ProfilePage = () => {
         },
         {
             label: 'Change Password',
-            link: 'change-password.html',
+            link: 'change-password',
             icon: 'lni lni-lock',
         },
         { label: 'Sign Out', link: 'index.html', icon: 'lni lni-upload' },

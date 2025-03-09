@@ -4,6 +4,7 @@ import HomePage from '@/pages/HomePage'
 import JobDetailPage from '@/pages/JobDetailPage'
 import ErrorPage from '@/pages/ErrorPage'
 import ProfilePage from '@/pages/ProfilePage'
+import ChangePasswordPage from '@/pages/ChangePasswordPage'
 
 const AppRoutes = () => {
     return (
@@ -13,6 +14,10 @@ const AppRoutes = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/job/:jobId" element={<JobDetailPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route
+                        path="/change-password"
+                        element={<ChangePasswordPage />}
+                    />
                 </Route>
                 <Route path="*" element={<ErrorPage />} />
             </Routes>
