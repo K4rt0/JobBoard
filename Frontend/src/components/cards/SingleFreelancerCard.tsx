@@ -69,9 +69,11 @@ const SingleFreelancerCard: React.FC<FreelancerCardProps> = ({
                         </div>
 
                         {/* Hire Button */}
-                        <Button variant="primary" className="fw-medium">
-                            <i className="bi bi-person-plus me-2"></i>Hire Me
-                        </Button>
+                        <div className="button">
+                            <a href="/" className="btn btn-alt px-2 py-1">
+                                <i className="bi bi-person-plus"></i>Hire Me
+                            </a>
+                        </div>
                     </div>
 
                     {/* Stats Row */}

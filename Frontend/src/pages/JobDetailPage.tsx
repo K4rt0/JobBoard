@@ -1,11 +1,36 @@
 import React from 'react'
+import { Button, Form, InputGroup } from 'react-bootstrap'
 
 const JobDetailPage = () => {
+    // Dữ liệu mẫu cho danh sách freelancer (có thể thay bằng API sau)
+    const freelancers = [
+        {
+            id: 1,
+            name: 'ahmmadqazi584',
+            image: 'assets/images/universal-image/freelancer1.png',
+            bid: '$25 USD in 3 days',
+            rating: 4.9,
+            reviews: 13,
+            description:
+                "Hi Fabio M., Just reviewed your job post and noticed you're looking for a skilled Java Developer—this aligns perfectly with my expertise! With over 6 years of experience and a track record of delivering 50+ web apps [More]",
+        },
+        {
+            id: 2,
+            name: 'johnDoe123',
+            image: 'assets/images/universal-image/freelancer2.png',
+            bid: '$30 USD in 5 days',
+            rating: 4.7,
+            reviews: 8,
+            description:
+                'Experienced web developer with 5 years in front-end development, specializing in React and Node.js [More]',
+        },
+    ]
+
     return (
         <div className="job-details section">
             <div className="container">
                 <div className="row mb-n5">
-                    {/* <!-- Job List Details Start --> */}
+                    {/* Job List Details Start */}
                     <div className="col-lg-8 col-12">
                         <div className="job-details-inner">
                             <div className="job-details-head row mx-0">
@@ -72,7 +97,7 @@ const JobDetailPage = () => {
                                 <h6 className="mb-3 mt-4">Responsibilities</h6>
                                 <ul>
                                     <li>
-                                        Proven work experienceas a web designer
+                                        Proven work experience as a web designer
                                     </li>
                                     <li>
                                         Demonstrable graphic design skills with
@@ -87,7 +112,7 @@ const JobDetailPage = () => {
                                         development process
                                     </li>
                                     <li>
-                                        Proven work experienceas a web designer
+                                        Proven work experience as a web designer
                                     </li>
                                     <li>
                                         Excellent visual design skills with
@@ -98,7 +123,7 @@ const JobDetailPage = () => {
                                         effectively
                                     </li>
                                     <li>
-                                        Proven work experienceas a web designer
+                                        Proven work experience as a web designer
                                     </li>
                                     <li>
                                         Up-to-date with the latest Web trends,
@@ -168,16 +193,64 @@ const JobDetailPage = () => {
                                         Employer-sponsored Value Adds – Fresh
                                         Beanies
                                     </li>
-                                    <li>401(k)with matching</li>
+                                    <li>401(k) with matching</li>
                                 </ul>
                             </div>
                         </div>
+                        {/* Freelancers Bidding Section */}
+                        <div className="card mt-4 shadow-sm">
+                            <div className="card-body p-4">
+                                <h6 className="mb-3">
+                                    {freelancers.length} freelancers are bidding
+                                    on average $152 for this job
+                                </h6>
+                                <hr />
+                                {freelancers.map((freelancer) => (
+                                    <div
+                                        key={freelancer.id}
+                                        className="d-flex align-items-center mb-3"
+                                    >
+                                        <img
+                                            src={freelancer.image}
+                                            alt={freelancer.name}
+                                            className="rounded-circle"
+                                            style={{
+                                                width: '50px',
+                                                height: '50px',
+                                                objectFit: 'cover',
+                                            }}
+                                        />
+                                        <div className="ms-3">
+                                            <h6 className="mb-0">
+                                                {freelancer.name}
+                                            </h6>
+                                            <div className="text-muted small">
+                                                {freelancer.bid}
+                                            </div>
+                                            <div className="text-warning small">
+                                                {freelancer.rating}{' '}
+                                                <i className="fa fa-star"></i> (
+                                                {freelancer.reviews} Reviews)
+                                            </div>
+                                            <p className="text-muted small mb-0">
+                                                {freelancer.description.slice(
+                                                    0,
+                                                    100,
+                                                )}
+                                                ...
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                    {/* <!-- Job List Details End --> */}
-                    {/* <!-- Job Sidebar Wrap Start --> */}
+                    {/* Job List Details End */}
+
+                    {/* Job Sidebar Wrap Start */}
                     <div className="col-lg-4 col-12">
                         <div className="job-details-sidebar">
-                            {/* <!-- Sidebar (Apply Buttons) Start --> */}
+                            {/* Sidebar (Apply Buttons) Start */}
                             <div className="sidebar-widget">
                                 <div className="inner">
                                     <div className="row m-n2 button">
@@ -201,8 +274,8 @@ const JobDetailPage = () => {
                                     </div>
                                 </div>
                             </div>
-                            {/* <!-- Sidebar (Apply Buttons) End --> */}
-                            {/* <!-- Sidebar (Job Overview) Start --> */}
+                            {/* Sidebar (Apply Buttons) End */}
+                            {/* Sidebar (Job Overview) Start */}
                             <div className="sidebar-widget">
                                 <div className="inner">
                                     <h6 className="title">Job Overview</h6>
@@ -241,46 +314,52 @@ const JobDetailPage = () => {
                                     </ul>
                                 </div>
                             </div>
-                            {/* <!-- Sidebar (Job Overview) End --> */}
-
-                            {/* <!-- Sidebar (Job Location) Start --> */}
-                            <div className="sidebar-widget">
-                                <div className="inner">
-                                    <h6 className="title">Job Location</h6>
-                                    <div
-                                        className="mapouter"
-                                        style={{
-                                            position: 'relative',
-                                            textAlign: 'right',
-                                            height: '300px',
-                                            width: '100%',
-                                        }}
-                                    >
-                                        <div
-                                            className="gmap_canvas"
-                                            style={{
-                                                overflow: 'hidden',
-                                                background: 'none',
-                                                height: '300px',
-                                                width: '100%',
-                                            }}
+                            {/* Sidebar (Job Overview) End */}
+                            {/* Bid on Project Section */}
+                            <div className="card mt-4 shadow-sm">
+                                <div className="card-body">
+                                    <h6 className="mb-3">Place your bid</h6>
+                                    <div className="mb-3">
+                                        <label
+                                            htmlFor="bidAmount"
+                                            className="form-label"
                                         >
-                                            <iframe
-                                                width="100%"
-                                                height="300"
-                                                id="gmap_canvas"
-                                                src="https://maps.google.com/maps?q=New%20York&t=&z=13&ie=UTF8&iwloc=&output=embed"
-                                                style={{ border: 'none' }}
-                                                loading="lazy"
-                                            ></iframe>
-                                        </div>
+                                            Bid amount
+                                        </label>
+                                        <InputGroup>
+                                            <Form.Control
+                                                type="number"
+                                                id="bidAmount"
+                                                placeholder="USD"
+                                                defaultValue={50}
+                                                min={0}
+                                            />
+                                            <InputGroup.Text>
+                                                USD
+                                            </InputGroup.Text>
+                                        </InputGroup>
                                     </div>
+                                    <div className="mb-3">
+                                        <label
+                                            htmlFor="email"
+                                            className="form-label"
+                                        >
+                                            Email address
+                                        </label>
+                                        <Form.Control
+                                            type="email"
+                                            id="email"
+                                            placeholder="jane@freelancer.com"
+                                        />
+                                    </div>
+                                    <Button variant="primary" className="w-100">
+                                        Bid on the project
+                                    </Button>
                                 </div>
                             </div>
-                            {/* <!-- Sidebar (Job Location) End --> */}
                         </div>
                     </div>
-                    {/* <!-- Job Sidebar Wrap End --> */}
+                    {/* Job Sidebar Wrap End */}
                 </div>
             </div>
         </div>

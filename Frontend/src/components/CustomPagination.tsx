@@ -32,47 +32,52 @@ const CustomPagination: React.FC<PaginationProps> = ({
         // Always show the first page
         if (startPage > 1) {
             items.push(
-                <Pagination.Item
-                    key={1}
-                    active={currentPage === 1}
-                    onClick={() => setCurrentPage(1)}
-                >
-                    1
-                </Pagination.Item>,
+                <li key={1} className={currentPage === 1 ? 'active' : ''}>
+                    <a href="#" onClick={() => setCurrentPage(1)}>
+                        1
+                    </a>
+                </li>,
             )
             if (startPage > 2) {
-                items.push(<Pagination.Ellipsis key="ellipsis-start" />)
+                items.push(
+                    <li key="ellipsis-start">
+                        <span>...</span>
+                    </li>,
+                )
             }
         }
 
         // Add pages in the calculated range
         for (let page = startPage; page <= endPage; page++) {
             items.push(
-                <Pagination.Item
-                    key={page}
-                    active={currentPage === page}
-                    onClick={() => setCurrentPage(page)}
-                >
-                    {page}
-                </Pagination.Item>,
+                <li key={page} className={currentPage === page ? 'active' : ''}>
+                    <a href="#" onClick={() => setCurrentPage(page)}>
+                        {page}
+                    </a>
+                </li>,
             )
         }
 
         // Add ellipsis if there's a gap before the last page
         if (endPage < totalPages - 1) {
-            items.push(<Pagination.Ellipsis key="ellipsis-end" />)
+            items.push(
+                <li key="ellipsis-end">
+                    <span>...</span>
+                </li>,
+            )
         }
 
         // Always show the last page if not already included
         if (endPage < totalPages) {
             items.push(
-                <Pagination.Item
+                <li
                     key={totalPages}
-                    active={currentPage === totalPages}
-                    onClick={() => setCurrentPage(totalPages)}
+                    className={currentPage === totalPages ? 'active' : ''}
                 >
-                    {totalPages}
-                </Pagination.Item>,
+                    <a href="#" onClick={() => setCurrentPage(totalPages)}>
+                        {totalPages}
+                    </a>
+                </li>,
             )
         }
 
@@ -84,27 +89,40 @@ const CustomPagination: React.FC<PaginationProps> = ({
     const endResult = Math.min(currentPage * resultsPerPage, totalResults)
 
     return (
-        <Container>
-            {/* Pagination Row (Sửa lỗi hiển thị theo hàng ngang) */}
-            <Row className="justify-content-center">
-                <Col xs="auto">
-                    <Pagination className="d-flex flex-wrap justify-content-center">
-                        <Pagination.Prev
-                            onClick={() =>
-                                setCurrentPage((prev) => Math.max(1, prev - 1))
-                            }
-                            disabled={currentPage === 1}
-                        />
+        <Container className="pagination center">
+            <Row>
+                <Col xs={12}>
+                    <ul className="pagination-list">
+                        <li>
+                            <a
+                                href="#"
+                                onClick={() =>
+                                    setCurrentPage((prev) =>
+                                        Math.max(1, prev - 1),
+                                    )
+                                }
+                                className={currentPage === 1 ? 'disabled' : ''}
+                            >
+                                <i className="lni lni-arrow-left"></i>
+                            </a>
+                        </li>
                         {getPaginationItems()}
-                        <Pagination.Next
-                            onClick={() =>
-                                setCurrentPage((prev) =>
-                                    Math.min(totalPages, prev + 1),
-                                )
-                            }
-                            disabled={currentPage === totalPages}
-                        />
-                    </Pagination>
+                        <li>
+                            <a
+                                href="#"
+                                onClick={() =>
+                                    setCurrentPage((prev) =>
+                                        Math.min(totalPages, prev + 1),
+                                    )
+                                }
+                                className={
+                                    currentPage === totalPages ? 'disabled' : ''
+                                }
+                            >
+                                <i className="lni lni-arrow-right"></i>
+                            </a>
+                        </li>
+                    </ul>
                 </Col>
             </Row>
 
