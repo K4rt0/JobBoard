@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { env } from "~/config/environment";
 import { StatusCodes } from "http-status-codes";
+import { user_model } from "~/models/user.model";
+import { ObjectId } from "mongodb";
 
 const jwt_auth = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -21,13 +23,13 @@ const jwt_auth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    const userId = decoded._id;
-    const user = await user_model.findOne({ _id: userId });
+    const user_id = decoded._id;
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
 
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({
         statusCode: StatusCodes.NOT_FOUND,
-        message: "User not found",
+        message: "Người dùng không tồn tại !",
       });
     }
 
@@ -38,7 +40,9 @@ const jwt_auth = async (req, res, next) => {
       });
     }
 
-    req.user = decoded;
+    const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
+    req.user = userWithoutSensitiveInfo;
+
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
