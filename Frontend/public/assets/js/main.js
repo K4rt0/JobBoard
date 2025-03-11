@@ -3,73 +3,83 @@ Template Name: Massive
 Author: GrayGrids
 */
 
-(function () {
-    //===== Prealoder
-
-    window.onload = function () {
-        window.setTimeout(fadeout, 500);
-    }
-
-    function fadeout() {
-        document.querySelector('#loading-area').style.opacity = '0';
-        document.querySelector('#loading-area').style.display = 'none';
-    }
-
-    /*=====================================
-    Sticky
-    ======================================= */
-    window.onscroll = function () {
-        var header_navbar = document.querySelector(".navbar-area");
-        if (header_navbar) { // Kiểm tra nếu tồn tại
-            var sticky = header_navbar.offsetTop;
-            if (window.pageYOffset > sticky) {
-                header_navbar.classList.add("sticky");
-            } else {
-                header_navbar.classList.remove("sticky");
-            }
+;(function () {
+    //===== Preloader
+    window.addEventListener('load', function () {
+        const loadingArea = document.querySelector('#loading-area')
+        if (loadingArea) {
+            setTimeout(() => {
+                loadingArea.style.opacity = '0'
+                loadingArea.style.display = 'none'
+            }, 500)
         }
-
-        // show or hide the back-to-top button
-        var backToTo = document.querySelector(".scroll-top");
-        if (backToTo) { // Kiểm tra nếu tồn tại
-            if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
-                backToTo.style.display = "flex";
-            } else {
-                backToTo.style.display = "none";
-            }
-        }
-    };
-
-
-    // for menu scroll 
-    var pageLink = document.querySelectorAll('.page-scroll');
-
-    pageLink.forEach(elem => {
-        elem.addEventListener('click', e => {
-            e.preventDefault();
-            document.querySelector(elem.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth',
-                offsetTop: 1 - 60,
-            });
-        });
-    });
-
-    //===== close navbar-collapse when a  clicked
-    let navbarToggler = document.querySelector(".navbar-toggler");
-    var navbarCollapse = document.querySelector(".collapse");
-
-    document.querySelectorAll(".page-scroll").forEach(e =>
-        e.addEventListener("click", () => {
-            navbarToggler.classList.remove("active");
-            navbarCollapse.classList.remove('show')
-        })
-    );
-    navbarToggler.addEventListener('click', function () {
-        navbarToggler.classList.toggle("active");
     })
-    // WOW active
-    new WOW().init();
 
+    // Sticky Navbar and Scroll-to-top
+    window.addEventListener('scroll', () => {
+        const headerNavbar = document.querySelector('.navbar-area')
+        const scrollPosition =
+            window.pageYOffset || document.documentElement.scrollTop
 
-    
-})();
+        if (header_navbar) {
+            const stickyOffset = headerNavbar.offsetTop
+
+            if (window.pageYOffset > sticky) {
+                headerNavbar.classList.add('sticky')
+            } else {
+                headerNavbar.classList.remove('sticky')
+            }
+        }
+
+        // Back-to-top button
+        const backToTopBtn = document.querySelector('.scroll-top')
+        if (backToTopBtn) {
+            if (scrollY > 50) {
+                backToTopBtn.style.display = 'flex'
+            } else {
+                backToTopBtn.style.display = 'none'
+            }
+        }
+    })
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('.page-scroll').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault()
+            const targetId = link.getAttribute('href')
+            const targetElement = document.querySelector(targetId)
+
+            if (targetId && targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                })
+            }
+
+            // Close navbar after click
+            const navbarCollapse = document.querySelector('.collapse')
+            const navbarToggler = document.querySelector('.navbar-toggler')
+
+            if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                navbarCollapse.classList.remove('show')
+            }
+
+            if (navbarToggler && navbarToggler.classList.contains('active')) {
+                navbarToggler.classList.remove('active')
+            }
+        })
+    })
+
+    // Navbar toggler
+    const navbarToggler = document.querySelector('.navbar-toggler')
+    if (navbarToggler) {
+        navbarToggler.addEventListener('click', () => {
+            navbarToggler.classList.toggle('active')
+        })
+    }
+
+    // WOW.js initialization
+    if (typeof WOW !== 'undefined') {
+        new WOW().init()
+    }
+})()
