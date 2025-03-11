@@ -7,7 +7,7 @@ const create_user = async (req, res, next) => {
     email: Joi.string().required().email().trim().strict(),
     phone_number: Joi.string().min(10).max(15).trim().strict().default(null),
     birth_date: Joi.date().default(null),
-    role: Joi.string().valid("Freelancer", "Employer", "Admin").default("Freelancer"),
+    role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
 
     bio: Joi.string().max(500).default(null),
     education: Joi.string().max(100).default(null),
