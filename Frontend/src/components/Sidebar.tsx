@@ -431,13 +431,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = true }) => {
           icon: 'lni lni-dashboard',
           label: 'Dashboard',
         },
-        { to: '/admin/users', icon: 'lni lni-users', label: 'User Management' },
-        {
-          to: '/admin/jobs',
-          icon: 'lni lni-briefcase',
-          label: 'Job Management',
-          badge: 5,
-        },
         {
           to: '/admin/add-skill',
           icon: 'lni lni-plus',
@@ -448,6 +441,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = true }) => {
           icon: 'lni lni-plus',
           label: 'Add Job',
         },
+        {
+          to: '/admin/manager-users',
+          icon: 'lni lni-users',
+          label: 'User Management',
+        },
+
         { to: '/admin/settings', icon: 'lni lni-cog', label: 'Settings' },
       ]
     : [
