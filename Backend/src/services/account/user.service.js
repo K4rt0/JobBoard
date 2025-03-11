@@ -4,16 +4,17 @@ import { env } from "~/config/environment";
 import jwt from "jsonwebtoken";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "http-status-codes";
+import { ObjectId } from "mongodb";
 
 const create_user = async (data) => {
   try {
     const existingUser = await user_model.find_user({ email: data.email });
     if (existingUser) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Người dùng đã tồn tại trong hệ thống !");
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashed_password = await bcrypt.hash(data.password, 10);
     const user_data = {
       ...data,
-      password: hashedPassword,
+      password: hashed_password,
     };
 
     const user = await user_model.create_user(user_data);
@@ -28,17 +29,45 @@ const login_user = async ({ email, password }) => {
     const user = await user_model.find_user({ email });
     if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const is_password_valid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
+    if (!is_password_valid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
 
     const _id = user._id.toString();
-    const accessToken = jwt.sign({ _id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
-    const refreshToken = jwt.sign({ _id }, env.JWT_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
+    const access_token = jwt.sign({ _id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
+    const refresh_token = jwt.sign({ _id }, env.JWT_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
 
-    await user_model.update_user(_id, { refresh_token: refreshToken });
+    await user_model.update_user(_id, { refresh_token: refresh_token });
 
-    return { _id, accessToken, refreshToken };
+    return { _id, access_token, refresh_token };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_user_by_id = async (user_id) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
+
+    return userWithoutSensitiveInfo;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_all_users = async () => {
+  try {
+    const users = await user_model.find_all_user();
+
+    const usersWithoutSensitiveInfo = users.map((user) => {
+      const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
+      return userWithoutSensitiveInfo;
+    });
+
+    return usersWithoutSensitiveInfo;
   } catch (error) {
     throw error;
   }
@@ -47,4 +76,6 @@ const login_user = async ({ email, password }) => {
 export const user_service = {
   create_user,
   login_user,
+  get_user_by_id,
+  get_all_users,
 };

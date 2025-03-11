@@ -6,15 +6,6 @@ import { auth_middleware } from "~/middlewares/account/auth.middleware";
 
 const router = express.Router();
 
-router
-  .post("/register", user_validation.create_user, user_controller.create_user)
-  .post("/login", user_validation.login_user, user_controller.login_user)
-  .post("/refresh-token", refresh_token_controller.refresh_token)
-  .get("/profile", auth_middleware.jwt_auth, (req, res) => {
-    res.status(200).json({
-      message: "Profile retrieved",
-      data: req.user,
-    });
-  });
+router.post("/register", user_validation.create_user, user_controller.create_user).post("/login", user_validation.login_user, user_controller.login_user).post("/refresh-token", refresh_token_controller.refresh_token).get("/profile", auth_middleware.jwt_auth, user_controller.get_profile);
 
 export const user_route = router;

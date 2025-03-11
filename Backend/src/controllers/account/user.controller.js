@@ -32,7 +32,7 @@ const login_user = async (req, res, next) => {
 
 const get_profile = async (req, res, next) => {
   try {
-    const result = await user_service.get_profile(req.user.id);
+    const result = await user_service.get_user_by_id(req._id);
     res.status(StatusCodes.OK).json({
       message: "Profile retrieved successfully",
       data: result,

@@ -1,10 +1,8 @@
 import jwt from "jsonwebtoken";
 import { env } from "~/config/environment";
 import { StatusCodes } from "http-status-codes";
-import { user_model } from "~/models/user.model";
-import { ObjectId } from "mongodb";
 
-const jwt_auth = async (req, res, next) => {
+const admin_jwt_middleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
     return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -22,24 +20,7 @@ const jwt_auth = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-    const user_id = decoded._id;
-    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
-
-    if (!user) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: "Người dùng không tồn tại !",
-      });
-    }
-
-    if (user.status === "Deleted" || user.status === "Blocked") {
-      return res.status(StatusCodes.FORBIDDEN).json({
-        statusCode: StatusCodes.FORBIDDEN,
-        message: `Account is ${user.status.toLowerCase()}`,
-      });
-    }
-    req._id = user_id;
+    jwt.verify(token, env.JWT_SECRET);
 
     next();
   } catch (error) {
@@ -57,4 +38,4 @@ const jwt_auth = async (req, res, next) => {
   }
 };
 
-export const auth_middleware = { jwt_auth };
+export default admin_jwt_middleware;
