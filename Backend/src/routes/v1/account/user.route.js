@@ -11,8 +11,6 @@ router
   .post("/login", user_validation.login_user, user_controller.login_user)
   .post("/refresh-token", refresh_token_controller.refresh_token)
   .get("/profile", auth_middleware.jwt_auth, (req, res) => {
-    console.log("req", req);
-    console.log("res", res);
     res.status(200).json({
       message: "Profile retrieved",
       data: req.user,

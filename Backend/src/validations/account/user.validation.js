@@ -41,7 +41,7 @@ const login_user = async (req, res, next) => {
   });
 
   try {
-    await schema.validateAsync(req.body, { abortEarly: false });
+    await schema.validateAsync(req.body);
     next();
   } catch (error) {
     next(error);
@@ -54,7 +54,7 @@ const refresh = async (req, res, next) => {
   });
 
   try {
-    await schema.validateAsync(req.body, { abortEarly: false });
+    await schema.validateAsync(req.body);
     next();
   } catch (error) {
     next(error);

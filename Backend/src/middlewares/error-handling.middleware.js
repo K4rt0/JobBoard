@@ -11,5 +11,5 @@ export const error_handling_middleware = (err, req, res, next) => {
 
   if (env.BUILD_ENV === "production") delete response_error.stack;
 
-  res.json(response_error);
+  res.status(err.statusCode).json(response_error);
 };
