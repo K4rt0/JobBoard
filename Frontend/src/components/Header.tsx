@@ -63,7 +63,7 @@ const Header = () => {
                                                 <a>Find Jobs</a>
                                                 <ul className="sub-menu">
                                                     <li>
-                                                        <a href="/job-list">
+                                                        <a href="/jobs">
                                                             Find Jobs
                                                         </a>
                                                     </li>

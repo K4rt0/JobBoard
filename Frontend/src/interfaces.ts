@@ -48,3 +48,12 @@ export interface JobFormData {
     recruiterEmail: string
     termsAgreed: boolean
 }
+export interface Job {
+    id: number
+    title: string
+    company: string
+    location: string
+    salary: string
+    type: string
+    posted: string
+}

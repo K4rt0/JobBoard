@@ -15,6 +15,7 @@ import AddJobPage from '@/pages/admin-pages/AddJobPage'
 import AddSkillPage from '@/pages/admin-pages/AddSkillPage'
 import UserManagement from '@/pages/admin-pages/ManagerUserPage'
 import PostJobPage from '@/pages/PostJobPage'
+import JobSearchPage from '@/pages/JobSearchPage'
 
 const AppRoutes = () => {
     return (
@@ -26,6 +27,7 @@ const AppRoutes = () => {
                     <Route path="/job/:jobId" element={<JobDetailPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/post-job" element={<PostJobPage />} />
+                    <Route path="/jobs" element={<JobSearchPage />} />
                     <Route
                         path="/freelancer-marketplace"
                         element={<FreelancerMarketplacePage />}
