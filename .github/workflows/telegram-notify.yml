@@ -38,9 +38,8 @@ jobs:
           MESSAGE=$(cat <<EOF
           🔊 **NOTIFICATION FROM GITHUB**
           
-          📌 **GitHub Repository:** [${{ github.repository }}](https://github.com/${{ github.repository }}) - [🔗 View Repo](https://github.com/${{ github.repository }})
-          👤 **User:** [${{ github.actor }}](https://github.com/${{ github.actor }}) - [🔗 View User](https://github.com/${{ github.actor }})
-          🚀 **From Branch:** \`${{ github.ref_name }}\`
+          📌 **GitHub Repository:** [${{ github.repository }}](https://github.com/${{ github.repository }}) - [View Repo](https://github.com/${{ github.repository }})
+          👤 **User:** [${{ github.actor }}](https://github.com/${{ github.actor }}) - [View User](https://github.com/${{ github.actor }})
 
           📖 **Action:** **${{ github.actor }} - ${ACTION_TYPE} - ${{ github.ref_name }}**
           ${MESSAGE_TEXT}
