@@ -20,7 +20,7 @@ jobs:
           
           # Kiểm tra loại sự kiện
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            ACTION_TYPE="📤 **Commit**"
+            ACTION_TYPE="**Commit**"
             MESSAGE_TEXT="📝 Message: \`${{ github.event.head_commit.message }}\`"
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             if [[ "${{ github.event.action }}" == "opened" ]]; then
@@ -28,7 +28,7 @@ jobs:
             elif [[ "${{ github.event.action }}" == "closed" ]]; then
               if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
                 ACTION_TYPE="✅ **Merged**"
-                MESSAGE_TEXT="📝 Message: \`${{ github.event.pull_request.title }}\`"
+                MESSAGE_TEXT="📝 Message: ${{ github.event.pull_request.title }}"
               else
                 ACTION_TYPE="❌ **Pull Request Closed**"
               fi
