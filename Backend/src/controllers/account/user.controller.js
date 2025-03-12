@@ -21,8 +21,8 @@ const login_user = async (req, res, next) => {
       message: "Login successful",
       data: {
         id: result._id,
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
       },
     });
   } catch (error) {
@@ -42,8 +42,19 @@ const get_profile = async (req, res, next) => {
   }
 };
 
+const logout_user = async (req, res, next) => {
+  try {
+    const user_id = req._id;
+    const result = await user_service.logout_user(user_id);
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_controller = {
   create_user,
   login_user,
+  logout_user,
   get_profile,
 };
