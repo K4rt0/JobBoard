@@ -2,7 +2,7 @@ name: Notify Telegram on Git Actions
 
 on:
   push:
-    branches: ["*"]  # Theo dõi tất cả branch
+    branches: ["*"]  # Lắng nghe tất cả branch
   pull_request:
     types: [opened, closed]  # Gửi thông báo khi PR mở hoặc đóng
 
@@ -17,18 +17,18 @@ jobs:
         run: |
           ACTION_TYPE=""
           MESSAGE_TEXT=""
-
+          
           # Kiểm tra loại sự kiện
           if [[ "${{ github.event_name }}" == "push" ]]; then
             ACTION_TYPE="📤 **Commit**"
-            MESSAGE_TEXT="📝 **Message:** \`${{ github.event.head_commit.message }}\`"
+            MESSAGE_TEXT="📝 Message: \`${{ github.event.head_commit.message }}\`"
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             if [[ "${{ github.event.action }}" == "opened" ]]; then
               ACTION_TYPE="🔀 **Pull Request Opened**"
             elif [[ "${{ github.event.action }}" == "closed" ]]; then
               if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
                 ACTION_TYPE="✅ **Merged**"
-                MESSAGE_TEXT="📝 **Message:** \`${{ github.event.pull_request.title }}\`"
+                MESSAGE_TEXT="📝 Message: \`${{ github.event.pull_request.title }}\`"
               else
                 ACTION_TYPE="❌ **Pull Request Closed**"
               fi
@@ -37,7 +37,7 @@ jobs:
 
           MESSAGE=$(cat <<EOF
           🔊 **NOTIFICATION FROM GITHUB**
-
+          
           📌 **GitHub Repository:** [${{ github.repository }}](https://github.com/${{ github.repository }}) - [🔗 View Repo](https://github.com/${{ github.repository }})
           👤 **User:** [${{ github.actor }}](https://github.com/${{ github.actor }}) - [🔗 View User](https://github.com/${{ github.actor }})
           🚀 **From Branch:** \`${{ github.ref_name }}\`
@@ -52,4 +52,4 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
           -d chat_id="$TELEGRAM_CHAT_ID" \
           -d text="$MESSAGE" \
-          -d parse_mode="MarkdownV2"
+          -d parse_mode="Markdown"
