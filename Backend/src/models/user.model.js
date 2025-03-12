@@ -69,9 +69,10 @@ const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
     const total = await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .countDocuments({ ...final_query, ...query });
+    const projection = { password: 0, refresh_token: 0 };
     const users = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .find({ ...final_query, ...query })
+      .find({ ...final_query, ...query }, { projection })
       .sort(sort)
       .skip(skip)
       .limit(limit)
