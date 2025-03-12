@@ -30,3 +30,21 @@ export interface Freelancer {
     reviews: number
     avatar: string
 }
+
+// Define the form data type
+export interface JobFormData {
+    title: string
+    category: string
+    jobType: string
+    deadline?: string
+    salary?: string
+    description: string
+    companyName: string
+    industry?: string
+
+    companyDescription?: string
+    logo?: FileList
+    recruiterName: string
+    recruiterEmail: string
+    termsAgreed: boolean
+}

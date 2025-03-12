@@ -56,21 +56,9 @@ const SignupModal: React.FC = () => {
                                 <div className="social-login">
                                     <ul>
                                         <li>
-                                            <a className="linkedin" href="#">
-                                                <i className="lni lni-linkedin-original"></i>{' '}
-                                                Import from LinkedIn
-                                            </a>
-                                        </li>
-                                        <li>
                                             <a className="google" href="#">
                                                 <i className="lni lni-google"></i>{' '}
                                                 Import from Google
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a className="facebook" href="#">
-                                                <i className="lni lni-facebook-original"></i>{' '}
-                                                Import from Facebook
                                             </a>
                                         </li>
                                     </ul>

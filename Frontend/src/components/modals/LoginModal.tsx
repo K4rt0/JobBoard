@@ -40,27 +40,9 @@ const LoginModal: React.FC = () => {
                                     <div className="social-login">
                                         <ul>
                                             <li>
-                                                <a
-                                                    className="linkedin"
-                                                    href="#"
-                                                >
-                                                    <i className="lni lni-linkedin-original"></i>{' '}
-                                                    Log in with LinkedIn
-                                                </a>
-                                            </li>
-                                            <li>
                                                 <a className="google" href="#">
                                                     <i className="lni lni-google"></i>{' '}
                                                     Log in with Google
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a
-                                                    className="facebook"
-                                                    href="#"
-                                                >
-                                                    <i className="lni lni-facebook-original"></i>{' '}
-                                                    Log in with Facebook
                                                 </a>
                                             </li>
                                         </ul>
