@@ -48,9 +48,9 @@ const login_user = async (req, res, next) => {
   }
 };
 
-const refresh = async (req, res, next) => {
+const refresh_token = async (req, res, next) => {
   const schema = Joi.object({
-    refreshToken: Joi.string().required(),
+    refresh_token: Joi.string().required(),
   });
 
   try {
@@ -64,5 +64,5 @@ const refresh = async (req, res, next) => {
 export const user_validation = {
   create_user,
   login_user,
-  refresh,
+  refresh_token,
 };
