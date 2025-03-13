@@ -5,6 +5,6 @@ import { admin_user_validation } from "~/validations/admin/admin_user.validation
 
 const router = express.Router();
 
-router.get("/get-all", [admin_jwt_middleware, admin_user_validation.get_all_users], admin_user_controller.get_all_users);
+router.get("/get-all", [admin_jwt_middleware, admin_user_validation.get_all_users], admin_user_controller.get_all_users).patch("/:id/status", [admin_jwt_middleware, admin_user_validation.update_user_status], admin_user_controller.update_user_status);
 
 export const admin_user_route = router;

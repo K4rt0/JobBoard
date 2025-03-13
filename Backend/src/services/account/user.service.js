@@ -48,7 +48,7 @@ const login_user = async ({ email, password }) => {
 const get_user_by_id = async (user_id) => {
   try {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
-    if (!user) throw new Error("Người dùng không tồn tại !");
+    if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
 
     const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
 
