@@ -24,6 +24,22 @@ const get_all_users = async (req, res, next) => {
     next(error);
   }
 };
+
+const update_user_status = async (req, res, next) => {
+  try {
+    const user_id = req.params.id;
+    const { status } = req.body;
+    const result = await admin_user_service.update_user_status(user_id, status);
+    res.status(StatusCodes.OK).json({
+      message: "Cập nhật trạng thái người dùng thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const admin_user_controller = {
   get_all_users,
+  update_user_status,
 };
