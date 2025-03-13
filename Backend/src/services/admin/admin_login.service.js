@@ -8,7 +8,7 @@ const admin_login_service = (data) => {
 
     if (data.username !== username || data.password !== password) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
 
-    const accessToken = jwt.sign({}, env.JWT_SECRET, { expiresIn: "1h" });
+    const accessToken = jwt.sign({}, env.JWT_SECRET, { expiresIn: "7d" });
     return { accessToken };
   } catch (error) {
     throw error;
