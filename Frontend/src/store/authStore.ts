@@ -4,6 +4,7 @@ import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
 import { UserAuth } from '@/interfaces'
+import { refresh_token } from '@/services/axiosInstance'
 
 interface AuthState {
     user: UserAuth | null
@@ -15,6 +16,7 @@ interface AuthState {
     ) => Promise<void>
     loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
     refreshaccess_token: () => Promise<void>
+    fetchUserProfile: () => Promise<void> // Thêm hàm lấy thông tin người dùng
     logout: () => void
 }
 
@@ -39,7 +41,6 @@ export const useAuthStore = create<AuthState>()(
             login: async (email, password) => {
                 try {
                     const response = await loginApi(email, password)
-                    console.log(response)
                     const userData: UserAuth = {
                         id: response.data.id,
                         access_token: response.data.access_token,
@@ -48,6 +49,9 @@ export const useAuthStore = create<AuthState>()(
 
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
+
+                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng nhập
+                    await get().fetchUserProfile()
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw error.response?.data?.message || 'Login failed'
@@ -66,7 +70,6 @@ export const useAuthStore = create<AuthState>()(
                         email,
                         password,
                     })
-
                     const userData: UserAuth = {
                         id: response.data.id,
                         access_token: response.data.access_token,
@@ -75,6 +78,9 @@ export const useAuthStore = create<AuthState>()(
 
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
+
+                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng ký
+                    await get().fetchUserProfile()
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw (
@@ -97,20 +103,20 @@ export const useAuthStore = create<AuthState>()(
                         )
                     }
 
-                    // Gửi Access Token của Google đến backend để xác thực
                     const response = await loginGoogleApi(
                         tokenResponse.access_token,
                     )
-
                     const userData: UserAuth = {
                         id: response.data.id,
-
                         access_token: response.data.access_token,
                         refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
+
+                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng nhập bằng Google
+                    await get().fetchUserProfile()
                 } catch (error) {
                     throw new Error('Google login failed. Try again!')
                 }
@@ -126,25 +132,52 @@ export const useAuthStore = create<AuthState>()(
                         throw new Error('No refresh token available')
                     }
 
-                    const response = await axios.post(
-                        `${process.env.REACT_APP_BASE_API_URL}/auth/refresh`,
-                        {
-                            refresh_token: user.refresh_token,
-                        },
-                    )
+                    await refresh_token()
 
-                    const newaccess_token = response.data.access_token
-
-                    set((state) => ({
-                        user: state.user
-                            ? { ...state.user, access_token: newaccess_token }
-                            : null,
-                    }))
-
-                    setAuthHeader(newaccess_token)
+                    // Có thể gọi lại fetchUserProfile nếu cần cập nhật thông tin
+                    await get().fetchUserProfile()
                 } catch (error) {
                     console.error('Refresh token failed:', error)
                     get().logout()
+                }
+            },
+
+            /**
+             * Lấy thông tin chi tiết người dùng từ ID
+             */
+            fetchUserProfile: async () => {
+                try {
+                    const user = get().user
+                    if (!user || !user.access_token) {
+                        throw new Error('User not authenticated')
+                    }
+
+                    // Gọi API lấy thông tin người dùng
+                    const response = await axios.get(
+                        `${process.env.REACT_APP_BASE_API_URL}/user/profile`, // Hoặc `/users/${user.id}`
+                        {
+                            headers: {
+                                Authorization: `Bearer ${user.access_token}`,
+                            },
+                        },
+                    )
+
+                    const profileData = response.data
+
+                    // Cập nhật user trong store với thông tin đầy đủ
+                    set((state) => ({
+                        user: state.user
+                            ? {
+                                  ...state.user,
+                                  full_name: profileData.data.full_name,
+                                  email: profileData.data.email,
+                                  avatar: profileData.data.avatar,
+                              }
+                            : null,
+                    }))
+                } catch (error) {
+                    console.error('Failed to fetch user profile:', error)
+                    throw error // Có thể xử lý lỗi ở nơi gọi hàm nếu cần
                 }
             },
 

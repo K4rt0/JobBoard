@@ -6,6 +6,9 @@ export interface UserRequestDTO {
 
 export interface UserAuth {
     id: string
+    full_name?: string
+    avatar_url?: string
+    email?: string
     access_token: string
     refresh_token: string
 }
