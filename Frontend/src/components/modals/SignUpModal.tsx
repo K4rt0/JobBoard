@@ -1,28 +1,30 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { registerSchema } from '@/schemas/authSchema'
+
+// 📌 Định nghĩa kiểu dữ liệu form
+type FormData = {
+    full_name: string
+    email: string
+    password: string
+    agree_to_terms?: boolean
+}
 
 const SignupModal: React.FC = () => {
-    const [email, setEmail] = useState<string>('')
-    const [password, setPassword] = useState<string>('')
-    const [confirmPassword, setConfirmPassword] = useState<string>('')
-    const [agreeToTerms, setAgreeToTerms] = useState<boolean>(false)
-    const [error, setError] = useState<string>('')
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+    } = useForm<FormData>({
+        resolver: yupResolver(registerSchema),
+    })
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match!')
-            return
-        }
-
-        console.log('Signup Info:', { email, password, agreeToTerms })
-
-        // Reset form after successful submission
-        setEmail('')
-        setPassword('')
-        setConfirmPassword('')
-        setAgreeToTerms(false)
-        setError('')
+    const onSubmit = (data: FormData) => {
+        console.log('Signup Info:', data)
+        reset() // ✅ Reset form sau khi submit thành công
     }
 
     return (
@@ -66,7 +68,26 @@ const SignupModal: React.FC = () => {
                                 <div className="or-devider">
                                     <span>Or</span>
                                 </div>
-                                <form onSubmit={handleSubmit}>
+                                <form onSubmit={handleSubmit(onSubmit)}>
+                                    <div className="form-group">
+                                        <label
+                                            htmlFor="full_name"
+                                            className="label"
+                                        >
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Enter your full name"
+                                            {...register('full_name')}
+                                        />
+                                        {errors.full_name && (
+                                            <p className="text-danger">
+                                                {errors.full_name.message}
+                                            </p>
+                                        )}
+                                    </div>
                                     <div className="form-group">
                                         <label
                                             htmlFor="email"
@@ -78,12 +99,13 @@ const SignupModal: React.FC = () => {
                                             type="email"
                                             className="form-control"
                                             placeholder="example@gmail.com"
-                                            value={email}
-                                            onChange={(e) =>
-                                                setEmail(e.target.value)
-                                            }
-                                            required
+                                            {...register('email')}
                                         />
+                                        {errors.email && (
+                                            <p className="text-danger">
+                                                {errors.email.message}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="form-group">
                                         <label
@@ -97,57 +119,23 @@ const SignupModal: React.FC = () => {
                                                 type="password"
                                                 className="form-control"
                                                 placeholder="Enter password"
-                                                value={password}
-                                                onChange={(e) =>
-                                                    setPassword(e.target.value)
-                                                }
-                                                required
+                                                {...register('password')}
                                             />
+                                            {errors.password && (
+                                                <p className="text-danger">
+                                                    {errors.password.message}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label
-                                            htmlFor="confirmPassword"
-                                            className="label"
-                                        >
-                                            Confirm Password
-                                        </label>
-                                        <div className="position-relative">
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                placeholder="Confirm password"
-                                                value={confirmPassword}
-                                                onChange={(e) =>
-                                                    setConfirmPassword(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    {error && (
-                                        <p className="text-danger">{error}</p>
-                                    )}
                                     <div className="form-group d-flex flex-wrap justify-content-between">
                                         <div className="form-check">
                                             <input
                                                 className="form-check-input"
                                                 type="checkbox"
-                                                id="agreeToTerms"
-                                                checked={agreeToTerms}
-                                                onChange={() =>
-                                                    setAgreeToTerms(
-                                                        !agreeToTerms,
-                                                    )
-                                                }
-                                                required
+                                                {...register('agree_to_terms')}
                                             />
-                                            <label
-                                                className="form-check-label"
-                                                htmlFor="agreeToTerms"
-                                            >
+                                            <label className="form-check-label">
                                                 Agree to the{' '}
                                                 <a href="#">
                                                     Terms & Conditions
@@ -155,6 +143,11 @@ const SignupModal: React.FC = () => {
                                             </label>
                                         </div>
                                     </div>
+                                    {errors.agree_to_terms && (
+                                        <p className="text-danger">
+                                            {errors.agree_to_terms.message}
+                                        </p>
+                                    )}
                                     <div className="form-group mb-8 button">
                                         <button className="btn" type="submit">
                                             Sign Up
