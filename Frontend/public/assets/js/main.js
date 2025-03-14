@@ -24,7 +24,7 @@ Author: GrayGrids
         if (header_navbar) {
             const stickyOffset = headerNavbar.offsetTop
 
-            if (window.pageYOffset > sticky) {
+            if (window.pageYOffset > stickyOffset) {
                 headerNavbar.classList.add('sticky')
             } else {
                 headerNavbar.classList.remove('sticky')
