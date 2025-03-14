@@ -16,41 +16,42 @@ const refreshAxiosInstance = axios.create({
 // 🟢 Main axios instance (Dùng cho mọi request)
 const axiosInstance = axios.create({
     baseURL: process.env.REACT_APP_BASE_API_URL,
+    withCredentials: true,
     timeout: 10000,
 })
 
 // 🟢 Hàm refresh token
-export const refreshToken = async (): Promise<string | null> => {
+export const refresh_token = async (): Promise<string | null> => {
     try {
-        const refreshToken: string | null =
-            useAuthStore.getState().user?.refreshToken ?? null
-        if (!refreshToken) throw new Error('No refresh token available')
+        const refresh_token: string | null =
+            useAuthStore.getState().user?.refresh_token ?? null
+        if (!refresh_token) throw new Error('No refresh token available')
 
         // 🟢 Gửi request refresh token (dùng refreshAxiosInstance để tránh vòng lặp)
         const response = await refreshAxiosInstance.post(
             `/auth/refresh-token`,
-            { refreshToken },
+            { refresh_token },
             { headers: { 'Content-Type': 'application/json' } },
         )
 
         console.log('Token refresh response:', response)
-        const newAccessToken: string | null =
-            response?.data?.accessToken ?? null
-        if (!newAccessToken)
+        const newaccess_token: string | null =
+            response?.data?.access_token ?? null
+        if (!newaccess_token)
             throw new Error('Invalid response from refresh token')
 
         // 🟢 Cập nhật token mới vào Zustand
         useAuthStore.setState((state) => ({
             user: state.user
-                ? { ...state.user, accessToken: newAccessToken }
+                ? { ...state.user, access_token: newaccess_token }
                 : null,
         }))
 
         // 🟢 Cập nhật token mới vào axiosInstance
         axiosInstance.defaults.headers.common['Authorization'] =
-            `Bearer ${newAccessToken}`
+            `Bearer ${newaccess_token}`
 
-        return newAccessToken
+        return newaccess_token
     } catch (error) {
         console.error('Lỗi khi refresh token:', error)
         useAuthStore.getState().logout() // Logout nếu refresh token thất bại
@@ -58,13 +59,13 @@ export const refreshToken = async (): Promise<string | null> => {
     }
 }
 
-// 🟢 Request Interceptor: Tự động gắn accessToken vào request
+// 🟢 Request Interceptor: Tự động gắn access_token vào request
 axiosInstance.interceptors.request.use(
     (config) => {
-        const accessToken: string | null =
-            useAuthStore.getState().user?.accessToken ?? null
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`
+        const access_token: string | null =
+            useAuthStore.getState().user?.access_token ?? null
+        if (access_token) {
+            config.headers.Authorization = `Bearer ${access_token}`
         }
         return config
     },
@@ -89,10 +90,10 @@ axiosInstance.interceptors.response.use(
         ) {
             originalRequest._retry = true
             try {
-                const newAccessToken = await refreshToken()
-                if (newAccessToken) {
+                const newaccess_token = await refresh_token()
+                if (newaccess_token) {
                     originalRequest.headers['Authorization'] =
-                        `Bearer ${newAccessToken}`
+                        `Bearer ${newaccess_token}`
                     return axiosInstance(originalRequest)
                 } else {
                     return Promise.reject(error)
@@ -136,15 +137,15 @@ export const isTokenExpired = (token: string | null): boolean => {
 
 // 🟢 Tự động refresh token nếu gần hết hạn
 export const proactiveTokenRefresh = async (): Promise<string | null> => {
-    const accessToken: string | null =
-        useAuthStore.getState().user?.accessToken ?? null
+    const access_token: string | null =
+        useAuthStore.getState().user?.access_token ?? null
 
-    if (accessToken && isTokenExpired(accessToken)) {
+    if (access_token && isTokenExpired(access_token)) {
         console.log('Token sắp hết hạn, đang làm mới...')
-        return await refreshToken()
+        return await refresh_token()
     }
 
-    return accessToken
+    return access_token
 }
 
 export default axiosInstance

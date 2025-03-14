@@ -1,9 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+
+// Định nghĩa interface cho Bootstrap Modal (có thể không cần)
+declare global {
+    interface Window {
+        jQuery: any
+        $: any
+        bootstrap: any
+    }
+}
 
 const schema = yup.object().shape({
     email: yup
@@ -21,7 +30,9 @@ type FormData = {
     password: string
 }
 
-const LoginModal: React.FC = () => {
+const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
+    onLoginSuccess,
+}) => {
     const {
         register,
         handleSubmit,
@@ -33,6 +44,44 @@ const LoginModal: React.FC = () => {
     const [errorMessage, setErrorMessage] = useState('')
     const { login } = useAuth()
     const navigate = useNavigate()
+    const modalRef = useRef<HTMLDivElement>(null)
+
+    // Hàm để đóng modal một cách an toàn
+    const closeModal = () => {
+        try {
+            // Nếu đang sử dụng Bootstrap 5
+            if (window.bootstrap && modalRef.current) {
+                const bsModal = window.bootstrap.Modal.getInstance(
+                    modalRef.current,
+                )
+                if (bsModal) {
+                    bsModal.hide()
+                }
+            }
+            // Nếu đang sử dụng Bootstrap 4 hoặc jQuery
+            else if (window.jQuery || window.$) {
+                const $ = window.jQuery || window.$
+                $('#login').modal('hide')
+            }
+            // Fallback nếu không có cách nào hoạt động
+            else {
+                // Loại bỏ các class để ẩn modal
+                if (modalRef.current) {
+                    modalRef.current.classList.remove('show')
+                    modalRef.current.style.display = 'none'
+                }
+                // Loại bỏ backdrop
+                const backdrop = document.querySelector('.modal-backdrop')
+                if (backdrop) backdrop.remove()
+
+                // Loại bỏ class modal-open từ body
+                document.body.classList.remove('modal-open')
+                document.body.style.removeProperty('padding-right')
+            }
+        } catch (error) {
+            console.error('Lỗi khi đóng modal:', error)
+        }
+    }
 
     const onSubmit = async (data: FormData) => {
         setLoading(true)
@@ -40,9 +89,11 @@ const LoginModal: React.FC = () => {
 
         try {
             await login(data.email, data.password)
-            console.log('data', data.email, data.password)
-
-            navigate('/') // Chuyển hướng khi đăng nhập thành công
+            closeModal() // Đóng modal trước
+            onLoginSuccess() // Sau đó báo thành công
+            setTimeout(() => {
+                navigate('/') // Chuyển hướng sau một chút để đảm bảo modal đã đóng
+            }, 100)
         } catch (error) {
             setErrorMessage(error as string)
         } finally {
@@ -50,10 +101,25 @@ const LoginModal: React.FC = () => {
         }
     }
 
+    // Cập nhật event listener cho nút đóng
+    useEffect(() => {
+        const closeButton = document.querySelector('[data-dismiss="modal"]')
+        if (closeButton) {
+            closeButton.addEventListener('click', closeModal)
+        }
+
+        return () => {
+            if (closeButton) {
+                closeButton.removeEventListener('click', closeModal)
+            }
+        }
+    }, [])
+
     return (
         <div
             className="modal fade form-modal"
             id="login"
+            ref={modalRef}
             tabIndex={-1}
             aria-hidden="true"
         >
@@ -154,12 +220,23 @@ const LoginModal: React.FC = () => {
                                         </a>
                                     </div>
                                     <div className="form-group mb-8 button">
-                                        <button className="btn" type="submit">
-                                            Log in
+                                        <button
+                                            className="btn"
+                                            type="submit"
+                                            disabled={loading}
+                                        >
+                                            {loading
+                                                ? 'Đang đăng nhập...'
+                                                : 'Log in'}
                                         </button>
                                     </div>
+                                    {errorMessage && (
+                                        <div className="alert alert-danger mb-4">
+                                            {errorMessage}
+                                        </div>
+                                    )}
                                     <p className="text-center create-new-account">
-                                        Don’t have an account?{' '}
+                                        Don&apos;t have an account?{' '}
                                         <a href="#">Create a free account</a>
                                     </p>
                                 </form>

@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from 'yup'
 import { registerSchema } from '@/schemas/authSchema'
+import { useAuth } from '@/hooks/useAuth'
+import { useNavigate } from 'react-router-dom'
 
-// 📌 Định nghĩa kiểu dữ liệu form
+// Định nghĩa kiểu dữ liệu form
 type FormData = {
     full_name: string
     email: string
@@ -12,7 +13,9 @@ type FormData = {
     agree_to_terms?: boolean
 }
 
-const SignupModal: React.FC = () => {
+const SignupModal: React.FC<{ onSignupSuccess?: () => void }> = ({
+    onSignupSuccess,
+}) => {
     const {
         register,
         handleSubmit,
@@ -21,16 +24,119 @@ const SignupModal: React.FC = () => {
     } = useForm<FormData>({
         resolver: yupResolver(registerSchema),
     })
+    const [loading, setLoading] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
+    const { register: registerUser } = useAuth()
+    const navigate = useNavigate()
+    const modalRef = useRef<HTMLDivElement>(null)
 
-    const onSubmit = (data: FormData) => {
-        console.log('Signup Info:', data)
-        reset() // ✅ Reset form sau khi submit thành công
+    // Hàm để đóng modal một cách an toàn
+    const closeModal = () => {
+        try {
+            // Xử lý đóng modal bằng nhiều cách khác nhau
+
+            // Cách 1: Sử dụng Bootstrap API nếu có
+            if (window.bootstrap && modalRef.current) {
+                const bsModal = window.bootstrap.Modal.getInstance(
+                    modalRef.current,
+                )
+                if (bsModal) {
+                    bsModal.hide()
+                    return
+                }
+            }
+
+            // Cách 2: Sử dụng jQuery nếu có
+            if (typeof window.jQuery !== 'undefined') {
+                window.jQuery('#signup').modal('hide')
+                return
+            }
+
+            if (typeof window.$ !== 'undefined') {
+                window.$('#signup').modal('hide')
+                return
+            }
+
+            // Cách 3: Thêm thuộc tính trực tiếp vào DOM
+            const modalElement = document.getElementById('signup')
+            if (modalElement) {
+                // Loại bỏ các class bootstrap
+                modalElement.classList.remove('show')
+                modalElement.setAttribute('aria-hidden', 'true')
+                modalElement.style.display = 'none'
+
+                // Loại bỏ backdrop
+                const backdrop = document.querySelector('.modal-backdrop')
+                if (backdrop && backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop)
+                }
+
+                // Loại bỏ class modal-open từ body
+                document.body.classList.remove('modal-open')
+                document.body.style.removeProperty('padding-right')
+                document.body.style.overflow = ''
+            }
+        } catch (error) {
+            console.error('Lỗi khi đóng modal:', error)
+        }
     }
+
+    const onSubmit = async (data: FormData) => {
+        setLoading(true)
+        setErrorMessage('')
+
+        try {
+            await registerUser(data.full_name, data.email, data.password)
+
+            // Đóng modal trước khi chuyển hướng
+            closeModal()
+
+            // Gọi callback nếu có
+            if (onSignupSuccess) {
+                onSignupSuccess()
+            }
+
+            // Reset form
+            reset()
+
+            // Chuyển hướng sau khi đóng modal
+            setTimeout(() => {
+                navigate('/')
+            }, 300) // Tăng độ trễ để đảm bảo modal đã đóng hoàn toàn
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error ? error.message : String(error),
+            )
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Cập nhật event listener cho nút đóng modal
+    useEffect(() => {
+        // Tìm nút đóng trong modal
+        const closeButton = document.querySelector(
+            '#signup button[data-dismiss="modal"]',
+        )
+        if (closeButton) {
+            const handleClose = (e: Event) => {
+                e.preventDefault()
+                closeModal()
+            }
+
+            closeButton.addEventListener('click', handleClose)
+
+            return () => {
+                closeButton.removeEventListener('click', handleClose)
+            }
+        }
+    }, [])
 
     return (
         <div
             className="modal fade form-modal"
             id="signup"
+            ref={modalRef}
             tabIndex={-1}
             aria-hidden="true"
         >
@@ -80,6 +186,7 @@ const SignupModal: React.FC = () => {
                                             type="text"
                                             className="form-control"
                                             placeholder="Enter your full name"
+                                            id="full_name"
                                             {...register('full_name')}
                                         />
                                         {errors.full_name && (
@@ -99,6 +206,7 @@ const SignupModal: React.FC = () => {
                                             type="email"
                                             className="form-control"
                                             placeholder="example@gmail.com"
+                                            id="email"
                                             {...register('email')}
                                         />
                                         {errors.email && (
@@ -118,6 +226,7 @@ const SignupModal: React.FC = () => {
                                             <input
                                                 type="password"
                                                 className="form-control"
+                                                id="password"
                                                 placeholder="Enter password"
                                                 {...register('password')}
                                             />
@@ -133,9 +242,13 @@ const SignupModal: React.FC = () => {
                                             <input
                                                 className="form-check-input"
                                                 type="checkbox"
+                                                id="agree_to_terms"
                                                 {...register('agree_to_terms')}
                                             />
-                                            <label className="form-check-label">
+                                            <label
+                                                className="form-check-label"
+                                                htmlFor="agree_to_terms"
+                                            >
                                                 Agree to the{' '}
                                                 <a href="#">
                                                     Terms & Conditions
@@ -148,9 +261,20 @@ const SignupModal: React.FC = () => {
                                             {errors.agree_to_terms.message}
                                         </p>
                                     )}
+                                    {errorMessage && (
+                                        <div className="alert alert-danger mb-4">
+                                            {errorMessage}
+                                        </div>
+                                    )}
                                     <div className="form-group mb-8 button">
-                                        <button className="btn" type="submit">
-                                            Sign Up
+                                        <button
+                                            className="btn"
+                                            type="submit"
+                                            disabled={loading}
+                                        >
+                                            {loading
+                                                ? 'Đang đăng ký...'
+                                                : 'Sign Up'}
                                         </button>
                                     </div>
                                 </form>

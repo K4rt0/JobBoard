@@ -3,10 +3,10 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
-import { User } from '@/interfaces'
+import { UserAuth } from '@/interfaces'
 
 interface AuthState {
-    user: User | null
+    user: UserAuth | null
     login: (username: string, password: string) => Promise<void>
     register: (
         full_name: string,
@@ -14,7 +14,7 @@ interface AuthState {
         password: string,
     ) => Promise<void>
     loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
-    refreshAccessToken: () => Promise<void>
+    refreshaccess_token: () => Promise<void>
     logout: () => void
 }
 
@@ -36,22 +36,18 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Đăng nhập với username/password
              */
-            login: async (username, password) => {
+            login: async (email, password) => {
                 try {
-                    const response = await loginApi(username, password)
-
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const response = await loginApi(email, password)
+                    console.log(response)
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw error.response?.data?.message || 'Login failed'
@@ -63,26 +59,22 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Đăng ký tài khoản mới
              */
-            register: async (username, email, password) => {
+            register: async (full_name, email, password) => {
                 try {
                     const response = await registerApi({
-                        username,
+                        full_name,
                         email,
                         password,
                     })
 
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw (
@@ -110,18 +102,15 @@ export const useAuthStore = create<AuthState>()(
                         tokenResponse.access_token,
                     )
 
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const userData: UserAuth = {
+                        id: response.data.id,
+
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     throw new Error('Google login failed. Try again!')
                 }
@@ -130,29 +119,29 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Refresh Access Token bằng Refresh Token
              */
-            refreshAccessToken: async () => {
+            refreshaccess_token: async () => {
                 try {
                     const user = get().user
-                    if (!user || !user.refreshToken) {
+                    if (!user || !user.refresh_token) {
                         throw new Error('No refresh token available')
                     }
 
                     const response = await axios.post(
                         `${process.env.REACT_APP_BASE_API_URL}/auth/refresh`,
                         {
-                            refreshToken: user.refreshToken,
+                            refresh_token: user.refresh_token,
                         },
                     )
 
-                    const newAccessToken = response.data.accessToken
+                    const newaccess_token = response.data.access_token
 
                     set((state) => ({
                         user: state.user
-                            ? { ...state.user, accessToken: newAccessToken }
+                            ? { ...state.user, access_token: newaccess_token }
                             : null,
                     }))
 
-                    setAuthHeader(newAccessToken)
+                    setAuthHeader(newaccess_token)
                 } catch (error) {
                     console.error('Refresh token failed:', error)
                     get().logout()
