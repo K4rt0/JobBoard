@@ -2,9 +2,9 @@ name: Notify Telegram on Git Actions
 
 on:
   push:
-    branches: ["*"]  # Lắng nghe tất cả branch
+    branches: ["*"]
   pull_request:
-    types: [opened, closed]  # Gửi thông báo khi PR mở hoặc đóng
+    types: [opened, closed]
 
 jobs:
   notify:
