@@ -9,7 +9,7 @@ export const error_handling_middleware = (err, req, res, next) => {
     stack: err.stack,
   };
 
-  if (env.BUILD_ENV === "production") delete response_error.stack;
+  if (env.BUILD_MODE === "production") delete response_error.stack;
 
   res.status(err.statusCode).json(response_error);
 };

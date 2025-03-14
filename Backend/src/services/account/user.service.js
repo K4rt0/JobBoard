@@ -26,9 +26,8 @@ const create_user = async (data) => {
 
 const login_user = async ({ email, password }) => {
   try {
-    const user = await user_model.find_user({ email });
+    const user = await user_model.find_user({ email }, false);
     if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
-
     const is_password_valid = await bcrypt.compare(password, user.password);
 
     if (!is_password_valid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
