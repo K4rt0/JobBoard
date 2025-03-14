@@ -5,7 +5,7 @@ import { CONNECT_DB, CLOSE_DB } from "./config/mongodb.js";
 import { APIs_V1 } from "./routes/v1";
 import { error_handling_middleware } from "./middlewares/error-handling.middleware";
 import cors from "cors";
-import { cors_options } from "./config/cors";
+import { cors_options } from "~/config/cors";
 
 const SERVER_START = () => {
   const app = express();
