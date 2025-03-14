@@ -16,9 +16,23 @@ const get_all_users = async (req, res, next) => {
     const result = await admin_user_service.get_all_users(page, limit, filterObj);
 
     res.status(StatusCodes.OK).json({
-      message: "Users retrieved successfully",
+      message: "Lấy dữ liệu người dùng thành công !",
       data: result.data,
       pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_user = async (req, res, next) => {
+  try {
+    const user_id = req.params.id;
+    const user = await admin_user_service.get_user(user_id);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy dữ liệu người dùng thành công !",
+      data: user,
     });
   } catch (error) {
     next(error);
@@ -41,5 +55,6 @@ const update_user_status = async (req, res, next) => {
 
 export const admin_user_controller = {
   get_all_users,
+  get_user,
   update_user_status,
 };

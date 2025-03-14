@@ -6,7 +6,7 @@ const admin_login_controller = async (req, res, next) => {
     const result = await admin_login_service(req.body);
 
     res.status(StatusCodes.OK).json({
-      message: "Admin Login successful",
+      message: "Đăng nhập thành công !",
       data: {
         accessToken: result.accessToken,
       },
