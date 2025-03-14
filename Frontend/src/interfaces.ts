@@ -11,7 +11,7 @@ export interface User {
     accessToken: string
     refreshToken: string
     avatar?: string
-    name: string
+    full_name: string
 }
 
 // Type definitions

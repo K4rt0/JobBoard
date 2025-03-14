@@ -4,7 +4,7 @@ import { UserRequestDTO } from '@/interfaces'
 import axiosInstance from './axiosInstance'
 import { useAuthStore } from '@/store/authStore'
 
-const API_URL = `${process.env.REACT_APP_BASE_API_URL}/auth`
+const API_URL = `${process.env.REACT_APP_BASE_API_URL}/users`
 
 // ✅ API đăng nhập
 export const loginApi = async (username: string, password: string) => {
