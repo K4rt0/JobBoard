@@ -10,12 +10,23 @@ const get_all_users = async (page = 1, limit = 10, filter = {}) => {
   }
 };
 
-const update_user_status = async (user_Id, status) => {
+const get_user = async (user_id) => {
   try {
-    const user = await user_model.find_user({ _id: new ObjectId(user_Id) });
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
-    await user_model.update_user(user_Id, { status });
-    return { id: user_Id, status };
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const update_user_status = async (user_id, status) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
+    await user_model.update_user(user_id, { status });
+    return { id: user_id, status };
   } catch (error) {
     throw error;
   }
@@ -23,5 +34,6 @@ const update_user_status = async (user_Id, status) => {
 
 export const admin_user_service = {
   get_all_users,
+  get_user,
   update_user_status,
 };

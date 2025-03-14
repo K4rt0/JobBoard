@@ -10,7 +10,7 @@ const refresh_token = async (refresh_token) => {
 
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user || user.refresh_token !== refresh_token) {
-      throw new Error("Invalid refresh token");
+      throw new Error("Refresh Token không hợp lệ !");
     }
 
     const newAccessToken = jwt.sign({ _id: user_id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
