@@ -1,5 +1,40 @@
 import { StatusCodes } from "http-status-codes";
-import { admin_user_service } from "~/services/admin/admin_user.service";
+import { user_service } from "~/services/account/user.service";
+
+const create_user = async (req, res, next) => {
+  try {
+    const result = await user_service.create_user(req.body);
+
+    res.status(StatusCodes.CREATED).json({
+      message: "Tạo người dùng thành công !",
+      data: { id: result.insertedId },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_user = async (req, res, next) => {
+  try {
+    let user_id;
+
+    if (req.params.id) user_id = req.params.id;
+    else if (req._id) user_id = req._id;
+    else
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "Không tìm thấy người dùng !",
+        data: result,
+      });
+
+    const result = await user_service.get_user_by_id(user_id);
+    res.status(StatusCodes.OK).json({
+      message: "Lấy dữ liệu người dùng thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const get_all_users = async (req, res, next) => {
   try {
@@ -25,20 +60,6 @@ const get_all_users = async (req, res, next) => {
   }
 };
 
-const get_user = async (req, res, next) => {
-  try {
-    const user_id = req.params.id;
-    const user = await admin_user_service.get_user(user_id);
-
-    res.status(StatusCodes.OK).json({
-      message: "Lấy dữ liệu người dùng thành công !",
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 const update_user_status = async (req, res, next) => {
   try {
     const user_id = req.params.id;
@@ -53,8 +74,9 @@ const update_user_status = async (req, res, next) => {
   }
 };
 
-export const admin_user_controller = {
-  get_all_users,
+export const user_controller = {
+  create_user,
   get_user,
   update_user_status,
+  get_all_users,
 };

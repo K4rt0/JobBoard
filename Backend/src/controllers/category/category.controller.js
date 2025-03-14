@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { category_service } from "~/services/admin/admin_category.service";
+import { category_service } from "~/services/category/category.service";
 
 const create_category = async (req, res, next) => {
   try {
