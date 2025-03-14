@@ -14,7 +14,7 @@ interface AuthState {
         password: string,
     ) => Promise<void>
     loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
-    refreshAccessToken: () => Promise<void>
+    refreshaccess_token: () => Promise<void>
     logout: () => void
 }
 
@@ -44,14 +44,14 @@ export const useAuthStore = create<AuthState>()(
                         id: response.userId,
                         username: response.username,
                         email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
+                        access_token: response.access_token,
+                        refresh_token: response.refresh_token,
                         avatar: response.avatar || '',
                         full_name: response.full_name || '',
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw error.response?.data?.message || 'Login failed'
@@ -75,14 +75,14 @@ export const useAuthStore = create<AuthState>()(
                         id: response.userId,
                         username: response.username,
                         email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
+                        access_token: response.access_token,
+                        refresh_token: response.refresh_token,
                         avatar: response.avatar || '',
                         full_name: response.full_name || '',
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
                         throw (
@@ -114,14 +114,14 @@ export const useAuthStore = create<AuthState>()(
                         id: response.userId,
                         username: response.username,
                         email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
+                        access_token: response.access_token,
+                        refresh_token: response.refresh_token,
                         avatar: response.avatar || '',
                         full_name: response.full_name || '',
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
                 } catch (error) {
                     throw new Error('Google login failed. Try again!')
                 }
@@ -130,29 +130,29 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Refresh Access Token bằng Refresh Token
              */
-            refreshAccessToken: async () => {
+            refreshaccess_token: async () => {
                 try {
                     const user = get().user
-                    if (!user || !user.refreshToken) {
+                    if (!user || !user.refresh_token) {
                         throw new Error('No refresh token available')
                     }
 
                     const response = await axios.post(
                         `${process.env.REACT_APP_BASE_API_URL}/auth/refresh`,
                         {
-                            refreshToken: user.refreshToken,
+                            refresh_token: user.refresh_token,
                         },
                     )
 
-                    const newAccessToken = response.data.accessToken
+                    const newaccess_token = response.data.access_token
 
                     set((state) => ({
                         user: state.user
-                            ? { ...state.user, accessToken: newAccessToken }
+                            ? { ...state.user, access_token: newaccess_token }
                             : null,
                     }))
 
-                    setAuthHeader(newAccessToken)
+                    setAuthHeader(newaccess_token)
                 } catch (error) {
                     console.error('Refresh token failed:', error)
                     get().logout()

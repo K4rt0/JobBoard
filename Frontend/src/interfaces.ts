@@ -8,8 +8,8 @@ export interface User {
     id: string
     username: string
     email: string
-    accessToken: string
-    refreshToken: string
+    access_token: string
+    refresh_token: string
     avatar?: string
     full_name: string
 }
