@@ -94,9 +94,9 @@ const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
   }
 };
 
-const find_user = async (query) => {
+const find_user = async (query, protect = true) => {
   try {
-    const projection = { password: 0, refresh_token: 0 };
+    const projection = protect ? { password: 0, refresh_token: 0 } : {};
     const user = await GET_DB().collection(USER_COLLECTION_NAME).findOne(query, { projection });
 
     return user;
