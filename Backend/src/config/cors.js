@@ -1,7 +1,16 @@
-const cors_options = {
-  origin: "http://127.0.0.1:3001",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+import { WHITELIST_DOMAINS } from "~/utils/constants";
+import { env } from "~/config/environment";
+import { StatusCodes } from "http-status-codes";
+import ApiError from "~/utils/ApiError";
 
-export default cors_options;
+export const cors_options = {
+  origin: function (origin, callback) {
+    if (!origin && env.BUILD_MODE === "dev") return callback(null, true);
+    if (WHITELIST_DOMAINS.includes(origin)) return callback(null, true);
+
+    return callback(new ApiError(StatusCodes.FORBIDDEN, `${origin} not allowed by our CORS Policy.`));
+  },
+
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
