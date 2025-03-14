@@ -17,6 +17,20 @@ const get_all_users = async (req, res, next) => {
   }
 };
 
+const update_user_status = async (req, res, next) => {
+  const schema = Joi.object({
+    status: Joi.string().valid("Active", "Deleted", "Blocked").required(),
+  });
+
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const admin_user_validation = {
   get_all_users,
+  update_user_status,
 };
