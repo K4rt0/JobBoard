@@ -9,6 +9,7 @@ export interface UserAuth {
     full_name?: string
     avatar_url?: string
     email?: string
+    role?: string
     access_token: string
     refresh_token: string
 }

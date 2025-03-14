@@ -172,6 +172,7 @@ export const useAuthStore = create<AuthState>()(
                                   full_name: profileData.data.full_name,
                                   email: profileData.data.email,
                                   avatar: profileData.data.avatar,
+                                  role: profileData.data.role,
                               }
                             : null,
                     }))
