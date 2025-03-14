@@ -109,14 +109,10 @@ const JobSearchPage: React.FC = () => {
     })
 
     return (
-        <section className="job-search py-5 bg-light">
-            <div className="container">
-                <h1 className="text-center fw-bold mb-5 text-primary">
-                    Find Your Dream Job
-                </h1>
-
+        <section className="job-search py-5 bg-light pt-5">
+            <div className="container pt-5">
                 {/* Custom Search Bar */}
-                <div className="card mb-5 shadow-lg border-0 rounded-3">
+                <div className="card mb-5 shadow-lg border-0 rounded-3 mt-3">
                     <div className="card-body p-4">
                         <div className="row g-3 align-items-center">
                             <div className="col-md-7">

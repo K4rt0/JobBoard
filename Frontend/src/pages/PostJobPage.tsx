@@ -33,9 +33,9 @@ const PostJobPage: React.FC = () => {
     }
 
     return (
-        <section className="job-post py-5 bg-light">
-            <div className="container">
-                <div className="row justify-content-center">
+        <section className="job-post py-5 bg-light pt-5">
+            <div className="container pt-5">
+                <div className="row justify-content-center pt-3">
                     <div className="col-lg-10 col-12">
                         <div className="card shadow-sm p-4 job-infomation">
                             <div className="text-center mb-5">
