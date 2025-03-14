@@ -8,7 +8,7 @@ const MainLayout = () => {
         <div>
             <div id="loading-area"></div>
             <Header />
-            <main className="pt-5">
+            <main className="">
                 <Outlet /> {/* Đây là nơi render các trang con */}
             </main>
             <Footer />

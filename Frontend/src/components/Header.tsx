@@ -1,8 +1,26 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import LoginModal from './modals/LoginModal'
 import SignupModal from './modals/SignUpModal'
+import { useAuth } from '@/hooks/useAuth'
 
 const Header = () => {
+    const { user, logout } = useAuth()
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+
+    useEffect(() => {
+        if (user) {
+            setIsLoggedIn(true)
+        }
+    }, [user])
+
+    // Hàm xử lý đăng nhập thành công
+    const handleLoginSuccess = () => {
+        setIsLoggedIn(true)
+    }
+    const handleRegisterSuccess = () => {
+        setIsLoggedIn(true)
+    }
+
     return (
         <>
             <header className="header" style={{ zIndex: '1000' }}>
@@ -23,9 +41,6 @@ const Header = () => {
                                         type="button"
                                         data-toggle="collapse"
                                         data-target="#navbarSupportedContent"
-                                        aria-controls="navbarSupportedContent"
-                                        aria-expanded="false"
-                                        aria-label="Toggle navigation"
                                     >
                                         <span className="toggler-icon"></span>
                                         <span className="toggler-icon"></span>
@@ -71,38 +86,54 @@ const Header = () => {
                                             </li>
                                         </ul>
                                     </div>
-                                    {/* <!-- navbar collapse --> */}
+
+                                    {/* Hiển thị user nếu đã đăng nhập */}
                                     <div className="button">
-                                        <a
-                                            href="javascript:"
-                                            data-toggle="modal"
-                                            data-target="#login"
-                                            className="login"
-                                        >
-                                            <i className="lni lni-lock-alt"></i>{' '}
-                                            Login
-                                        </a>
-                                        <a
-                                            href="javascript:"
-                                            data-toggle="modal"
-                                            data-target="#signup"
-                                            className="btn"
-                                        >
-                                            Sign Up
-                                        </a>
+                                        {isLoggedIn ? (
+                                            <div className="user-info">
+                                                <span>
+                                                    Welcome, {user?.id}!
+                                                </span>
+                                                <button
+                                                    className="btn btn-danger ml-3"
+                                                    onClick={() => {
+                                                        logout()
+                                                        setIsLoggedIn(false)
+                                                    }}
+                                                >
+                                                    Logout
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <a
+                                                    href="javascript:"
+                                                    data-toggle="modal"
+                                                    data-target="#login"
+                                                    className="login"
+                                                >
+                                                    <i className="lni lni-lock-alt"></i>{' '}
+                                                    Login
+                                                </a>
+                                                <a
+                                                    href="javascript:"
+                                                    data-toggle="modal"
+                                                    data-target="#signup"
+                                                    className="btn"
+                                                >
+                                                    Sign Up
+                                                </a>
+                                            </>
+                                        )}
                                     </div>
                                 </nav>
-                                {/* <!-- navbar --> */}
                             </div>
                         </div>
-                        {/* <!-- row --> */}
                     </div>
-                    {/* <!-- container --> */}
                 </div>
-                {/* <!-- navbar area --> */}
             </header>
-            <LoginModal />
-            <SignupModal />
+            <LoginModal onLoginSuccess={handleLoginSuccess} />
+            <SignupModal onSignupSuccess={handleRegisterSuccess} />
         </>
     )
 }

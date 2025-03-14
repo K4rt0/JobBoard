@@ -1,17 +1,13 @@
 export interface UserRequestDTO {
-    username: string
+    full_name: string
     email: string
     password: string
 }
 
-export interface User {
+export interface UserAuth {
     id: string
-    username: string
-    email: string
     access_token: string
     refresh_token: string
-    avatar?: string
-    full_name: string
 }
 
 // Type definitions

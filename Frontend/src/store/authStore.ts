@@ -3,10 +3,10 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
-import { User } from '@/interfaces'
+import { UserAuth } from '@/interfaces'
 
 interface AuthState {
-    user: User | null
+    user: UserAuth | null
     login: (username: string, password: string) => Promise<void>
     register: (
         full_name: string,
@@ -36,18 +36,14 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Đăng nhập với username/password
              */
-            login: async (username, password) => {
+            login: async (email, password) => {
                 try {
-                    const response = await loginApi(username, password)
-
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        access_token: response.access_token,
-                        refresh_token: response.refresh_token,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const response = await loginApi(email, password)
+                    console.log(response)
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
@@ -63,22 +59,18 @@ export const useAuthStore = create<AuthState>()(
             /**
              * Đăng ký tài khoản mới
              */
-            register: async (username, email, password) => {
+            register: async (full_name, email, password) => {
                 try {
                     const response = await registerApi({
-                        username,
+                        full_name,
                         email,
                         password,
                     })
 
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        access_token: response.access_token,
-                        refresh_token: response.refresh_token,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
@@ -110,14 +102,11 @@ export const useAuthStore = create<AuthState>()(
                         tokenResponse.access_token,
                     )
 
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        access_token: response.access_token,
-                        refresh_token: response.refresh_token,
-                        avatar: response.avatar || '',
-                        full_name: response.full_name || '',
+                    const userData: UserAuth = {
+                        id: response.data.id,
+
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
