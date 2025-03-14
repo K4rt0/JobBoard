@@ -1,4 +1,3 @@
-// models/category.model.js
 import Joi from "joi";
 import { GET_DB } from "~/config/mongodb";
 import { ObjectId } from "mongodb";
@@ -8,29 +7,28 @@ const CATEGORY_COLLECTION_SCHEMA = Joi.object({
   name: Joi.string().required().min(2).max(50).trim().strict(),
   description: Joi.string().max(200).default(null),
   slug: Joi.string().trim().strict().default(null),
+
   created_at: Joi.date().timestamp("javascript").default(Date.now),
   updated_at: Joi.date().timestamp("javascript").default(null),
 });
 
 const create_category = async (data) => {
   try {
-    const validatedData = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
+    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
       stripUnknown: true,
     });
-    const category = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertOne(validatedData);
+    const category = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertOne(validated_data);
 
-    // Nếu có skills trong data, tạo skills liên quan
     if (data.skills && Array.isArray(data.skills)) {
-      const categoryId = category.insertedId; // ObjectId
-      const skillsToInsert = data.skills.map((skill) => ({
+      const category_id = category.insertedId;
+      const skills_to_insert = data.skills.map((skill) => ({
         ...skill,
-        category_id: categoryId,
+        category_id: category_id,
         created_at: Date.now(),
         updated_at: null,
       }));
-      const skillResult = await GET_DB().collection("skills").insertMany(skillsToInsert);
+      await GET_DB().collection("skills").insertMany(skills_to_insert);
     }
-
     return category;
   } catch (error) {
     throw new Error(error);
@@ -91,7 +89,7 @@ const find_category_by_id = async (id) => {
       ])
       .toArray();
 
-    if (!category.length) throw new Error("Category not found");
+    if (!category.length) throw new Error("Không tìm thấy danh mục !");
     return category[0];
   } catch (error) {
     throw new Error(error);
@@ -100,23 +98,23 @@ const find_category_by_id = async (id) => {
 
 const update_category = async (id, data) => {
   try {
-    const validatedData = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
+    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
       stripUnknown: true,
     });
-    validatedData.updated_at = Date.now();
+    validated_data.updated_at = Date.now();
 
     const result = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
-      .updateOne({ _id: new ObjectId(id) }, { $set: validatedData });
+      .updateOne({ _id: new ObjectId(id) }, { $set: validated_data });
 
     if (data.skills && Array.isArray(data.skills)) {
-      const skillsToInsert = data.skills.map((skill) => ({
+      const skills_to_insert = data.skills.map((skill) => ({
         ...skill,
         category_id: new ObjectId(id),
         created_at: Date.now(),
         updated_at: null,
       }));
-      const skillResult = await GET_DB().collection("skills").insertMany(skillsToInsert);
+      await GET_DB().collection("skills").insertMany(skills_to_insert);
     }
 
     return result;
