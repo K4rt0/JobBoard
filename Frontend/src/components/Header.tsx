@@ -45,16 +45,26 @@ const Header = () => {
                                                 </a>
                                             </li>
                                             <li className="nav-item">
-                                                <a>Hiring</a>
+                                                <a>Hire Freelancers</a>
                                                 <ul className="sub-menu">
                                                     <li>
                                                         <a href="/freelancer-marketplace">
-                                                            Freelancers
+                                                            Find Freelancers
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="job-list">
-                                                            Jobs
+                                                        <a href="/post-job">
+                                                            Post a Job
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li className="nav-item">
+                                                <a>Find Jobs</a>
+                                                <ul className="sub-menu">
+                                                    <li>
+                                                        <a href="/jobs">
+                                                            Find Jobs
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -64,7 +74,7 @@ const Header = () => {
                                     {/* <!-- navbar collapse --> */}
                                     <div className="button">
                                         <a
-                                            href="javacript:"
+                                            href="javascript:"
                                             data-toggle="modal"
                                             data-target="#login"
                                             className="login"
@@ -73,7 +83,7 @@ const Header = () => {
                                             Login
                                         </a>
                                         <a
-                                            href="javacript:"
+                                            href="javascript:"
                                             data-toggle="modal"
                                             data-target="#signup"
                                             className="btn"

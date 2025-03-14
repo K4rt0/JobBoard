@@ -11,7 +11,7 @@ export interface User {
     accessToken: string
     refreshToken: string
     avatar?: string
-    name: string
+    full_name: string
 }
 
 // Type definitions
@@ -29,4 +29,31 @@ export interface Freelancer {
     level: number
     reviews: number
     avatar: string
+}
+
+// Define the form data type
+export interface JobFormData {
+    title: string
+    category: string
+    jobType: string
+    deadline?: string
+    salary?: string
+    description: string
+    companyName: string
+    industry?: string
+
+    companyDescription?: string
+    logo?: FileList
+    recruiterName: string
+    recruiterEmail: string
+    termsAgreed: boolean
+}
+export interface Job {
+    id: number
+    title: string
+    company: string
+    location: string
+    salary: string
+    type: string
+    posted: string
 }

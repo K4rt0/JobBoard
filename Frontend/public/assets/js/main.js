@@ -21,10 +21,10 @@ Author: GrayGrids
         const scrollPosition =
             window.pageYOffset || document.documentElement.scrollTop
 
-        if (header_navbar) {
+        if (headerNavbar) {
             const stickyOffset = headerNavbar.offsetTop
 
-            if (window.pageYOffset > sticky) {
+            if (window.pageYOffset > stickyOffset) {
                 headerNavbar.classList.add('sticky')
             } else {
                 headerNavbar.classList.remove('sticky')

@@ -9,7 +9,7 @@ interface AuthState {
     user: User | null
     login: (username: string, password: string) => Promise<void>
     register: (
-        username: string,
+        full_name: string,
         email: string,
         password: string,
     ) => Promise<void>
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
                         avatar: response.avatar || '',
-                        name: response.name || '',
+                        full_name: response.full_name || '',
                     }
 
                     set({ user: userData })
@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthState>()(
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
                         avatar: response.avatar || '',
-                        name: response.name || '',
+                        full_name: response.full_name || '',
                     }
 
                     set({ user: userData })
@@ -117,7 +117,7 @@ export const useAuthStore = create<AuthState>()(
                         accessToken: response.accessToken,
                         refreshToken: response.refreshToken,
                         avatar: response.avatar || '',
-                        name: response.name || '',
+                        full_name: response.full_name || '',
                     }
 
                     set({ user: userData })

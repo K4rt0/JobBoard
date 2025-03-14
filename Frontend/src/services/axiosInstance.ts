@@ -16,7 +16,6 @@ const refreshAxiosInstance = axios.create({
 // 🟢 Main axios instance (Dùng cho mọi request)
 const axiosInstance = axios.create({
     baseURL: process.env.REACT_APP_BASE_API_URL,
-    withCredentials: true,
     timeout: 10000,
 })
 
