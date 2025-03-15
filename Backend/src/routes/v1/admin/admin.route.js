@@ -1,13 +1,9 @@
 import express from "express";
-import admin_login_controller from "~/controllers/admin/admin_login.controller";
-import admin_login_validation from "~/validations/admin/admin.validation";
-import admin_user_route from "~/routes/v1/admin/admin_user.route";
-import admin_category_route from "~/routes/v1/admin/admin_category.route";
+import { auth_controller } from "~/controllers/auth/auth.controller";
+import { auth_validation } from "~/validations/auth/auth.validation";
 
-const router = express.Router();
-router.post("/login", admin_login_validation, admin_login_controller);
+const admin_route = express.Router();
 
-router.use("/user", admin_user_route);
-router.use("/category", admin_category_route);
+admin_route.post("/login", auth_validation.admin_login, auth_controller.admin_login);
 
-export const admin_route = router;
+export default admin_route;
