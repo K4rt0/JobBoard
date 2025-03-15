@@ -14,15 +14,29 @@ const create_category = async (req, res, next) => {
   }
 };
 
-const get_all_categories = async (req, res, next) => {
+const get_all_categories_pagination = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const result = await category_service.get_all_categories(page, limit);
+    const result = await category_service.get_all_categories_pagination(page, limit);
+
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh sách danh mục thành công !",
       data: result.data,
       pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_categories = async (req, res, next) => {
+  try {
+    const result = await category_service.get_all_categories();
+
+    res.status(StatusCodes.OK).json({
+      message: "Đã lấy dữ liệu danh sách danh mục thành công !",
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -58,6 +72,7 @@ const update_category = async (req, res, next) => {
 const delete_category = async (req, res, next) => {
   try {
     const result = await category_service.delete_category(req.params.id);
+
     res.status(StatusCodes.OK).json({
       message: "Đã xóa danh mục thành công !",
       data: result,
@@ -70,6 +85,7 @@ const delete_category = async (req, res, next) => {
 export const category_controller = {
   create_category,
   get_all_categories,
+  get_all_categories_pagination,
   get_category_by_id,
   update_category,
   delete_category,

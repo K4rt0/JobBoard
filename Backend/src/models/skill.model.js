@@ -7,7 +7,6 @@ const SKILL_COLLECTION_SCHEMA = Joi.object({
   description: Joi.string().max(200).default(null),
   slug: Joi.string().trim().strict().default(null),
 
-  category_id: Joi.string().hex().length(24).required(),
   created_at: Joi.date().timestamp("javascript").default(Date.now),
   updated_at: Joi.date().timestamp("javascript").default(null),
 });

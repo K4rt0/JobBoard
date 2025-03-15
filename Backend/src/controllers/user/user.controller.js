@@ -1,19 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { user_service } from "~/services/account/user.service";
 
-const create_user = async (req, res, next) => {
-  try {
-    const result = await user_service.create_user(req.body);
-
-    res.status(StatusCodes.CREATED).json({
-      message: "Tạo người dùng thành công !",
-      data: { id: result.insertedId },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
+// Admin
 const get_user = async (req, res, next) => {
   try {
     let user_id;
@@ -74,9 +62,26 @@ const update_user_status = async (req, res, next) => {
   }
 };
 
+// User
+const create_user = async (req, res, next) => {
+  try {
+    const result = await user_service.create_user(req.body);
+
+    res.status(StatusCodes.CREATED).json({
+      message: "Tạo người dùng thành công !",
+      data: { id: result.insertedId },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_controller = {
-  create_user,
+  // Admin
   get_user,
   update_user_status,
   get_all_users,
+
+  // User
+  create_user,
 };
