@@ -1,0 +1,55 @@
+name: Notify Telegram on Git Actions
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          ACTION_TYPE=""
+          MESSAGE_TEXT=""
+          
+          # Kiểm tra loại sự kiện
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            ACTION_TYPE="**Commit**"
+            MESSAGE_TEXT="📝 Message: ${{ github.event.head_commit.message }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.event.action }}" == "opened" ]]; then
+              ACTION_TYPE="🔀 **Pull Request Opened**"
+            elif [[ "${{ github.event.action }}" == "closed" ]]; then
+              if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+                ACTION_TYPE="✅ **Merged**"
+                MESSAGE_TEXT="📝 Message: ${{ github.event.pull_request.title }}"
+              else
+                ACTION_TYPE="❌ **Pull Request Closed**"
+              fi
+            fi
+          fi
+
+          MESSAGE=$(cat <<EOF
+          🔊 **NOTIFICATION FROM GITHUB**
+          
+          📌 **GitHub Repository:** **${{ github.repository }}** - [View Repo](https://github.com/${{ github.repository }})
+          👤 **User:** **${{ github.actor }}** - [View User](https://github.com/${{ github.actor }})
+
+          📖 **Action:** **${{ github.actor }} - ${ACTION_TYPE} - ${{ github.ref_name }}**
+          ${MESSAGE_TEXT}
+
+          🔗 [View Changes](${{ github.event.compare }})
+          EOF
+          )
+
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+          -d chat_id="$TELEGRAM_CHAT_ID" \
+          -d text="$MESSAGE" \
+          -d parse_mode="Markdown" \
+          -d disable_web_page_preview="true"

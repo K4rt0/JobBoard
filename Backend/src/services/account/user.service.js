@@ -8,8 +8,8 @@ import { ObjectId } from "mongodb";
 
 const create_user = async (data) => {
   try {
-    const existingUser = await user_model.find_user({ email: data.email });
-    if (existingUser) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Người dùng đã tồn tại trong hệ thống !");
+    const existing_user = await user_model.find_user({ email: data.email });
+    if (existing_user) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Người dùng đã tồn tại trong hệ thống !");
 
     const hashed_password = await bcrypt.hash(data.password, 10);
     const user_data = {
@@ -26,9 +26,8 @@ const create_user = async (data) => {
 
 const login_user = async ({ email, password }) => {
   try {
-    const user = await user_model.find_user({ email });
+    const user = await user_model.find_user({ email }, false);
     if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
-
     const is_password_valid = await bcrypt.compare(password, user.password);
 
     if (!is_password_valid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
@@ -48,7 +47,7 @@ const login_user = async ({ email, password }) => {
 const get_user_by_id = async (user_id) => {
   try {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
-    if (!user) throw new Error("Người dùng không tồn tại !");
+    if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
 
     const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
 
@@ -62,12 +61,21 @@ const get_all_users = async () => {
   try {
     const users = await user_model.find_all_user();
 
-    const usersWithoutSensitiveInfo = users.map((user) => {
-      const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
-      return userWithoutSensitiveInfo;
+    const users_without_sensitive_info = users.map((user) => {
+      const { password, refresh_token, ...user_without_sensitive_info } = user;
+      return user_without_sensitive_info;
     });
 
-    return usersWithoutSensitiveInfo;
+    return users_without_sensitive_info;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const logout_user = async (user_id) => {
+  try {
+    await user_model.update_user(user_id, { refresh_token: null });
+    return { message: "Đăng xuất thành công !" };
   } catch (error) {
     throw error;
   }
@@ -76,6 +84,7 @@ const get_all_users = async () => {
 export const user_service = {
   create_user,
   login_user,
+  logout_user,
   get_user_by_id,
   get_all_users,
 };

@@ -82,13 +82,13 @@ const FreelancerMarketplacePage: React.FC = () => {
     ]
 
     return (
-        <Container className="pt-5 container">
+        <Container className="pt-5 container" style={{ zIndex: '1' }}>
             {/* Breadcrumb */}
-            <Breadcrumb>
+            <Breadcrumb className="pt-5 mt-4">
                 <Breadcrumb.Item href="#">Freelancers</Breadcrumb.Item>
                 <Breadcrumb.Item active>Adobe Photoshop</Breadcrumb.Item>
             </Breadcrumb>
-
+            <hr />
             <Row>
                 {/* Left Sidebar */}
                 <Col md={4}>

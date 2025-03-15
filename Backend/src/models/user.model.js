@@ -69,9 +69,10 @@ const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
     const total = await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .countDocuments({ ...final_query, ...query });
+    const projection = { password: 0, refresh_token: 0 };
     const users = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .find({ ...final_query, ...query })
+      .find({ ...final_query, ...query }, { projection })
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -93,9 +94,10 @@ const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
   }
 };
 
-const find_user = async (query) => {
+const find_user = async (query, protect = true) => {
   try {
-    const user = await GET_DB().collection(USER_COLLECTION_NAME).findOne(query);
+    const projection = protect ? { password: 0, refresh_token: 0 } : {};
+    const user = await GET_DB().collection(USER_COLLECTION_NAME).findOne(query, { projection });
 
     return user;
   } catch (error) {

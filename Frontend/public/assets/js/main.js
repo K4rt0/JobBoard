@@ -21,7 +21,7 @@ Author: GrayGrids
         const scrollPosition =
             window.pageYOffset || document.documentElement.scrollTop
 
-        if (header_navbar) {
+        if (headerNavbar) {
             const stickyOffset = headerNavbar.offsetTop
 
             if (window.pageYOffset > stickyOffset) {

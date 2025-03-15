@@ -5,13 +5,7 @@ import { admin_route } from "~/routes/v1/admin/admin.route";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  res.json({
-    message: "Hello World!",
-  });
-});
-
-router.use("/users", user_route);
+router.use("/user", user_route);
 router.use("/admin", admin_route);
 
 export const APIs_V1 = router;
