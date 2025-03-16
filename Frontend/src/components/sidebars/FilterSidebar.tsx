@@ -52,7 +52,7 @@ const FilterSidebar: React.FC = () => {
     return (
         <Card
             className="border-0 shadow-sm rounded-3 sticky-top"
-            style={{ top: '1rem', maxWidth: '280px' }}
+            style={{ top: '1rem', maxWidth: '280px', zIndex: 1 }}
         >
             <Card.Body className="p-3">
                 <div className="d-flex justify-content-between align-items-center mb-3">

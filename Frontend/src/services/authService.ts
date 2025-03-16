@@ -4,15 +4,16 @@ import { UserRequestDTO } from '@/interfaces'
 import axiosInstance from './axiosInstance'
 import { useAuthStore } from '@/store/authStore'
 
-const API_URL = `${process.env.REACT_APP_BASE_API_URL}/auth`
+const API_URL = `${process.env.REACT_APP_BASE_API_URL}`
 
 // ✅ API đăng nhập
-export const loginApi = async (username: string, password: string) => {
+export const loginApi = async (email: string, password: string) => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/login`, {
-            username,
+        const response = await axiosInstance.post(`${API_URL}/auth/login`, {
+            email,
             password,
         })
+
         return response.data
     } catch (error) {
         handleApiError(error, 'Login failed')
@@ -23,7 +24,7 @@ export const loginApi = async (username: string, password: string) => {
 export const registerApi = async (userData: UserRequestDTO) => {
     try {
         const response = await axiosInstance.post(
-            `${API_URL}/register`,
+            `${API_URL}/user/register`,
             userData,
         )
         return response.data
@@ -36,8 +37,8 @@ export const registerApi = async (userData: UserRequestDTO) => {
 export const loginGoogleApi = async (access_token: string) => {
     try {
         const response = await axiosInstance.post(
-            `${API_URL}/google`,
-            { accessToken: access_token },
+            `${API_URL}/auth/google`,
+            { access_token: access_token },
             {
                 headers: { 'Content-Type': 'application/json' },
             },
@@ -45,45 +46,5 @@ export const loginGoogleApi = async (access_token: string) => {
         return response.data
     } catch (error) {
         handleApiError(error, 'Google login failed')
-    }
-}
-
-// ✅ API làm mới Access Token
-export const refreshToken = async (): Promise<string | null> => {
-    try {
-        const refreshToken = useAuthStore.getState().user?.refreshToken
-        if (!refreshToken) throw new Error('No refresh token available')
-        const response = await axiosInstance.post(
-            `${API_URL}/refresh-token`,
-            {
-                refreshToken,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            },
-        )
-        console.log('response:', response)
-        const newAccessToken = response.data.accessToken
-
-        // Cập nhật token mới vào Zustand
-        useAuthStore.setState((state) => ({
-            user: state.user
-                ? { ...state.user, accessToken: newAccessToken }
-                : null,
-        }))
-
-        // Cập nhật header cho axiosInstance
-        axiosInstance.defaults.headers.common['Authorization'] =
-            `Bearer ${newAccessToken}`
-
-        return newAccessToken
-    } catch (error) {
-        console.error('Lỗi khi refresh token:', error)
-
-        // Nếu refresh token thất bại, logout user
-        useAuthStore.getState().logout()
-        return null
     }
 }
