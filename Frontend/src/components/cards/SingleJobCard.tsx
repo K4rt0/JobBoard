@@ -1,17 +1,5 @@
+import { Job } from '@/interfaces'
 import React from 'react'
-
-interface Job {
-    id: number
-    title: string
-    company: string
-    location: string
-    salary: string
-    type: string
-    posted: string
-    description?: string
-    companyWebsite?: string
-    companyLogo?: string
-}
 
 interface SingleJobCardProps {
     job: Job

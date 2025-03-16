@@ -1,85 +1,129 @@
+import React, { useState, useEffect } from 'react'
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import CustomPagination from '@/components/CustomPagination'
 import FilterSidebar from '@/components/sidebars/FilterSidebar'
 import { Freelancer } from '@/interfaces'
-import { useState } from 'react'
-import { Container, Row, Col, Breadcrumb } from 'react-bootstrap'
+import { Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap'
 
 const FreelancerMarketplacePage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<number>(1)
+    const [freelancers, setFreelancers] = useState<Freelancer[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+
     const totalResults = 397
     const resultsPerPage = 10
 
-    // Sample data of freelancers
-    const freelancers: Freelancer[] = [
-        {
-            id: 1,
-            name: 'riyadalomgir77',
-            country: 'Bangladesh',
-            countryCode: 'bd',
-            skills: 'LABEL | PACKAGING | 3D Mockups | LOGO | BRANDING',
-            categories:
-                'Covers & Packaging, Adobe Photoshop, Logo Design, Illustration, Graphic Design',
-            description:
-                "Welcome! I'm AIOMGIR, an accomplished graphic designer hailing from vibrant Bangladesh...",
-            hourlyRate: 20,
-            currency: 'USD',
-            rating: 5.0,
-            level: 5.7,
-            reviews: 37,
-            avatar: '/api/placeholder/60/60',
-        },
-        {
-            id: 2,
-            name: 'DYehia2020',
-            country: 'Egypt',
-            countryCode: 'eg',
-            skills: 'CV, PDF, WORD, EXCEL, FORMS, CHARTS, GRAPHICS',
-            categories:
-                'Excel, Data Entry, PDF, Data Processing, Graphic Design',
-            description:
-                'If you are searching for Top Quality service, you are on the right profile...',
-            hourlyRate: 15,
-            currency: 'USD',
-            rating: 5.0,
-            level: 4.4,
-            reviews: 10,
-            avatar: '/api/placeholder/60/60',
-        },
-        {
-            id: 3,
-            name: 'Farzanayesmin23',
-            country: 'Bangladesh',
-            countryCode: 'bd',
-            skills: 'Professional Graphic Designer',
-            categories:
-                'Graphic Design, Logo Design, Photoshop, Brochure Design, Adobe Photoshop',
-            description:
-                "Hello Dear Buyer, I'm Farzana Yesmin. I'm a full time professional graphics designer...",
-            hourlyRate: 30,
-            currency: 'USD',
-            rating: 4.9,
-            level: 2.6,
-            reviews: 3,
-            avatar: '/api/placeholder/60/60',
-        },
-        {
-            id: 4,
-            name: 'abduldesigner322',
-            country: 'United Kingdom',
-            countryCode: 'gb',
-            skills: 'Professional Designer',
-            categories: 'Graphic Design, Logo Design, Photoshop, UI/UX Design',
-            description:
-                "I'm a professional designer with over 7 years of experience...",
-            hourlyRate: 25,
-            currency: 'USD',
-            rating: 4.8,
-            level: 4.2,
-            reviews: 45,
-            avatar: '/api/placeholder/60/60',
-        },
-    ]
+    // Giả lập API Fetch Freelancer List
+    useEffect(() => {
+        const fetchFreelancers = async () => {
+            setLoading(true)
+            try {
+                // Fake API Response
+                const response = await new Promise<{ data: Freelancer[] }>(
+                    (resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    data: [
+                                        {
+                                            id: '1',
+                                            fullName: 'riyadalomgir77',
+                                            email: 'riyad@example.com',
+                                            phoneNumber: '123456789',
+                                            location: 'Bangladesh',
+                                            website: 'https://riyad.com',
+                                            bio: "I'm a top-rated designer...",
+                                            skills: [
+                                                {
+                                                    id: '1',
+                                                    name: 'Logo Design',
+                                                    description: '',
+                                                    slug: '',
+                                                    createdAt:
+                                                        new Date().toISOString(),
+                                                    updatedAt:
+                                                        new Date().toISOString(),
+                                                },
+                                                {
+                                                    id: '2',
+                                                    name: 'Branding',
+                                                    description: '',
+                                                    slug: '',
+                                                    createdAt:
+                                                        new Date().toISOString(),
+                                                    updatedAt:
+                                                        new Date().toISOString(),
+                                                },
+                                            ],
+                                            experience: 5,
+                                            education: 'Bachelor in Design',
+                                            hourlyRate: 20,
+                                            currency: 'USD',
+                                            rating: 5.0,
+                                            level: 5.7,
+                                            reviews: 37,
+                                            avatar: '/api/placeholder/60/60',
+                                            status: 'Active',
+                                            createdAt: new Date().toISOString(),
+                                            role: 'Freelancer',
+                                        },
+                                        {
+                                            id: '2',
+                                            fullName: 'DYehia2020',
+                                            email: 'dyehia@example.com',
+                                            phoneNumber: '987654321',
+                                            location: 'Egypt',
+                                            website: 'https://dyehia.com',
+                                            bio: 'Providing quality service...',
+                                            skills: [
+                                                {
+                                                    id: '3',
+                                                    name: 'Excel',
+                                                    description: '',
+                                                    slug: '',
+                                                    createdAt:
+                                                        new Date().toISOString(),
+                                                    updatedAt:
+                                                        new Date().toISOString(),
+                                                },
+                                                {
+                                                    id: '4',
+                                                    name: 'Data Processing',
+                                                    description: '',
+                                                    slug: '',
+                                                    createdAt:
+                                                        new Date().toISOString(),
+                                                    updatedAt:
+                                                        new Date().toISOString(),
+                                                },
+                                            ],
+                                            experience: 7,
+                                            education: 'MBA in Data Science',
+                                            hourlyRate: 15,
+                                            currency: 'USD',
+                                            rating: 5.0,
+                                            level: 4.4,
+                                            reviews: 10,
+                                            avatar: '/api/placeholder/60/60',
+                                            status: 'Active',
+                                            createdAt: new Date().toISOString(),
+                                            role: 'Freelancer',
+                                        },
+                                    ],
+                                }),
+                            1500,
+                        ),
+                )
+                setFreelancers(response.data)
+            } catch (error) {
+                console.error('Failed to fetch freelancers:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchFreelancers()
+    }, [currentPage]) // Mỗi lần đổi trang thì fetch lại dữ liệu
 
     return (
         <Container className="pt-5 container" style={{ zIndex: '1' }}>
@@ -89,6 +133,7 @@ const FreelancerMarketplacePage: React.FC = () => {
                 <Breadcrumb.Item active>Adobe Photoshop</Breadcrumb.Item>
             </Breadcrumb>
             <hr />
+
             <Row>
                 {/* Left Sidebar */}
                 <Col md={4}>
@@ -97,23 +142,39 @@ const FreelancerMarketplacePage: React.FC = () => {
 
                 {/* Main Content */}
                 <Col md={8}>
-                    <Row className="gy-4">
-                        {freelancers.map((freelancer) => (
-                            <Col md={12} key={freelancer.id}>
-                                <SingleFreelancerCard freelancer={freelancer} />
-                            </Col>
-                        ))}
-                    </Row>
+                    {loading ? (
+                        <div className="d-flex justify-content-center py-5">
+                            <Spinner animation="border" variant="primary" />
+                        </div>
+                    ) : (
+                        <>
+                            <Row className="gy-4">
+                                {freelancers.length > 0 ? (
+                                    freelancers.map((freelancer) => (
+                                        <Col md={12} key={freelancer.id}>
+                                            <SingleFreelancerCard
+                                                freelancer={freelancer}
+                                            />
+                                        </Col>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted">
+                                        No freelancers found.
+                                    </p>
+                                )}
+                            </Row>
 
-                    {/* Pagination */}
-                    <div className="d-flex justify-content-between align-items-center mt-4">
-                        <CustomPagination
-                            currentPage={currentPage}
-                            setCurrentPage={setCurrentPage}
-                            totalResults={totalResults}
-                            resultsPerPage={resultsPerPage}
-                        />
-                    </div>
+                            {/* Pagination */}
+                            <div className="d-flex justify-content-between align-items-center mt-4">
+                                <CustomPagination
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
+                                    totalResults={totalResults}
+                                    resultsPerPage={resultsPerPage}
+                                />
+                            </div>
+                        </>
+                    )}
                 </Col>
             </Row>
         </Container>
