@@ -34,7 +34,7 @@ const create_user = async (req, res, next) => {
   }
 };
 
-const get_all_users = async (req, res, next) => {
+const get_all_users_pagination = async (req, res, next) => {
   const schema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
@@ -64,8 +64,75 @@ const update_user_status = async (req, res, next) => {
   }
 };
 
+const change_user_password = async (req, res, next) => {
+  const schema = Joi.object({
+    old_password: Joi.string().required().trim().strict(),
+    new_password: Joi.string().required().trim().strict(),
+    retype_new_password: Joi.string().required().trim().strict(),
+  });
+
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update_user = async (req, res, next) => {
+  const schema = Joi.object({
+    full_name: Joi.string().min(3).max(50).trim().strict().messages({
+      "string.base": "Họ và tên phải là chuỗi !",
+      "string.empty": "Họ và tên không được để trống !",
+      "string.min": "Họ và tên phải có ít nhất {#limit} ký tự !",
+      "string.max": "Họ và tên không được vượt quá {#limit} ký tự !",
+    }),
+    phone_number: Joi.string().min(10).max(15).trim().strict().default(null).messages({
+      "string.base": "Số điện thoại phải là chuỗi !",
+      "string.min": "Số điện thoại phải có ít nhất {#limit} ký tự !",
+      "string.max": "Số điện thoại không được vượt quá {#limit} ký tự !",
+    }),
+    birth_date: Joi.date().default(null).messages({
+      "date.base": "Ngày sinh không hợp lệ !",
+    }),
+
+    avatar_url: Joi.string().uri().default(null).messages({
+      "string.uri": "Avatar URL không hợp lệ !",
+    }),
+    bio: Joi.string().max(500).default(null).messages({
+      "string.max": "Bio không được vượt quá {#limit} ký tự !",
+    }),
+    education: Joi.string().max(100).default(null).messages({
+      "string.max": "Học vấn không được vượt quá {#limit} ký tự !",
+    }),
+    experience: Joi.string().default(null),
+    cv_url: Joi.string().uri().default(null).messages({
+      "string.uri": "CV URL không hợp lệ !",
+    }),
+    skills: Joi.array().items(Joi.string().hex().length(24)).default([]).messages({
+      "array.items": "Mã kỹ năng phải là mảng chuỗi hex 24 ký tự !",
+    }),
+
+    company_name: Joi.string().max(100).default(null).messages({
+      "string.max": "Company name không được vượt quá {#limit} ký tự !",
+    }),
+    company_description: Joi.string().max(500).default(null).messages({
+      "string.max": "Company description không được vượt quá {#limit} ký tự !",
+    }),
+  });
+
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_validation = {
   create_user,
-  get_all_users,
+  get_all_users_pagination,
   update_user_status,
+  change_user_password,
+  update_user,
 };

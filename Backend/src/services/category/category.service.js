@@ -3,6 +3,13 @@ import { slugify } from "~/utils/formatters";
 
 const create_category = async (data) => {
   try {
+    if (Array.isArray(data)) {
+      const categories = data.map((category) => ({
+        ...category,
+        slug: slugify(category.name),
+      }));
+      return await category_model.create_many_categories(categories);
+    }
     data.slug = slugify(data.name);
 
     return await category_model.create_category(data);

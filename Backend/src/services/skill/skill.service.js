@@ -3,8 +3,14 @@ import { slugify } from "~/utils/formatters";
 
 const create_skill = async (data) => {
   try {
+    if (Array.isArray(data)) {
+      const skills = data.map((skill) => ({
+        ...skill,
+        slug: slugify(skill.name),
+      }));
+      return await skill_model.create_many_skills(skills);
+    }
     data.slug = slugify(data.name);
-
     return await skill_model.create_skill(data);
   } catch (error) {
     throw error;

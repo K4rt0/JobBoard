@@ -29,6 +29,23 @@ const create_category = async (data) => {
   }
 };
 
+const create_many_categories = async (data) => {
+  try {
+    const validated_data = await Promise.all(data.map((item) => CATEGORY_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true })));
+
+    const categories_data = validated_data.map((category) => ({
+      ...category,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    }));
+
+    const result = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertMany(categories_data);
+    return result;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 const find_all_categories_pagination = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
@@ -108,6 +125,7 @@ export const category_model = {
   CATEGORY_COLLECTION_NAME,
   CATEGORY_COLLECTION_SCHEMA,
   create_category,
+  create_many_categories,
   find_all_categories,
   find_all_categories_pagination,
   find_category_by_id,

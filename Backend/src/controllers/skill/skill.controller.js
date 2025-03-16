@@ -5,10 +5,17 @@ const create_skill = async (req, res, next) => {
   try {
     const result = await skill_service.create_skill(req.body);
 
-    res.status(StatusCodes.CREATED).json({
-      message: "Kỹ năng đã được tạo thành công !",
-      data: { id: result.insertedId },
-    });
+    if (Array.isArray(req.body)) {
+      res.status(StatusCodes.CREATED).json({
+        message: "Các kỹ năng đã được tạo thành công !",
+        data: { insertedIds: result.insertedIds },
+      });
+    } else {
+      res.status(StatusCodes.CREATED).json({
+        message: "Kỹ năng đã được tạo thành công !",
+        data: { id: result.insertedId },
+      });
+    }
   } catch (error) {
     next(error);
   }

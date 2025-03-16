@@ -42,6 +42,15 @@ const create_user = async (data) => {
   }
 };
 
+const find_all_users = async () => {
+  try {
+    const users = await GET_DB().collection(USER_COLLECTION_NAME).find({}).toArray();
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to fetch users: ${error.message}`);
+  }
+};
+
 const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
   try {
     const skip = (page - 1) * limit;
@@ -108,11 +117,12 @@ const find_user = async (query, protect = true) => {
 
 const update_user = async (user_id, data) => {
   try {
-    const result = await GET_DB()
+    console.log(data);
+    await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .updateOne({ _id: new ObjectId(user_id) }, { $set: data });
 
-    return result;
+    return { _id: user_id };
   } catch (error) {
     throw new Error(`Failed to update user: ${error.message}`);
   }
@@ -123,6 +133,7 @@ export const user_model = {
   USER_COLLECTION_SCHEMA,
   create_user,
   find_user,
-  update_user,
   find_all_with_pagination,
+  find_all_users,
+  update_user,
 };

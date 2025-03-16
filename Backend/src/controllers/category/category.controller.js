@@ -5,10 +5,17 @@ const create_category = async (req, res, next) => {
   try {
     const result = await category_service.create_category(req.body);
 
-    res.status(StatusCodes.CREATED).json({
-      message: "Danh mục đã được tạo thành công !",
-      data: { id: result.insertedId },
-    });
+    if (Array.isArray(req.body)) {
+      res.status(StatusCodes.CREATED).json({
+        message: "Các danh mục đã được tạo thành công !",
+        data: { insertedIds: result.insertedIds },
+      });
+    } else {
+      res.status(StatusCodes.CREATED).json({
+        message: "Danh mục đã được tạo thành công !",
+        data: { id: result.insertedId },
+      });
+    }
   } catch (error) {
     next(error);
   }

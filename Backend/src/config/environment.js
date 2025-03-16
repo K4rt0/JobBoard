@@ -7,8 +7,8 @@ export const env = {
   SERVER_PORT: process.env.SERVER_PORT,
   BUILD_MODE: process.env.BUILD_MODE,
   JWT_SECRET: process.env.JWT_SECRET,
-  JWT_ACCESS_EXPIRES_IN: "1h",
-  JWT_REFRESH_EXPIRES_IN: "7d",
+  JWT_ACCESS_EXPIRES_IN: "1y",
+  JWT_REFRESH_EXPIRES_IN: "1y",
   ADMIN_USER: process.env.ADMIN_USER,
   ADMIN_PWD: process.env.ADMIN_PWD,
 };

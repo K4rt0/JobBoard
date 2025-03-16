@@ -29,6 +29,23 @@ const create_skill = async (data) => {
   }
 };
 
+const create_many_skills = async (data) => {
+  try {
+    const validated_data = await Promise.all(data.map((item) => SKILL_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true })));
+
+    const skills_data = validated_data.map((skill) => ({
+      ...skill,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    }));
+
+    const result = await GET_DB().collection(SKILL_COLLECTION_NAME).insertMany(skills_data);
+    return result;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 const find_all_skills_pagination = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
@@ -108,6 +125,7 @@ export const skill_model = {
   SKILL_COLLECTION_NAME,
   SKILL_COLLECTION_SCHEMA,
   create_skill,
+  create_many_skills,
   find_all_skills,
   find_all_skills_pagination,
   find_skill_by_id,
