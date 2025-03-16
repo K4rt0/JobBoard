@@ -1,17 +1,12 @@
 import Joi from "joi";
 
 const create_category = async (req, res, next) => {
-  const schema = Joi.object({
+  const single_schema = Joi.object({
     name: Joi.string().required().max(50).trim().strict(),
     description: Joi.string().max(200),
-
-    skills: Joi.array().items(
-      Joi.object({
-        name: Joi.string().required().max(50).trim().strict(),
-        description: Joi.string().max(200),
-      })
-    ),
   });
+  const multiple_schema = Joi.array().items(single_schema);
+  const schema = Joi.alternatives().try(single_schema, multiple_schema);
 
   try {
     await schema.validateAsync(req.body, { abortEarly: false });
@@ -25,6 +20,8 @@ const get_all_categories_pagination = async (req, res, next) => {
   const schema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    search: Joi.string().allow(""),
   });
 
   try {

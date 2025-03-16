@@ -5,10 +5,17 @@ const create_category = async (req, res, next) => {
   try {
     const result = await category_service.create_category(req.body);
 
-    res.status(StatusCodes.CREATED).json({
-      message: "Danh mục đã được tạo thành công !",
-      data: { id: result.insertedId },
-    });
+    if (Array.isArray(req.body)) {
+      res.status(StatusCodes.CREATED).json({
+        message: "Các danh mục đã được tạo thành công !",
+        data: { insertedIds: result.insertedIds },
+      });
+    } else {
+      res.status(StatusCodes.CREATED).json({
+        message: "Danh mục đã được tạo thành công !",
+        data: { id: result.insertedId },
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -18,7 +25,13 @@ const get_all_categories_pagination = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const result = await category_service.get_all_categories_pagination(page, limit);
+
+    const { sort, search } = req.query;
+    const filtered = {};
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await category_service.get_all_categories_pagination(page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh sách danh mục thành công !",

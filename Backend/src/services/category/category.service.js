@@ -3,6 +3,13 @@ import { slugify } from "~/utils/formatters";
 
 const create_category = async (data) => {
   try {
+    if (Array.isArray(data)) {
+      const categories = data.map((category) => ({
+        ...category,
+        slug: slugify(category.name),
+      }));
+      return await category_model.create_many_categories(categories);
+    }
     data.slug = slugify(data.name);
 
     return await category_model.create_category(data);
@@ -11,9 +18,9 @@ const create_category = async (data) => {
   }
 };
 
-const get_all_categories_pagination = async (page = 1, limit = 10) => {
+const get_all_categories_pagination = async (page = 1, limit = 10, filtered) => {
   try {
-    return await category_model.find_all_categories_pagination(page, limit);
+    return await category_model.find_all_categories_pagination(page, limit, filtered);
   } catch (error) {
     throw error;
   }

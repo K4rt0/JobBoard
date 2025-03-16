@@ -5,10 +5,17 @@ const create_skill = async (req, res, next) => {
   try {
     const result = await skill_service.create_skill(req.body);
 
-    res.status(StatusCodes.CREATED).json({
-      message: "Kỹ năng đã được tạo thành công !",
-      data: { id: result.insertedId },
-    });
+    if (Array.isArray(req.body)) {
+      res.status(StatusCodes.CREATED).json({
+        message: "Các kỹ năng đã được tạo thành công !",
+        data: { insertedIds: result.insertedIds },
+      });
+    } else {
+      res.status(StatusCodes.CREATED).json({
+        message: "Kỹ năng đã được tạo thành công !",
+        data: { id: result.insertedId },
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -18,7 +25,14 @@ const get_all_skills_pagination = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const result = await skill_service.get_all_skills_pagination(page, limit);
+    const { sort, search } = req.query;
+
+    const filtered = {};
+
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await skill_service.get_all_skills_pagination(page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh sách kỹ năng thành công !",

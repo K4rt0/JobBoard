@@ -20,8 +20,8 @@ const jwt_auth = (is_admin = false) => {
         message: "Token không hợp lệ !",
       });
     try {
+      const decoded = jwt.verify(token, env.JWT_SECRET);
       if (!is_admin) {
-        const decoded = jwt.verify(token, env.JWT_SECRET);
         const user_id = decoded._id;
         const user = await user_model.find_user({ _id: new ObjectId(user_id) });
 
@@ -37,11 +37,11 @@ const jwt_auth = (is_admin = false) => {
     } catch (error) {
       if (error.name === "TokenExpiredError")
         return res.status(StatusCodes.UNAUTHORIZED).json({
-          status_code: StatusCodes.NOT_FOUND,
+          status_code: StatusCodes.UNAUTHORIZED,
           message: "Token đã hết hạn !",
         });
       return res.status(StatusCodes.UNAUTHORIZED).json({
-        status_code: StatusCodes.NOT_FOUND,
+        status_code: StatusCodes.UNAUTHORIZED,
         message: "Token không hợp lệ !",
       });
     }
