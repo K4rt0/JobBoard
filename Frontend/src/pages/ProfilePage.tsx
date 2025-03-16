@@ -4,7 +4,7 @@ import { getCurrentUser, updateUserProfile } from '@/services/userService'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '@/hooks/useAuth'
-import { UserInfoData } from '@/interfaces'
+import { Skill, UserInfoData } from '@/interfaces'
 import { Button } from 'react-bootstrap'
 import FormModal from '@/components/modals/FormModal'
 import {
@@ -37,6 +37,7 @@ type ModalType = keyof ModalConfig | null
 
 const ProfilePage: React.FC = () => {
     const [userData, setUserData] = useState<UserInfoData>({
+        id: '',
         fullName: '',
         email: '',
         phoneNumber: '',
@@ -169,15 +170,8 @@ const ProfilePage: React.FC = () => {
         setFormData((prev) => ({ ...prev, [name]: value }))
     }
 
-    // Xử lý thay đổi skill
-    const handleSkillsChange = (
-        e: React.ChangeEvent<HTMLInputElement>,
-    ): void => {
-        const skills = e.target.value
-            .split(',')
-            .map((skill) => skill.trim())
-            .filter((skill) => skill)
-        setFormData((prev) => ({ ...prev, skills }))
+    const handleSkillsChange = (selectedOptions: Skill[]): void => {
+        setFormData((prev) => ({ ...prev, skills: selectedOptions }))
     }
 
     // Xử lý submit form
@@ -467,7 +461,7 @@ const ProfilePage: React.FC = () => {
                                                 (skill, index) => (
                                                     <li key={index}>
                                                         <a href="resume.html#">
-                                                            {skill}
+                                                            {skill.name}
                                                         </a>
                                                     </li>
                                                 ),
