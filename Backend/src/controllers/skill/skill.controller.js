@@ -25,7 +25,14 @@ const get_all_skills_pagination = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const result = await skill_service.get_all_skills_pagination(page, limit);
+    const { sort, search } = req.query;
+
+    const filtered = {};
+
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await skill_service.get_all_skills_pagination(page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh sách kỹ năng thành công !",

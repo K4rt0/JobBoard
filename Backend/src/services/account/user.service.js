@@ -50,9 +50,9 @@ const get_all_users = async () => {
   }
 };
 
-const get_all_users_pagination = async (page, limit, filterObj) => {
+const get_all_users_pagination = async (page, limit, filtered) => {
   try {
-    const users = await user_model.find_all_with_pagination(page, limit, filterObj);
+    const users = await user_model.find_all_with_pagination(page, limit, filtered);
 
     const users_without_sensitive_info = users.data.map((user) => {
       const { password, refresh_token, ...user_without_sensitive_info } = user;
@@ -67,7 +67,7 @@ const get_all_users_pagination = async (page, limit, filterObj) => {
 
 const change_user_password = async (user_id, old_password, new_password, retype_new_password) => {
   try {
-    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) }, false);
     if (!user) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Không tìm thấy người dùng này trong hệ thống !");
 
     const is_password_match = await bcrypt.compare(old_password, user.password);

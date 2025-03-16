@@ -51,16 +51,16 @@ const find_all_users = async () => {
   }
 };
 
-const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
+const find_all_with_pagination = async (page = 1, limit = 10, filtered = {}) => {
   try {
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filter.role && filter.role !== "All" && ["Freelancer", "Employer"].includes(filter.role)) query.role = filter.role;
-    if (filter.search) query.$or = [{ full_name: { $regex: filter.search, $options: "i" } }, { email: { $regex: filter.search, $options: "i" } }, { phone_number: { $regex: filter.search, $options: "i" } }];
+    if (filtered.role && filtered.role !== "All" && ["Freelancer", "Employer"].includes(filtered.role)) query.role = filtered.role;
+    if (filtered.search) query.$or = [{ full_name: { $regex: filtered.search, $options: "i" } }, { email: { $regex: filtered.search, $options: "i" } }, { phone_number: { $regex: filtered.search, $options: "i" } }];
 
     let sort = {};
-    const sort_type = filter.sort || "all";
+    const sort_type = filtered.sort || "all";
     switch (sort_type.toLowerCase()) {
       case "newest":
         sort = { created_at: -1 };
@@ -74,7 +74,7 @@ const find_all_with_pagination = async (page = 1, limit = 10, filter = {}) => {
         break;
     }
 
-    const { role: _, sort: __, search: ___, ...final_query } = filter;
+    const { role: _, sort: __, search: ___, ...final_query } = filtered;
 
     const total = await GET_DB()
       .collection(USER_COLLECTION_NAME)
@@ -117,7 +117,6 @@ const find_user = async (query, protect = true) => {
 
 const update_user = async (user_id, data) => {
   try {
-    console.log(data);
     await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .updateOne({ _id: new ObjectId(user_id) }, { $set: data });

@@ -17,9 +17,9 @@ const create_skill = async (data) => {
   }
 };
 
-const get_all_skills_pagination = async (page = 1, limit = 10) => {
+const get_all_skills_pagination = async (page = 1, limit = 10, filtered) => {
   try {
-    return await skill_model.find_all_skills_pagination(page, limit);
+    return await skill_model.find_all_skills_pagination(page, limit, filtered);
   } catch (error) {
     throw error;
   }

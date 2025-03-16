@@ -20,6 +20,8 @@ const get_all_categories_pagination = async (req, res, next) => {
   const schema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    search: Joi.string().allow(""),
   });
 
   try {

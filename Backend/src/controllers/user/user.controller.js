@@ -5,7 +5,7 @@ import { user_service } from "~/services/account/user.service";
 const get_user = async (req, res, next) => {
   try {
     let user_id;
-    
+
     if (req.params.id) user_id = req.params.id;
     else if (req._id) user_id = req._id;
     else
@@ -13,7 +13,6 @@ const get_user = async (req, res, next) => {
         message: "Không tìm thấy người dùng !",
         data: result,
       });
-    console.log(user_id);
     const result = await user_service.get_user_by_id(user_id);
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",
@@ -43,13 +42,13 @@ const get_all_users_pagination = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
 
     const { status, role, sort, search } = req.query;
-    const filterObj = {};
-    if (status && ["Active", "Deleted", "Blocked"].includes(status)) filterObj.status = status;
-    if (role && ["All", "Freelancer", "Employer"].includes(role)) filterObj.role = role;
-    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filterObj.sort = sort;
-    if (search) filterObj.search = search;
+    const filtered = {};
+    if (status && ["Active", "Deleted", "Blocked"].includes(status)) filtered.status = status;
+    if (role && ["All", "Freelancer", "Employer"].includes(role)) filtered.role = role;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
 
-    const result = await user_service.get_all_users_pagination(page, limit, filterObj);
+    const result = await user_service.get_all_users_pagination(page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",

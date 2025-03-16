@@ -46,24 +46,49 @@ const create_many_skills = async (data) => {
   }
 };
 
-const find_all_skills_pagination = async (page = 1, limit = 10) => {
+const find_all_skills_pagination = async (page = 1, limit = 10, filtered = {}) => {
   try {
     const skip = (page - 1) * limit;
-    const total = await GET_DB().collection(SKILL_COLLECTION_NAME).countDocuments();
+    const query = {};
+
+    if (filtered.search) query.$or = [{ name: { $regex: filtered.search, $options: "i" } }, { slug: { $regex: filtered.search, $options: "i" } }];
+
+    let sort = {};
+    const sort_type = filtered.sort || "all";
+    switch (sort_type.toLowerCase()) {
+      case "newest":
+        sort = { created_at: -1 };
+        break;
+      case "oldest":
+        sort = { created_at: 1 };
+        break;
+      case "all":
+      default:
+        sort = {};
+        break;
+    }
+
+    const { sort: __, search: ___, ...final_query } = filtered;
+    const total = await GET_DB()
+      .collection(SKILL_COLLECTION_NAME)
+      .countDocuments({ ...final_query, ...query });
 
     const skills = await GET_DB()
       .collection(SKILL_COLLECTION_NAME)
-      .aggregate([{ $skip: skip }, { $limit: limit }])
+      .find({ ...final_query, ...query })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
       .toArray();
 
-    const totalPages = Math.ceil(total / limit);
+    const total_pages = Math.ceil(total / limit);
 
     return {
       data: skills,
       pagination: {
         total,
-        currentPage: page,
-        totalPages,
+        current_page: page,
+        total_pages,
         limit,
       },
     };

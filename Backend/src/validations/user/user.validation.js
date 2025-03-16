@@ -41,7 +41,7 @@ const get_all_users_pagination = async (req, res, next) => {
     status: Joi.string().valid("Active", "Deleted", "Blocked"),
     role: Joi.string().valid("All", "Freelancer", "Employer"),
     sort: Joi.string().valid("all", "oldest", "newest"),
-    search: Joi.string(),
+    search: Joi.string().allow(""),
   });
   try {
     await schema.validateAsync(req.query, { abortEarly: false });

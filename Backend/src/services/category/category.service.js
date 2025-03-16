@@ -18,9 +18,9 @@ const create_category = async (data) => {
   }
 };
 
-const get_all_categories_pagination = async (page = 1, limit = 10) => {
+const get_all_categories_pagination = async (page = 1, limit = 10, filtered) => {
   try {
-    return await category_model.find_all_categories_pagination(page, limit);
+    return await category_model.find_all_categories_pagination(page, limit, filtered);
   } catch (error) {
     throw error;
   }
