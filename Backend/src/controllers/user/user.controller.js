@@ -5,7 +5,7 @@ import { user_service } from "~/services/account/user.service";
 const get_user = async (req, res, next) => {
   try {
     let user_id;
-
+    
     if (req.params.id) user_id = req.params.id;
     else if (req._id) user_id = req._id;
     else

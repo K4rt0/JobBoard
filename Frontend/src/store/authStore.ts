@@ -3,18 +3,23 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
-import { User } from '@/interfaces'
+import { UserAuth } from '@/interfaces'
+import { refresh_token } from '@/services/axiosInstance'
+import { getCurrentUser } from '@/services/userService'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 interface AuthState {
-    user: User | null
-    login: (username: string, password: string) => Promise<void>
+    user: UserAuth | null
+    login: (email: string, password: string) => Promise<boolean>
     register: (
-        username: string,
+        full_name: string,
         email: string,
         password: string,
-    ) => Promise<void>
-    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
+    ) => Promise<boolean>
+    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<boolean>
     refreshAccessToken: () => Promise<void>
+    fetchUserProfile: () => Promise<void>
     logout: () => void
 }
 
@@ -34,63 +39,59 @@ export const useAuthStore = create<AuthState>()(
             user: null,
 
             /**
-             * Đăng nhập với username/password
+             * Đăng nhập với email/password
              */
-            login: async (username, password) => {
+            login: async (email, password) => {
                 try {
-                    const response = await loginApi(username, password)
-
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        name: response.name || '',
+                    const response = await loginApi(email, password)
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
+
+                    await get().fetchUserProfile()
+                    return true // Đăng nhập thành công
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        throw error.response?.data?.message || 'Login failed'
+                        console.log(error)
+
+                        const errorMessage =
+                            error.response?.data?.message ||
+                            'Invalid email or password!'
+                        toast.error(errorMessage)
+                        return false
                     }
-                    throw new Error('An unexpected error occurred')
+                    return false
                 }
             },
 
             /**
              * Đăng ký tài khoản mới
              */
-            register: async (username, email, password) => {
+            register: async (full_name, email, password) => {
                 try {
-                    const response = await registerApi({
-                        username,
-                        email,
-                        password,
-                    })
+                    await registerApi({ full_name, email, password })
 
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        name: response.name || '',
+                    const success = await get().login(email, password)
+                    if (success) {
+                        toast.success('Account created successfully!')
+                        return true
                     }
-
-                    set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    return false
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        throw (
+                        toast.error(
                             error.response?.data?.message ||
-                            'Registration failed'
+                                'Registration failed',
                         )
+                    } else {
+                        toast.error('An unexpected error occurred')
                     }
-                    throw new Error('An unexpected error occurred')
+                    return false
                 }
             },
 
@@ -100,30 +101,31 @@ export const useAuthStore = create<AuthState>()(
             loginWithGoogle: async (tokenResponse: TokenResponse) => {
                 try {
                     if (!tokenResponse.access_token) {
-                        throw new Error(
+                        toast.error(
                             'Google login failed. No access token received.',
                         )
+                        return false
                     }
 
-                    // Gửi Access Token của Google đến backend để xác thực
                     const response = await loginGoogleApi(
                         tokenResponse.access_token,
                     )
-
-                    const userData: User = {
-                        id: response.userId,
-                        username: response.username,
-                        email: response.email,
-                        accessToken: response.accessToken,
-                        refreshToken: response.refreshToken,
-                        avatar: response.avatar || '',
-                        name: response.name || '',
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
                     }
 
                     set({ user: userData })
-                    setAuthHeader(userData.accessToken)
+                    setAuthHeader(userData.access_token)
+
+                    await get().fetchUserProfile()
+                    toast.success('Google login successful!')
+
+                    return true
                 } catch (error) {
-                    throw new Error('Google login failed. Try again!')
+                    toast.error('Google login failed. Please try again.')
+                    return false
                 }
             },
 
@@ -133,29 +135,48 @@ export const useAuthStore = create<AuthState>()(
             refreshAccessToken: async () => {
                 try {
                     const user = get().user
-                    if (!user || !user.refreshToken) {
+                    if (!user || !user.refresh_token) {
                         throw new Error('No refresh token available')
                     }
 
-                    const response = await axios.post(
-                        `${process.env.REACT_APP_BASE_API_URL}/auth/refresh`,
-                        {
-                            refreshToken: user.refreshToken,
-                        },
-                    )
+                    await refresh_token()
+                    await get().fetchUserProfile()
+                } catch (error) {
+                    console.error('Refresh token failed:', error)
+                    toast.error('Session expired. Please log in again.')
+                    get().logout() // Tự động logout nếu refresh token thất bại
+                }
+            },
 
-                    const newAccessToken = response.data.accessToken
+            /**
+             * Lấy thông tin chi tiết người dùng
+             */
+            fetchUserProfile: async () => {
+                try {
+                    const user = get().user
+                    if (!user || !user.access_token) {
+                        throw new Error('User not authenticated')
+                    }
+
+                    const response = await getCurrentUser()
+                    const profileData = response
 
                     set((state) => ({
                         user: state.user
-                            ? { ...state.user, accessToken: newAccessToken }
+                            ? {
+                                  ...state.user,
+                                  full_name: profileData.full_name,
+                                  email: profileData.email,
+                                  avatar: profileData.avatar,
+                                  role: profileData.role,
+                              }
                             : null,
                     }))
-
-                    setAuthHeader(newAccessToken)
                 } catch (error) {
-                    console.error('Refresh token failed:', error)
-                    get().logout()
+                    console.error('Failed to fetch user profile:', error)
+                    toast.error(
+                        'Failed to fetch user profile. Please try again.',
+                    )
                 }
             },
 
@@ -165,6 +186,7 @@ export const useAuthStore = create<AuthState>()(
             logout: () => {
                 set({ user: null })
                 setAuthHeader(null)
+                toast.success('Logged out successfully.')
             },
         }),
         {

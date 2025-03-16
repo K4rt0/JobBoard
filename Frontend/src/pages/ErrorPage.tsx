@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const ErrorPage = () => {
     return (
@@ -11,9 +12,9 @@ const ErrorPage = () => {
                             <h2>Here Is Some Problem</h2>
                             <p>The page you are looking for it maybe deleted</p>
                             <div className="button">
-                                <a href="index.html" className="btn">
+                                <Link to={'/'} className="btn">
                                     Go To Home
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>
