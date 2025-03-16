@@ -4,16 +4,15 @@ import { UserRequestDTO } from '@/interfaces'
 import axiosInstance from './axiosInstance'
 import { useAuthStore } from '@/store/authStore'
 
-const API_URL = `${process.env.REACT_APP_BASE_API_URL}/user`
+const API_URL = `${process.env.REACT_APP_BASE_API_URL}`
 
 // ✅ API đăng nhập
 export const loginApi = async (email: string, password: string) => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/login`, {
+        const response = await axiosInstance.post(`${API_URL}/auth/login`, {
             email,
             password,
         })
-        console.log('data', email, password)
 
         return response.data
     } catch (error) {
@@ -25,7 +24,7 @@ export const loginApi = async (email: string, password: string) => {
 export const registerApi = async (userData: UserRequestDTO) => {
     try {
         const response = await axiosInstance.post(
-            `${API_URL}/register`,
+            `${API_URL}/user/register`,
             userData,
         )
         return response.data
@@ -38,7 +37,7 @@ export const registerApi = async (userData: UserRequestDTO) => {
 export const loginGoogleApi = async (access_token: string) => {
     try {
         const response = await axiosInstance.post(
-            `${API_URL}/google`,
+            `${API_URL}/auth/google`,
             { access_token: access_token },
             {
                 headers: { 'Content-Type': 'application/json' },

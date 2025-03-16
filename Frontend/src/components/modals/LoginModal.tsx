@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 // Định nghĩa interface cho Bootstrap Modal (có thể không cần)
 declare global {
@@ -88,14 +89,19 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
         setErrorMessage('')
 
         try {
-            await login(data.email, data.password)
-            closeModal() // Đóng modal trước
-            onLoginSuccess() // Sau đó báo thành công
-            setTimeout(() => {
-                navigate('/') // Chuyển hướng sau một chút để đảm bảo modal đã đóng
-            }, 100)
+            const success = await login(data.email, data.password)
+
+            if (success) {
+                closeModal() // Đóng modal nếu đăng nhập thành công
+                onLoginSuccess()
+                toast.success('Login successful!') // Hiển thị thông báo thành công
+                setTimeout(() => navigate('/'), 100)
+            } else {
+                // Không đóng modal nếu đăng nhập thất bại
+                setErrorMessage('Invalid email or password') // Nếu muốn hiển thị lỗi ở UI
+            }
         } catch (error) {
-            setErrorMessage(error as string)
+            setErrorMessage('An unexpected error occurred')
         } finally {
             setLoading(false)
         }

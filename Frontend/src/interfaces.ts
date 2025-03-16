@@ -13,6 +13,23 @@ export interface UserAuth {
     access_token: string
     refresh_token: string
 }
+// Define the shape of the user data
+export interface UserInfoData {
+    fullName: string
+    email: string
+    phoneNumber: string
+    role: string
+    bio: string
+    skills: string[]
+    experience: number
+    education: string | null
+    cvUrl: string | null
+    status: string
+    createdAt: string
+    location?: string // Optional, as API doesn't provide this yet
+    website?: string // Optional
+    socialLinks?: Record<string, string> // For social media links
+}
 
 // Type definitions
 export interface Freelancer {

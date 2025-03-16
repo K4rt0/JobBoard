@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import LoginModal from './modals/LoginModal'
 import SignupModal from './modals/SignUpModal'
 import { useAuthStore } from '@/store/authStore'
+import { useAuth } from '@/hooks/useAuth'
 
 // Styled-components
 const UserMenu = styled.div`
@@ -159,7 +160,7 @@ const LogoutButton = styled.button`
 `
 
 const Header = () => {
-    const { user, logout } = useAuthStore()
+    const { user, logout } = useAuth()
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
     const [currentPath, setCurrentPath] = useState<string>('')
 
