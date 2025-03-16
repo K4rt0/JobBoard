@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Form } from 'react-bootstrap'
+import { Badge, Form } from 'react-bootstrap'
 import Select from 'react-select'
 import { getSkillsList } from '@/services/skillService' // API lấy danh sách kỹ năng
 
@@ -24,7 +24,7 @@ interface FormFieldsProps {
 }
 
 interface SkillsFormFieldsProps {
-    formData: FormData
+    formData: { skills: string[] }
     handleSkillsChange: (skills: string[]) => void
 }
 
@@ -130,6 +130,14 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
         fetchSkills()
     }, [])
 
+    // Xóa skill khi click vào tag
+    const handleRemoveSkill = (skillToRemove: string) => {
+        const updatedSkills = formData.skills.filter(
+            (skill) => skill !== skillToRemove,
+        )
+        handleSkillsChange(updatedSkills)
+    }
+
     return (
         <Form.Group className="mb-2 position-relative">
             <Form.Label className="fw-bold">
@@ -139,12 +147,10 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
             <Select
                 isMulti
                 options={skillOptions}
-                value={
-                    formData.skills?.map((skill) => ({
-                        value: skill,
-                        label: skill,
-                    })) || []
-                }
+                value={formData.skills.map((skill) => ({
+                    value: skill,
+                    label: skill,
+                }))}
                 onChange={(selectedOptions) =>
                     handleSkillsChange(
                         selectedOptions.map((option) => option.value),
@@ -156,6 +162,22 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
             <small className="text-muted">
                 Select skills from the list or type to search
             </small>
+
+            {/* Hiển thị danh sách skill dưới dạng tag */}
+            <div className="mt-3">
+                {formData.skills.map((skill, index) => (
+                    <Badge
+                        key={index}
+                        pill
+                        bg="primary"
+                        className="me-2 mb-2"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleRemoveSkill(skill)}
+                    >
+                        {skill} ✕
+                    </Badge>
+                ))}
+            </div>
         </Form.Group>
     )
 }
