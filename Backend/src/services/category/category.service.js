@@ -29,6 +29,9 @@ const get_all_categories = async () => {
 
 const get_category_by_id = async (id) => {
   try {
+    const category = await category_model.find_category_by_id(id);
+    if (!category) throw new Error("Danh mục này không tồn tại !");
+
     return await category_model.find_category_by_id(id);
   } catch (error) {
     throw error;

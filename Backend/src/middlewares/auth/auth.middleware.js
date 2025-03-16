@@ -19,7 +19,6 @@ const jwt_auth = (is_admin = false) => {
         status_code: StatusCodes.UNAUTHORIZED,
         message: "Token không hợp lệ !",
       });
-
     try {
       if (!is_admin) {
         const decoded = jwt.verify(token, env.JWT_SECRET);
