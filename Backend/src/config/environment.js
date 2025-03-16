@@ -11,4 +11,6 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: "1y",
   ADMIN_USER: process.env.ADMIN_USER,
   ADMIN_PWD: process.env.ADMIN_PWD,
+  IMGUR_CLIENT_ID: process.env.IMGUR_CLIENT_ID,
+  IMGUR_CLIENT_SECRET: process.env.IMGUR_CLIENT_SECRET,
 };

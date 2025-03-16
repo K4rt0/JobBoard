@@ -96,9 +96,14 @@ const update_user = async (req, res, next) => {
       "date.base": "Ngày sinh không hợp lệ !",
     }),
 
-    avatar_url: Joi.string().uri().default(null).messages({
-      "string.uri": "Avatar URL không hợp lệ !",
-    }),
+    avatar: Joi.object({
+      url: Joi.string().uri().default(null),
+      delete_hash: Joi.string().default(null),
+    })
+      .default({ url: null, delete_hash: null })
+      .messages({
+        "object.base": "Avatar phải là object !",
+      }),
     bio: Joi.string().max(500).default(null).messages({
       "string.max": "Bio không được vượt quá {#limit} ký tự !",
     }),

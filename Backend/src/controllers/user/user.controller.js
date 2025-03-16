@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { user_service } from "~/services/account/user.service";
+import { user_service } from "~/services/user/user.service";
 
 // Admin
 const get_user = async (req, res, next) => {
@@ -104,7 +104,7 @@ const change_user_password = async (req, res, next) => {
 
 const update_user = async (req, res, next) => {
   try {
-    const result = await user_service.update_user(req._id, req.body);
+    const result = await user_service.update_user(req._id, req.body, req.files && req.files.avatar ? req.files.avatar : null);
 
     res.status(StatusCodes.OK).json({
       message: "Cập nhật thông tin người dùng thành công !",
