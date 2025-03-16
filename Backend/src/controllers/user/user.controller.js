@@ -13,7 +13,7 @@ const get_user = async (req, res, next) => {
         message: "Không tìm thấy người dùng !",
         data: result,
       });
-
+    console.log(user_id);
     const result = await user_service.get_user_by_id(user_id);
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",

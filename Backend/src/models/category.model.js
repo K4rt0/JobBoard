@@ -36,18 +36,7 @@ const find_all_categories_pagination = async (page = 1, limit = 10) => {
 
     const categories = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
-      .aggregate([
-        { $skip: skip },
-        { $limit: limit },
-        {
-          $lookup: {
-            from: "skills",
-            localField: "_id",
-            foreignField: "category_id",
-            as: "skills",
-          },
-        },
-      ])
+      .aggregate([{ $skip: skip }, { $limit: limit }])
       .toArray();
 
     const totalPages = Math.ceil(total / limit);
