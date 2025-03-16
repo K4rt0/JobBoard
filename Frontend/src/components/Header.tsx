@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import LoginModal from './modals/LoginModal'
 import SignupModal from './modals/SignUpModal'
 import { useAuthStore } from '@/store/authStore'
+import { useAuth } from '@/hooks/useAuth'
 
 // Styled-components
 const UserMenu = styled.div`
@@ -10,11 +11,17 @@ const UserMenu = styled.div`
     display: inline-block;
 `
 
+const UserInfoWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+`
+
 const Avatar = styled.img`
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    cursor: pointer;
+    margin-right: 8px;
 `
 
 const AvatarFallback = styled.span`
@@ -26,7 +33,28 @@ const AvatarFallback = styled.span`
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    margin-right: 8px;
+`
+
+const UserDetails = styled.div`
+    display: flex;
+    flex-direction: column;
+`
+
+const FullName = styled.span`
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+`
+
+const Role = styled.span`
+    font-size: 12px;
+    color: #dc3545;
+    line-height: 1.2;
 `
 
 const UserDropdown = styled.div`
@@ -127,13 +155,28 @@ const LogoutButton = styled.button`
     i {
         margin-right: 8px;
         font-size: 16px;
-        color: #dc3545; /* Đồng bộ màu đỏ với chữ Logout */
+        color: #dc3545;
     }
 `
 
 const Header = () => {
-    const { user, logout } = useAuthStore()
+    const { user, logout } = useAuth()
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+    const [currentPath, setCurrentPath] = useState<string>('')
+
+    useEffect(() => {
+        // Lấy đường dẫn hiện tại khi component mount
+        setCurrentPath(window.location.pathname)
+
+        // Cập nhật currentPath khi người dùng chuyển trang (dùng event popstate)
+        const handlePathChange = () => {
+            setCurrentPath(window.location.pathname)
+        }
+        window.addEventListener('popstate', handlePathChange)
+
+        // Cleanup listener
+        return () => window.removeEventListener('popstate', handlePathChange)
+    }, [])
 
     useEffect(() => {
         if (user) {
@@ -183,35 +226,132 @@ const Header = () => {
                                             id="nav"
                                             className="navbar-nav ml-auto"
                                         >
-                                            <li className="nav-item">
-                                                <a href="/" className="active">
+                                            <li
+                                                className={`nav-item ${currentPath === '/' ? 'active' : ''}`}
+                                            >
+                                                <a
+                                                    href="/"
+                                                    className={
+                                                        currentPath === '/'
+                                                            ? 'active'
+                                                            : ''
+                                                    }
+                                                >
                                                     Home
                                                 </a>
                                             </li>
-                                            <li className="nav-item">
-                                                <a>Hire Freelancers</a>
+                                            <li
+                                                className={`nav-item ${
+                                                    currentPath ===
+                                                        '/freelancer-marketplace' ||
+                                                    currentPath === '/post-job'
+                                                        ? 'active'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <a
+                                                    className={
+                                                        currentPath ===
+                                                            '/freelancer-marketplace' ||
+                                                        currentPath ===
+                                                            '/post-job'
+                                                            ? 'active'
+                                                            : ''
+                                                    }
+                                                >
+                                                    Hire Freelancers
+                                                </a>
                                                 <ul className="sub-menu">
-                                                    <li>
-                                                        <a href="/freelancer-marketplace">
+                                                    <li
+                                                        className={
+                                                            currentPath ===
+                                                            '/freelancer-marketplace'
+                                                                ? 'active'
+                                                                : ''
+                                                        }
+                                                    >
+                                                        <a
+                                                            href="/freelancer-marketplace"
+                                                            className={
+                                                                currentPath ===
+                                                                '/freelancer-marketplace'
+                                                                    ? 'active'
+                                                                    : ''
+                                                            }
+                                                        >
                                                             Find Freelancers
                                                         </a>
                                                     </li>
-                                                    <li>
-                                                        <a href="/post-job">
+                                                    <li
+                                                        className={
+                                                            currentPath ===
+                                                            '/post-job'
+                                                                ? 'active'
+                                                                : ''
+                                                        }
+                                                    >
+                                                        <a
+                                                            href="/post-job"
+                                                            className={
+                                                                currentPath ===
+                                                                '/post-job'
+                                                                    ? 'active'
+                                                                    : ''
+                                                            }
+                                                        >
                                                             Post a Job
                                                         </a>
                                                     </li>
                                                 </ul>
                                             </li>
-                                            <li className="nav-item">
-                                                <a>Find Jobs</a>
+                                            <li
+                                                className={`nav-item ${currentPath === '/jobs' ? 'active' : ''}`}
+                                            >
+                                                <a
+                                                    className={
+                                                        currentPath === '/jobs'
+                                                            ? 'active'
+                                                            : ''
+                                                    }
+                                                >
+                                                    Find Jobs
+                                                </a>
                                                 <ul className="sub-menu">
-                                                    <li>
-                                                        <a href="/jobs">
+                                                    <li
+                                                        className={
+                                                            currentPath ===
+                                                            '/jobs'
+                                                                ? 'active'
+                                                                : ''
+                                                        }
+                                                    >
+                                                        <a
+                                                            href="/jobs"
+                                                            className={
+                                                                currentPath ===
+                                                                '/jobs'
+                                                                    ? 'active'
+                                                                    : ''
+                                                            }
+                                                        >
                                                             Find Jobs
                                                         </a>
                                                     </li>
                                                 </ul>
+                                            </li>
+                                            <li
+                                                className={`nav-item ${currentPath === '/faq' ? 'active' : ''}`}
+                                            >
+                                                <a
+                                                    href="/faq"
+                                                    className={
+                                                        currentPath === '/faq'
+                                                            ? 'active'
+                                                            : ''
+                                                    }
+                                                >
+                                                    FAQ
+                                                </a>
                                             </li>
                                         </ul>
                                     </div>
@@ -219,18 +359,32 @@ const Header = () => {
                                     <div className="button">
                                         {isLoggedIn && user ? (
                                             <UserMenu>
-                                                {user.avatar_url ? (
-                                                    <Avatar
-                                                        src={user.avatar_url}
-                                                        alt="Avatar"
-                                                    />
-                                                ) : (
-                                                    <AvatarFallback>
-                                                        {user.full_name?.charAt(
-                                                            0,
-                                                        ) || 'U'}
-                                                    </AvatarFallback>
-                                                )}
+                                                <UserInfoWrapper>
+                                                    {user.avatar_url ? (
+                                                        <Avatar
+                                                            src={
+                                                                user.avatar_url
+                                                            }
+                                                            alt="Avatar"
+                                                        />
+                                                    ) : (
+                                                        <AvatarFallback>
+                                                            {user.full_name?.charAt(
+                                                                0,
+                                                            ) || 'U'}
+                                                        </AvatarFallback>
+                                                    )}
+                                                    <UserDetails>
+                                                        <FullName>
+                                                            {user.full_name ||
+                                                                'User'}
+                                                        </FullName>
+                                                        <Role>
+                                                            {user.role ||
+                                                                'Member'}
+                                                        </Role>
+                                                    </UserDetails>
+                                                </UserInfoWrapper>
                                                 <UserDropdown>
                                                     <Email>
                                                         <i className="lni lni-envelope"></i>
