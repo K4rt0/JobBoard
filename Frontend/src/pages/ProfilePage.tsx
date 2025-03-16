@@ -1,7 +1,67 @@
 import DashboardSidebar from '@/components/sidebars/DashboardSidebar'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { getCurrentUser, updateUserProfile } from '@/services/userService'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '@/hooks/useAuth'
+import { UserInfoData } from '@/interfaces'
+import { Button } from 'react-bootstrap'
+import FormModal from '@/components/modals/FormModal'
+import {
+    ContactFormFields,
+    BioFormFields,
+    SkillsFormFields,
+    ExperienceFormFields,
+    EducationFormFields,
+} from '@/components/forms/ProfileFormFields'
 
-const ProfilePage = () => {
+// Định nghĩa kiểu cho Modal
+interface ModalConfigItem {
+    title: string
+    icon: string
+    component: React.ComponentType<any>
+}
+
+// Định nghĩa kiểu cho danh sách Modal
+type ModalConfig = {
+    [key in
+        | 'contact'
+        | 'bio'
+        | 'skills'
+        | 'experience'
+        | 'education']: ModalConfigItem
+}
+
+// Kiểu dữ liệu cho `showModal`
+type ModalType = keyof ModalConfig | null
+
+const ProfilePage: React.FC = () => {
+    const [userData, setUserData] = useState<UserInfoData>({
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        role: '',
+        bio: '',
+        skills: [],
+        experience: 0,
+        education: null,
+        cvUrl: null,
+        status: '',
+        createdAt: '',
+        location: '',
+        website: '',
+        socialLinks: {},
+    })
+
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState<boolean>(true)
+    const { user } = useAuth()
+    const accessToken = user?.access_token
+
+    // State cho modal
+    const [showModal, setShowModal] = useState<ModalType>(null)
+    const [formData, setFormData] = useState<Partial<UserInfoData>>({})
+
     const menuItems = [
         {
             label: 'My Resume',
@@ -35,34 +95,173 @@ const ProfilePage = () => {
             link: 'change-password',
             icon: 'lni lni-lock',
         },
-        { label: 'Sign Out', link: 'index.html', icon: 'lni lni-upload' },
     ]
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                setLoading(true)
+                if (!accessToken) throw new Error('No access token available')
+
+                localStorage.setItem('accessToken', accessToken)
+                const data = await getCurrentUser()
+
+                const mockSocialLinks = {
+                    facebook: 'https://facebook.com',
+                    twitter: 'https://twitter.com',
+                    linkedin: 'https://linkedin.com',
+                    dribbble: 'https://dribbble.com',
+                    pinterest: 'https://pinterest.com',
+                }
+
+                setUserData((prev) => ({
+                    ...prev,
+                    fullName: data.full_name || 'Unknown User',
+                    email: data.email || '',
+                    phoneNumber: data.phone_number || '',
+                    role: data.role || 'Freelancer',
+                    bio: data.bio || 'No bio available',
+                    skills: data.skills || [],
+                    experience: data.experience || 0,
+                    education: data.education || null,
+                    cvUrl: data.cv_url || null,
+                    status: data.status || 'Active',
+                    createdAt: data.created_at
+                        ? new Date(data.created_at).toLocaleDateString()
+                        : 'N/A',
+                    socialLinks: mockSocialLinks,
+                }))
+            } catch (err) {
+                const errorMessage =
+                    err instanceof Error
+                        ? err.message
+                        : 'Failed to load profile data'
+                setError(errorMessage)
+                toast.error(errorMessage)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchUserProfile()
+    }, [accessToken])
+
+    // Hàm mở modal
+    const handleOpenModal = (
+        section: ModalType,
+        initialData: Partial<UserInfoData> = {},
+    ): void => {
+        setShowModal(section)
+        setFormData(initialData)
+    }
+
+    // Hàm đóng modal
+    const handleCloseModal = (): void => {
+        setShowModal(null)
+        setFormData({})
+    }
+
+    // Xử lý thay đổi input
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ): void => {
+        const { name, value } = e.target
+        setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+
+    // Xử lý thay đổi skill
+    const handleSkillsChange = (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ): void => {
+        const skills = e.target.value
+            .split(',')
+            .map((skill) => skill.trim())
+            .filter((skill) => skill)
+        setFormData((prev) => ({ ...prev, skills }))
+    }
+
+    // Xử lý submit form
+    const handleSubmit = async (): Promise<void> => {
+        try {
+            const updatedData = await updateUserProfile(formData)
+
+            setUserData((prev) => ({
+                ...prev,
+                ...updatedData,
+                createdAt: updatedData.createdAt
+                    ? new Date(updatedData.createdAt).toLocaleDateString()
+                    : prev.createdAt,
+            }))
+
+            toast.success('Profile updated successfully!')
+            handleCloseModal()
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error ? err.message : 'Failed to update profile'
+            toast.error(errorMessage)
+        }
+    }
+
+    if (loading) return <div>Loading profile...</div>
+    if (error) return <div>Error: {error}</div>
+
+    // Modal configurations
+    const modalConfig: ModalConfig = {
+        contact: {
+            title: 'Edit Contact Information',
+            icon: 'lni lni-user',
+            component: ContactFormFields,
+        },
+        bio: {
+            title: 'Edit Bio',
+            icon: 'lni lni-user-alt',
+            component: BioFormFields,
+        },
+        skills: {
+            title: 'Edit Skills',
+            icon: 'lni lni-star',
+            component: SkillsFormFields,
+        },
+        experience: {
+            title: 'Edit Experience',
+            icon: 'lni lni-briefcase',
+            component: ExperienceFormFields,
+        },
+        education: {
+            title: 'Edit Education',
+            icon: 'lni lni-graduation',
+            component: EducationFormFields,
+        },
+    }
+
+    const currentModal = showModal ? modalConfig[showModal] : null
+    const FormComponent = currentModal?.component
 
     return (
         <div className="resume section">
             <div className="container">
                 <div className="resume-inner">
                     <div className="row">
-                        {/* <!-- Start Main Content --> */}
+                        {/* Sidebar */}
                         <div className="col-lg-4 col-12">
                             <DashboardSidebar menuItems={menuItems} />
                         </div>
-                        {/* <!-- End Main Content --> */}
+                        {/* Main Content */}
                         <div className="col-lg-8 col-12">
                             <div className="inner-content">
-                                {/* <!-- Start Personal Top Content --> */}
+                                {/* Personal Info */}
                                 <div className="personal-top-content">
                                     <div className="row">
                                         <div className="col-lg-5 col-md-5 col-12">
                                             <div className="name-head">
                                                 <a
-                                                    className="mb-2"
+                                                    className="mb-2 w-100"
                                                     href="resume.html#"
                                                 >
                                                     <img
-                                                        className="circle-54"
-                                                        src="https://demo.graygrids.com/themes/jobgrids/assets/images/resume/avater.png"
-                                                        alt=""
+                                                        className="circle-54 w-50"
+                                                        src="/assets/images/avatars/unknown.jpg"
+                                                        alt={userData.fullName}
                                                     />
                                                 </a>
                                                 <h4>
@@ -70,7 +269,7 @@ const ProfilePage = () => {
                                                         className="name"
                                                         href="resume.html#"
                                                     >
-                                                        David Henricks
+                                                        {userData.fullName}
                                                     </a>
                                                 </h4>
                                                 <p>
@@ -78,340 +277,362 @@ const ProfilePage = () => {
                                                         className="deg"
                                                         href="resume.html#"
                                                     >
-                                                        Product Designer
+                                                        {userData.role}
                                                     </a>
                                                 </p>
-                                                <ul className="social">
-                                                    <li>
-                                                        <a href="resume.html#">
-                                                            <i className="lni lni-facebook-original"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="resume.html#">
-                                                            <i className="lni lni-twitter-original"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="resume.html#">
-                                                            <i className="lni lni-linkedin-original"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="resume.html#">
-                                                            <i className="lni lni-dribbble"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="resume.html#">
-                                                            <i className="lni lni-pinterest"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
+                                                {userData.socialLinks &&
+                                                Object.keys(
+                                                    userData.socialLinks,
+                                                ).length > 0 ? (
+                                                    <ul className="social">
+                                                        {Object.entries(
+                                                            userData.socialLinks,
+                                                        ).map(
+                                                            ([
+                                                                platform,
+                                                                link,
+                                                            ]) => (
+                                                                <li
+                                                                    key={
+                                                                        platform
+                                                                    }
+                                                                >
+                                                                    <a
+                                                                        href={
+                                                                            link
+                                                                        }
+                                                                    >
+                                                                        <i
+                                                                            className={`lni lni-${platform}-original`}
+                                                                        ></i>
+                                                                    </a>
+                                                                </li>
+                                                            ),
+                                                        )}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="font-size-4 mb-8">
+                                                        No social links
+                                                        available
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="col-lg-7 col-md-7 col-12">
                                             <div className="content-right">
                                                 <h5 className="title-main">
                                                     Contact Info
+                                                    <Button
+                                                        variant="link"
+                                                        onClick={() =>
+                                                            handleOpenModal(
+                                                                'contact',
+                                                                {
+                                                                    email: userData.email,
+                                                                    phoneNumber:
+                                                                        userData.phoneNumber,
+                                                                    location:
+                                                                        userData.location,
+                                                                    website:
+                                                                        userData.website,
+                                                                },
+                                                            )
+                                                        }
+                                                        className="p-0 ms-2"
+                                                    >
+                                                        <i className="lni lni-pencil"></i>
+                                                    </Button>
                                                 </h5>
-                                                {/* <!-- Single List --> */}
                                                 <div className="single-list">
                                                     <h5 className="title">
                                                         Location
                                                     </h5>
-                                                    <p>New York , USA</p>
+                                                    <p>
+                                                        {userData.location ||
+                                                            'No data available'}
+                                                    </p>
                                                 </div>
-                                                {/* <!-- Single List/ */}
                                                 <div className="single-list">
                                                     <h5 className="title">
                                                         E-mail
                                                     </h5>
-                                                    <p>youremail@gmail.com</p>
+                                                    <p>
+                                                        {userData.email ||
+                                                            'No data available'}
+                                                    </p>
                                                 </div>
-                                                {/* <!-- Single List -->
-                                            <!-- Single List --> */}
                                                 <div className="single-list">
                                                     <h5 className="title">
                                                         Phone
                                                     </h5>
-                                                    <p>+999 565 562</p>
+                                                    <p>
+                                                        {userData.phoneNumber ||
+                                                            'No data available'}
+                                                    </p>
                                                 </div>
-                                                {/* <!-- Single List -->
-                                            <!-- Single List --> */}
                                                 <div className="single-list">
                                                     <h5 className="title">
                                                         Website Linked
                                                     </h5>
-                                                    <p>
-                                                        <a href="resume.html#">
-                                                            yourwebsite.com
-                                                        </a>
-                                                    </p>
+                                                    {userData.website ? (
+                                                        <p>
+                                                            <a
+                                                                href={
+                                                                    userData.website
+                                                                }
+                                                            >
+                                                                {
+                                                                    userData.website
+                                                                }
+                                                            </a>
+                                                        </p>
+                                                    ) : (
+                                                        <p>No data available</p>
+                                                    )}
                                                 </div>
-                                                {/* <!-- Single List --> */}
+                                                <div className="single-list">
+                                                    <h5 className="title">
+                                                        CV
+                                                    </h5>
+                                                    {userData.cvUrl ? (
+                                                        <p>
+                                                            <a
+                                                                href={
+                                                                    userData.cvUrl
+                                                                }
+                                                            >
+                                                                Download CV
+                                                            </a>
+                                                        </p>
+                                                    ) : (
+                                                        <p>No data available</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                {/* <!-- End Persona/e Section --> */}
+                                {/* About Section */}
                                 <div className="single-section">
-                                    <h4>About</h4>
+                                    <h4>
+                                        About
+                                        <Button
+                                            variant="link"
+                                            onClick={() =>
+                                                handleOpenModal('bio', {
+                                                    bio: userData.bio,
+                                                })
+                                            }
+                                            className="p-0 ms-2"
+                                        >
+                                            <i className="lni lni-pencil"></i>
+                                        </Button>
+                                    </h4>
+                                    {userData.bio &&
+                                    userData.bio !== 'No bio available' ? (
+                                        <p className="font-size-4 mb-8">
+                                            {userData.bio}
+                                        </p>
+                                    ) : (
+                                        <p className="font-size-4 mb-8">
+                                            No bio available
+                                        </p>
+                                    )}
                                     <p className="font-size-4 mb-8">
-                                        A talented professional with an academic
-                                        background in IT and proven commercial
-                                        development experience as C++ developer
-                                        since 1999. Has a sound knowledge of the
-                                        software development life cycle. Was
-                                        involved in more than 140 software
-                                        development outsourcing projects.
+                                        Account created: {userData.createdAt}
                                     </p>
                                     <p className="font-size-4 mb-8">
-                                        Programming Languages: C/C++, .NET C++,
-                                        Python, Bash, Shell, PERL, Regular
-                                        expressions, Python, Active-script.
+                                        Status: {userData.status}
                                     </p>
                                 </div>
-                                {/* <!-- End Single Section --> */}
-                                {/* <!-- Start Single Section --> */}
+                                {/* Skills Section */}
                                 <div className="single-section skill">
-                                    <h4>Skills</h4>
-                                    <ul className="list-unstyled d-flex align-items-center flex-wrap">
-                                        <li>
-                                            <a href="resume.html#">Agile</a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Wireframing
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Prototyping
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Information
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Waterfall Model
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                New Layout
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Ui/Ux Design
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Web Design
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="resume.html#">
-                                                Graphics Design
-                                            </a>
-                                        </li>
-                                    </ul>
+                                    <h4>
+                                        Skills
+                                        <Button
+                                            variant="link"
+                                            onClick={() =>
+                                                handleOpenModal('skills', {
+                                                    skills: userData.skills,
+                                                })
+                                            }
+                                            className="p-0 ms-2"
+                                        >
+                                            <i className="lni lni-pencil"></i>
+                                        </Button>
+                                    </h4>
+                                    {userData.skills.length > 0 ? (
+                                        <ul className="list-unstyled d-flex align-items-center flex-wrap">
+                                            {userData.skills.map(
+                                                (skill, index) => (
+                                                    <li key={index}>
+                                                        <a href="resume.html#">
+                                                            {skill}
+                                                        </a>
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    ) : (
+                                        <p className="font-size-4 mb-8">
+                                            No skills available
+                                        </p>
+                                    )}
                                 </div>
-                                {/* <!-- End Single Section --> */}
-                                {/* <!-- Start Single Section --> */}
+                                {/* Experience Section */}
                                 <div className="single-section exprerience">
-                                    <h4>Work Exprerience</h4>
-                                    {/* <!-- Single Exp --> */}
-                                    <div className="single-exp mb-30">
-                                        <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
-                                            <div className="image">
-                                                <img
-                                                    src="assets/images/resume/work1.png"
-                                                    alt="#"
-                                                />
-                                            </div>
-                                            <div className="w-100 mt-n2">
-                                                <h3 className="mb-0">
-                                                    <a href="resume.html#">
-                                                        Lead Product Designer
-                                                    </a>
-                                                </h3>
-                                                <a href="resume.html#">
-                                                    Airabnb
-                                                </a>
-                                                <div className="d-flex align-items-center justify-content-md-between flex-wrap">
-                                                    <a href="resume.html#">
-                                                        Jun 2020 - April 2023- 3
-                                                        years
-                                                    </a>
-                                                    <a
-                                                        href="resume.html#"
-                                                        className="font-size-3 text-gray"
-                                                    >
-                                                        <span
-                                                            className="mr-2"
-                                                            style={{
-                                                                marginTop:
-                                                                    '-2px',
-                                                            }}
+                                    <h4>
+                                        Work Experience
+                                        <Button
+                                            variant="link"
+                                            onClick={() =>
+                                                handleOpenModal('experience', {
+                                                    experience:
+                                                        userData.experience,
+                                                })
+                                            }
+                                            className="p-0 ms-2"
+                                        >
+                                            <i className="lni lni-pencil"></i>
+                                        </Button>
+                                    </h4>
+                                    {userData.experience > 0 ? (
+                                        <div className="single-exp mb-30">
+                                            <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
+                                                <div className="image">
+                                                    <img
+                                                        src="assets/images/resume/work1.png"
+                                                        alt="#"
+                                                    />
+                                                </div>
+                                                <div className="w-100 mt-n2">
+                                                    <h3 className="mb-0">
+                                                        <a href="resume.html#">
+                                                            Experience
+                                                        </a>
+                                                    </h3>
+                                                    <div className="d-flex align-items-center justify-content-md-between flex-wrap">
+                                                        <a href="resume.html#">
+                                                            {
+                                                                userData.experience
+                                                            }{' '}
+                                                            years
+                                                        </a>
+                                                        <a
+                                                            href="resume.html#"
+                                                            className="font-size-3 text-gray"
                                                         >
-                                                            <i className="lni lni-map-marker"></i>
-                                                        </span>
-                                                        New York, USA
-                                                    </a>
+                                                            <span
+                                                                className="mr-2"
+                                                                style={{
+                                                                    marginTop:
+                                                                        '-2px',
+                                                                }}
+                                                            >
+                                                                <i className="lni lni-map-marker"></i>
+                                                            </span>
+                                                            {userData.location ||
+                                                                'No data available'}
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* <!-- End Single Exp --> */}
-                                    {/* <!-- Single Exp --> */}
-                                    <div className="single-exp mb-30">
-                                        <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
-                                            <div className="image">
-                                                <img
-                                                    src="assets/images/resume/work2.png"
-                                                    alt="#"
-                                                />
-                                            </div>
-                                            <div className="w-100 mt-n2">
-                                                <h3 className="mb-0">
-                                                    <a href="resume.html#">
-                                                        Senior UI/UX Designer
-                                                    </a>
-                                                </h3>
-                                                <a href="resume.html#">
-                                                    Google Inc
-                                                </a>
-                                                <div className="d-flex align-items-center justify-content-md-between flex-wrap">
-                                                    <a href="resume.html#">
-                                                        Jun 2020 - April 2023- 3
-                                                        years
-                                                    </a>
-                                                    <a
-                                                        href="resume.html#"
-                                                        className="font-size-3 text-gray"
-                                                    >
-                                                        <span
-                                                            className="mr-2"
-                                                            style={{
-                                                                marginTop:
-                                                                    '-2px',
-                                                            }}
-                                                        >
-                                                            <i className="lni lni-map-marker"></i>
-                                                        </span>
-                                                        New York, USA
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* <!-- End Single Exp --> */}
+                                    ) : (
+                                        <p className="font-size-4 mb-8">
+                                            No experience available
+                                        </p>
+                                    )}
                                 </div>
-                                {/* <!-- End Single Section --> */}
-                                {/* <!-- Start Single Section --> */}
+                                {/* Education Section */}
                                 <div className="single-section education">
-                                    <h4>Education</h4>
-                                    {/* <!-- Sing/le Edu --> */}
-                                    <div className="single-edu mb-30">
-                                        <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
-                                            <div className="image">
-                                                <img
-                                                    src="assets/images/resume/edu1.svg"
-                                                    alt="#"
-                                                />
-                                            </div>
-                                            <div className="w-100 mt-n2">
-                                                <h3 className="mb-0">
-                                                    <a href="resume.html#">
-                                                        Masters in Art Design
-                                                    </a>
-                                                </h3>
-                                                <a href="resume.html#">
-                                                    Harvard University
-                                                </a>
-                                                <div className="d-flex align-items-center justify-content-md-between flex-wrap">
-                                                    <a href="resume.html#">
-                                                        Jun 2020 - April 2023- 3
-                                                        years
-                                                    </a>
-                                                    <a
-                                                        href="resume.html#"
-                                                        className="font-size-3 text-gray"
-                                                    >
-                                                        <span
-                                                            className="mr-2"
-                                                            style={{
-                                                                marginTop:
-                                                                    '-2px',
-                                                            }}
+                                    <h4>
+                                        Education
+                                        <Button
+                                            variant="link"
+                                            onClick={() =>
+                                                handleOpenModal('education', {
+                                                    education:
+                                                        userData.education,
+                                                })
+                                            }
+                                            className="p-0 ms-2"
+                                        >
+                                            <i className="lni lni-pencil"></i>
+                                        </Button>
+                                    </h4>
+                                    {userData.education ? (
+                                        <div className="single-edu mb-30">
+                                            <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
+                                                <div className="image">
+                                                    <img
+                                                        src="assets/images/resume/edu1.svg"
+                                                        alt="#"
+                                                    />
+                                                </div>
+                                                <div className="w-100 mt-n2">
+                                                    <h3 className="mb-0">
+                                                        <a href="resume.html#">
+                                                            {userData.education}
+                                                        </a>
+                                                    </h3>
+                                                    <div className="d-flex align-items-center justify-content-md-between flex-wrap">
+                                                        <a href="resume.html#">
+                                                            N/A
+                                                        </a>
+                                                        <a
+                                                            href="resume.html#"
+                                                            className="font-size-3 text-gray"
                                                         >
-                                                            <i className="lni lni-map-marker"></i>
-                                                        </span>
-                                                        Brylin, USA
-                                                    </a>
+                                                            <span
+                                                                className="mr-2"
+                                                                style={{
+                                                                    marginTop:
+                                                                        '-2px',
+                                                                }}
+                                                            >
+                                                                <i className="lni lni-map-marker"></i>
+                                                            </span>
+                                                            {userData.location ||
+                                                                'No data available'}
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* <!-- End Single Edu --> */}
-                                    {/* <!-- Single Edu --> */}
-                                    <div className="single-edu mb-30">
-                                        <div className="d-flex align-items-center pr-11 mb-9 flex-wrap flex-sm-nowrap">
-                                            <div className="image">
-                                                <img
-                                                    src="assets/images/resume/edu2.svg"
-                                                    alt="#"
-                                                />
-                                            </div>
-                                            <div className="w-100 mt-n2">
-                                                <h3 className="mb-0">
-                                                    <a href="resume.html#">
-                                                        Bachelor in Software
-                                                        Engineering
-                                                    </a>
-                                                </h3>
-                                                <a href="resume.html#">
-                                                    Manipal Institute of
-                                                    Technology
-                                                </a>
-                                                <div className="d-flex align-items-center justify-content-md-between flex-wrap">
-                                                    <a href="resume.html#">
-                                                        Fed 2019 - April 2023 -
-                                                        4 years{' '}
-                                                    </a>
-                                                    <a
-                                                        href="resume.html#"
-                                                        className="font-size-3 text-gray"
-                                                    >
-                                                        <span
-                                                            className="mr-2"
-                                                            style={{
-                                                                marginTop:
-                                                                    '-2px',
-                                                            }}
-                                                        >
-                                                            <i className="lni lni-map-marker"></i>
-                                                        </span>
-                                                        New York, USA
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* <!-- End Single Edu --> */}
+                                    ) : (
+                                        <p className="font-size-4 mb-8">
+                                            No education available
+                                        </p>
+                                    )}
                                 </div>
-                                {/* <!-- End Single Section --> */}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {showModal && currentModal && (
+                <FormModal
+                    show={!!showModal}
+                    onHide={handleCloseModal}
+                    onSubmit={handleSubmit}
+                    title={currentModal.title}
+                    icon={currentModal.icon}
+                >
+                    {FormComponent && (
+                        <FormComponent
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleSkillsChange={
+                                showModal === 'skills'
+                                    ? handleSkillsChange
+                                    : undefined
+                            }
+                        />
+                    )}
+                </FormModal>
+            )}
         </div>
     )
 }

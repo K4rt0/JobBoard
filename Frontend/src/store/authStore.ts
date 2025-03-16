@@ -5,18 +5,21 @@ import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
 import { UserAuth } from '@/interfaces'
 import { refresh_token } from '@/services/axiosInstance'
+import { getCurrentUser } from '@/services/userService'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 interface AuthState {
     user: UserAuth | null
-    login: (username: string, password: string) => Promise<void>
+    login: (email: string, password: string) => Promise<boolean>
     register: (
         full_name: string,
         email: string,
         password: string,
-    ) => Promise<void>
-    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<void>
-    refreshaccess_token: () => Promise<void>
-    fetchUserProfile: () => Promise<void> // Thêm hàm lấy thông tin người dùng
+    ) => Promise<boolean>
+    loginWithGoogle: (tokenResponse: TokenResponse) => Promise<boolean>
+    refreshAccessToken: () => Promise<void>
+    fetchUserProfile: () => Promise<void>
     logout: () => void
 }
 
@@ -36,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
             user: null,
 
             /**
-             * Đăng nhập với username/password
+             * Đăng nhập với email/password
              */
             login: async (email, password) => {
                 try {
@@ -50,13 +53,19 @@ export const useAuthStore = create<AuthState>()(
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
 
-                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng nhập
                     await get().fetchUserProfile()
+                    return true // Đăng nhập thành công
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        throw error.response?.data?.message || 'Login failed'
+                        console.log(error)
+
+                        const errorMessage =
+                            error.response?.data?.message ||
+                            'Invalid email or password!'
+                        toast.error(errorMessage)
+                        return false
                     }
-                    throw new Error('An unexpected error occurred')
+                    return false
                 }
             },
 
@@ -65,30 +74,24 @@ export const useAuthStore = create<AuthState>()(
              */
             register: async (full_name, email, password) => {
                 try {
-                    const response = await registerApi({
-                        full_name,
-                        email,
-                        password,
-                    })
-                    const userData: UserAuth = {
-                        id: response.data.id,
-                        access_token: response.data.access_token,
-                        refresh_token: response.data.refresh_token,
+                    await registerApi({ full_name, email, password })
+
+                    const success = await get().login(email, password)
+                    if (success) {
+                        toast.success('Account created successfully!')
+                        return true
                     }
-
-                    set({ user: userData })
-                    setAuthHeader(userData.access_token)
-
-                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng ký
-                    await get().fetchUserProfile()
+                    return false
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        throw (
+                        toast.error(
                             error.response?.data?.message ||
-                            'Registration failed'
+                                'Registration failed',
                         )
+                    } else {
+                        toast.error('An unexpected error occurred')
                     }
-                    throw new Error('An unexpected error occurred')
+                    return false
                 }
             },
 
@@ -98,9 +101,10 @@ export const useAuthStore = create<AuthState>()(
             loginWithGoogle: async (tokenResponse: TokenResponse) => {
                 try {
                     if (!tokenResponse.access_token) {
-                        throw new Error(
+                        toast.error(
                             'Google login failed. No access token received.',
                         )
+                        return false
                     }
 
                     const response = await loginGoogleApi(
@@ -115,17 +119,20 @@ export const useAuthStore = create<AuthState>()(
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
 
-                    // Gọi hàm lấy thông tin chi tiết ngay sau khi đăng nhập bằng Google
                     await get().fetchUserProfile()
+                    toast.success('Google login successful!')
+
+                    return true
                 } catch (error) {
-                    throw new Error('Google login failed. Try again!')
+                    toast.error('Google login failed. Please try again.')
+                    return false
                 }
             },
 
             /**
              * Refresh Access Token bằng Refresh Token
              */
-            refreshaccess_token: async () => {
+            refreshAccessToken: async () => {
                 try {
                     const user = get().user
                     if (!user || !user.refresh_token) {
@@ -133,17 +140,16 @@ export const useAuthStore = create<AuthState>()(
                     }
 
                     await refresh_token()
-
-                    // Có thể gọi lại fetchUserProfile nếu cần cập nhật thông tin
                     await get().fetchUserProfile()
                 } catch (error) {
                     console.error('Refresh token failed:', error)
-                    get().logout()
+                    toast.error('Session expired. Please log in again.')
+                    get().logout() // Tự động logout nếu refresh token thất bại
                 }
             },
 
             /**
-             * Lấy thông tin chi tiết người dùng từ ID
+             * Lấy thông tin chi tiết người dùng
              */
             fetchUserProfile: async () => {
                 try {
@@ -152,32 +158,25 @@ export const useAuthStore = create<AuthState>()(
                         throw new Error('User not authenticated')
                     }
 
-                    // Gọi API lấy thông tin người dùng
-                    const response = await axios.get(
-                        `${process.env.REACT_APP_BASE_API_URL}/user/profile`, // Hoặc `/users/${user.id}`
-                        {
-                            headers: {
-                                Authorization: `Bearer ${user.access_token}`,
-                            },
-                        },
-                    )
+                    const response = await getCurrentUser()
+                    const profileData = response
 
-                    const profileData = response.data
-
-                    // Cập nhật user trong store với thông tin đầy đủ
                     set((state) => ({
                         user: state.user
                             ? {
                                   ...state.user,
-                                  full_name: profileData.data.full_name,
-                                  email: profileData.data.email,
-                                  avatar: profileData.data.avatar,
+                                  full_name: profileData.full_name,
+                                  email: profileData.email,
+                                  avatar: profileData.avatar,
+                                  role: profileData.role,
                               }
                             : null,
                     }))
                 } catch (error) {
                     console.error('Failed to fetch user profile:', error)
-                    throw error // Có thể xử lý lỗi ở nơi gọi hàm nếu cần
+                    toast.error(
+                        'Failed to fetch user profile. Please try again.',
+                    )
                 }
             },
 
@@ -187,6 +186,7 @@ export const useAuthStore = create<AuthState>()(
             logout: () => {
                 set({ user: null })
                 setAuthHeader(null)
+                toast.success('Logged out successfully.')
             },
         }),
         {

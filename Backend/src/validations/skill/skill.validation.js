@@ -1,12 +1,13 @@
 import Joi from "joi";
 
-const create_category = async (req, res, next) => {
+const create_skill = async (req, res, next) => {
   const schema = Joi.object({
-    name: Joi.string().required().min(2).max(50).trim().strict(),
+    name: Joi.string().required().max(50).trim().strict(),
     description: Joi.string().max(200),
+
     skills: Joi.array().items(
       Joi.object({
-        name: Joi.string().required().min(2).max(50).trim().strict(),
+        name: Joi.string().required().max(50).trim().strict(),
         description: Joi.string().max(200),
       })
     ),
@@ -20,7 +21,7 @@ const create_category = async (req, res, next) => {
   }
 };
 
-const get_all_categories = async (req, res, next) => {
+const get_all_skills_pagination = async (req, res, next) => {
   const schema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
@@ -34,16 +35,10 @@ const get_all_categories = async (req, res, next) => {
   }
 };
 
-const update_category = async (req, res, next) => {
+const update_skill = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string().min(2).max(50).trim().strict(),
     description: Joi.string().max(200),
-    skills: Joi.array().items(
-      Joi.object({
-        name: Joi.string().required().min(2).max(50).trim().strict(),
-        description: Joi.string().max(200),
-      })
-    ),
   });
 
   try {
@@ -54,8 +49,21 @@ const update_category = async (req, res, next) => {
   }
 };
 
-export const category_validation = {
-  create_category,
-  get_all_categories,
-  update_category,
+const delete_skill = async (req, res, next) => {
+  const schema = Joi.object({
+    id: Joi.string().hex().length(24).required(),
+  });
+  try {
+    await schema.validateAsync(req.params);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const skill_validation = {
+  create_skill,
+  get_all_skills_pagination,
+  update_skill,
+  delete_skill,
 };

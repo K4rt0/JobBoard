@@ -34,27 +34,30 @@ const create_user = async (req, res, next) => {
   }
 };
 
-const login_user = async (req, res, next) => {
+const get_all_users = async (req, res, next) => {
   const schema = Joi.object({
-    email: Joi.string().required().email().trim().strict(),
-    password: Joi.string().required().trim().strict(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid("Active", "Deleted", "Blocked"),
+    role: Joi.string().valid("All", "Freelancer", "Employer"),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    search: Joi.string(),
   });
-
   try {
-    await schema.validateAsync(req.body);
+    await schema.validateAsync(req.query, { abortEarly: false });
     next();
   } catch (error) {
     next(error);
   }
 };
 
-const refresh_token = async (req, res, next) => {
+const update_user_status = async (req, res, next) => {
   const schema = Joi.object({
-    refresh_token: Joi.string().required(),
+    status: Joi.string().valid("Active", "Deleted", "Blocked").required(),
   });
 
   try {
-    await schema.validateAsync(req.body);
+    await schema.validateAsync(req.body, { abortEarly: false });
     next();
   } catch (error) {
     next(error);
@@ -63,6 +66,6 @@ const refresh_token = async (req, res, next) => {
 
 export const user_validation = {
   create_user,
-  login_user,
-  refresh_token,
+  get_all_users,
+  update_user_status,
 };

@@ -14,7 +14,6 @@ type DashboardSidebarProps = {
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ menuItems }) => {
     const location = useLocation()
-    console.log(location.pathname)
 
     return (
         <div className="dashbord-sidebar">

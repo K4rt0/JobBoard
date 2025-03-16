@@ -1,7 +1,5 @@
 import { user_model } from "~/models/user.model";
 import bcrypt from "bcrypt";
-import { env } from "~/config/environment";
-import jwt from "jsonwebtoken";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { ObjectId } from "mongodb";
@@ -19,26 +17,6 @@ const create_user = async (data) => {
 
     const user = await user_model.create_user(user_data);
     return user;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const login_user = async ({ email, password }) => {
-  try {
-    const user = await user_model.find_user({ email }, false);
-    if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
-    const is_password_valid = await bcrypt.compare(password, user.password);
-
-    if (!is_password_valid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
-
-    const _id = user._id.toString();
-    const access_token = jwt.sign({ _id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
-    const refresh_token = jwt.sign({ _id }, env.JWT_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
-
-    await user_model.update_user(_id, { refresh_token: refresh_token });
-
-    return { _id, access_token, refresh_token };
   } catch (error) {
     throw error;
   }
@@ -72,19 +50,8 @@ const get_all_users = async () => {
   }
 };
 
-const logout_user = async (user_id) => {
-  try {
-    await user_model.update_user(user_id, { refresh_token: null });
-    return { message: "Đăng xuất thành công !" };
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const user_service = {
   create_user,
-  login_user,
-  logout_user,
   get_user_by_id,
   get_all_users,
 };
