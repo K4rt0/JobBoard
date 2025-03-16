@@ -11,7 +11,10 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   birth_date: Joi.date().default(null),
   role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
 
-  avatar_url: Joi.string().uri().default(null),
+  avatar: Joi.object({
+    url: Joi.string().uri().default(null),
+    delete_hash: Joi.string().default(null),
+  }).default({ url: null, delete_hash: null }),
   bio: Joi.string().max(500).default(null),
   education: Joi.string().max(100).default(null),
   experience: Joi.number().min(0).default(0),

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { ObjectId } from "mongodb";
+import { imgur_service } from "~/services/utils/imgur.service";
 
 const create_user = async (data) => {
   try {
@@ -84,10 +85,22 @@ const change_user_password = async (user_id, old_password, new_password, retype_
   }
 };
 
-const update_user = async (user_id, data) => {
+const update_user = async (user_id, data, file) => {
   try {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Không tìm thấy người dùng này trong hệ thống !");
+
+    let avatar = user.avatar || { url: null, delete_hash: null };
+    if (file) {
+      if (avatar.url && avatar.delete_hash) await imgur_service.delete_image(avatar.delete_hash);
+
+      const imgur_result = await imgur_service.upload_image(file);
+      avatar = {
+        url: imgur_result.link,
+        delete_hash: imgur_result.delete_hash,
+      };
+    }
+    data.avatar = avatar;
 
     const result = await user_model.update_user(user_id, data);
 
