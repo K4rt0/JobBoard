@@ -193,7 +193,7 @@ const NavLinkStyled = styled(Link)<{ active: boolean; collapsed: boolean }>`
     transition: all 0.2s ease;
     justify-content: ${({ collapsed }) =>
         collapsed ? 'center' : 'flex-start'};
-    position: relative;
+    position: relativerick;
 
     &:hover {
         background: rgba(32, 66, 227, 0.1);
@@ -431,54 +431,78 @@ const Sidebar: React.FC<SidebarProps> = ({ isAdmin = true }) => {
         ? [
               {
                   to: '/admin/dashboard',
-                  icon: 'lni lni-dashboard',
+                  icon: 'lni lni-dashboard', // Biểu tượng dashboard
                   label: 'Dashboard',
               },
               {
-                  to: '/admin/add-skill',
-                  icon: 'lni lni-plus',
-                  label: 'Add Skill',
+                  to: '/admin/category',
+                  icon: 'lni lni-folder', // Biểu tượng thư mục cho danh mục
+                  label: 'Category List',
               },
               {
-                  to: '/admin/add-job',
-                  icon: 'lni lni-plus',
-                  label: 'Add Job',
+                  to: '/admin/skill',
+                  icon: 'lni lni-list', // Biểu tượng danh sách cho skill list
+                  label: 'Skill List',
+              },
+              {
+                  to: '/admin/job',
+                  icon: 'lni lni-briefcase', // Biểu tượng cặp tài liệu cho job list
+                  label: 'Job List',
               },
               {
                   to: '/admin/manager-users',
-                  icon: 'lni lni-users',
+                  icon: 'lni lni-users', // Biểu tượng nhóm người cho user management
                   label: 'User Management',
               },
-
-              { to: '/admin/settings', icon: 'lni lni-cog', label: 'Settings' },
+              {
+                  to: '/admin/settings',
+                  icon: 'lni lni-cog', // Biểu tượng bánh răng cho settings
+                  label: 'Settings',
+              },
           ]
         : [
-              { to: '/', icon: 'lni lni-home', label: 'Home' },
+              {
+                  to: '/',
+                  icon: 'lni lni-home', // Biểu tượng ngôi nhà cho home
+                  label: 'Home',
+              },
               {
                   to: '/jobs',
-                  icon: 'lni lni-briefcase',
+                  icon: 'lni lni-briefcase', // Biểu tượng cặp tài liệu cho find jobs
                   label: 'Find Jobs',
                   badge: 24,
               },
               {
                   to: '/companies',
-                  icon: 'lni lni-apartment',
+                  icon: 'lni lni-apartment', // Biểu tượng tòa nhà cho companies
                   label: 'Companies',
               },
-              { to: '/profile', icon: 'lni lni-user', label: 'Profile' },
-              { to: '/saved-jobs', icon: 'lni lni-heart', label: 'Saved Jobs' },
-              { to: '/contact', icon: 'lni lni-envelope', label: 'Contact Us' },
+              {
+                  to: '/profile',
+                  icon: 'lni lni-user', // Biểu tượng người dùng cho profile
+                  label: 'Profile',
+              },
+              {
+                  to: '/saved-jobs',
+                  icon: 'lni lni-heart', // Biểu tượng trái tim cho saved jobs
+                  label: 'Saved Jobs',
+              },
+              {
+                  to: '/contact',
+                  icon: 'lni lni-envelope', // Biểu tượng thư cho contact us
+                  label: 'Contact Us',
+              },
           ]
 
     const featuresItems: SidebarItem[] = [
         {
             to: '/resume-builder',
-            icon: 'lni lni-files',
+            icon: 'lni lni-files', // Biểu tượng tập tin cho resume builder
             label: 'Resume Builder',
         },
         {
             to: '/job-alerts',
-            icon: 'lni lni-alarm',
+            icon: 'lni lni-alarm', // Biểu tượng chuông cho job alerts
             label: 'Job Alerts',
             badge: 'New',
             danger: true,
