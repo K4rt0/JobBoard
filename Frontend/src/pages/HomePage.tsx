@@ -6,7 +6,7 @@ import { useState } from 'react'
 const Home = () => {
     const [jobs] = useState<Job[]>([
         {
-            id: 1,
+            id: '1',
             title: 'Senior React Developer',
             company: 'TechCorp',
             location: 'New York, NY',
@@ -15,7 +15,7 @@ const Home = () => {
             posted: '2 days ago',
         },
         {
-            id: 2,
+            id: '2',
             title: 'UX/UI Designer',
             company: 'DesignHub',
             location: 'San Francisco, CA',
@@ -24,7 +24,7 @@ const Home = () => {
             posted: '1 week ago',
         },
         {
-            id: 3,
+            id: '3',
             title: 'Software Engineer',
             company: 'SoftPeak',
             location: 'Austin, TX',

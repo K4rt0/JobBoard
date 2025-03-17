@@ -6,6 +6,7 @@ import { APIs_V1 } from "./routes/v1";
 import { error_handling_middleware } from "./middlewares/error-handling.middleware";
 import cors from "cors";
 import { cors_options } from "~/config/cors";
+import fileUpload from "express-fileupload";
 
 const SERVER_START = () => {
   const app = express();
@@ -13,6 +14,8 @@ const SERVER_START = () => {
   app.use(cors(cors_options));
 
   app.use(express.json());
+
+  app.use(fileUpload());
 
   app.use("/api/v1", APIs_V1);
 

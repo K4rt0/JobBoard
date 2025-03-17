@@ -3,17 +3,23 @@ import { slugify } from "~/utils/formatters";
 
 const create_skill = async (data) => {
   try {
+    if (Array.isArray(data)) {
+      const skills = data.map((skill) => ({
+        ...skill,
+        slug: slugify(skill.name),
+      }));
+      return await skill_model.create_many_skills(skills);
+    }
     data.slug = slugify(data.name);
-
     return await skill_model.create_skill(data);
   } catch (error) {
     throw error;
   }
 };
 
-const get_all_skills_pagination = async (page = 1, limit = 10) => {
+const get_all_skills_pagination = async (page = 1, limit = 10, filtered) => {
   try {
-    return await skill_model.find_all_skills_pagination(page, limit);
+    return await skill_model.find_all_skills_pagination(page, limit, filtered);
   } catch (error) {
     throw error;
   }

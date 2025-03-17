@@ -1,11 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { user_service } from "~/services/account/user.service";
+import { user_service } from "~/services/user/user.service";
 
 // Admin
 const get_user = async (req, res, next) => {
   try {
     let user_id;
-    
+
     if (req.params.id) user_id = req.params.id;
     else if (req._id) user_id = req._id;
     else
@@ -13,7 +13,6 @@ const get_user = async (req, res, next) => {
         message: "Không tìm thấy người dùng !",
         data: result,
       });
-    console.log(user_id);
     const result = await user_service.get_user_by_id(user_id);
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",
@@ -26,21 +25,34 @@ const get_user = async (req, res, next) => {
 
 const get_all_users = async (req, res, next) => {
   try {
+    const result = await user_service.get_all_users();
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy dữ liệu người dùng thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_users_pagination = async (req, res, next) => {
+  try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
     const { status, role, sort, search } = req.query;
-    const filterObj = {};
-    if (status && ["Active", "Deleted", "Blocked"].includes(status)) filterObj.status = status;
-    if (role && ["All", "Freelancer", "Employer"].includes(role)) filterObj.role = role;
-    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filterObj.sort = sort;
-    if (search) filterObj.search = search;
+    const filtered = {};
+    if (status && ["Active", "Deleted", "Blocked"].includes(status)) filtered.status = status;
+    if (role && ["All", "Freelancer", "Employer"].includes(role)) filtered.role = role;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
 
-    const result = await admin_user_service.get_all_users(page, limit, filterObj);
+    const result = await user_service.get_all_users_pagination(page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",
-      data: result.data,
+      data: result,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -51,8 +63,8 @@ const get_all_users = async (req, res, next) => {
 const update_user_status = async (req, res, next) => {
   try {
     const user_id = req.params.id;
-    const { status } = req.body;
-    const result = await admin_user_service.update_user_status(user_id, status);
+    const result = await user_service.update_user(user_id, req.body);
+
     res.status(StatusCodes.OK).json({
       message: "Cập nhật trạng thái người dùng thành công !",
       data: result,
@@ -76,12 +88,42 @@ const create_user = async (req, res, next) => {
   }
 };
 
+const change_user_password = async (req, res, next) => {
+  try {
+    const { old_password, new_password, retype_new_password } = req.body;
+    const result = await user_service.change_user_password(req._id, old_password, new_password, retype_new_password);
+
+    res.status(StatusCodes.OK).json({
+      message: "Đổi mật khẩu thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update_user = async (req, res, next) => {
+  try {
+    const result = await user_service.update_user(req._id, req.body, req.files && req.files.avatar ? req.files.avatar : null);
+
+    res.status(StatusCodes.OK).json({
+      message: "Cập nhật thông tin người dùng thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_controller = {
   // Admin
   get_user,
   update_user_status,
+  get_all_users_pagination,
   get_all_users,
 
   // User
   create_user,
+  change_user_password,
+  update_user,
 };

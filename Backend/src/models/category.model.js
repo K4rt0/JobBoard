@@ -29,29 +29,71 @@ const create_category = async (data) => {
   }
 };
 
-const find_all_categories_pagination = async (page = 1, limit = 10) => {
+const create_many_categories = async (data) => {
+  try {
+    const validated_data = await Promise.all(data.map((item) => CATEGORY_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true })));
+
+    const categories_data = validated_data.map((category) => ({
+      ...category,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    }));
+
+    const result = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertMany(categories_data);
+    return result;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+const find_all_categories_pagination = async (page = 1, limit = 10, filtered = {}) => {
   try {
     const skip = (page - 1) * limit;
-    const total = await GET_DB().collection(CATEGORY_COLLECTION_NAME).countDocuments();
+    const query = {};
+
+    if (filtered.search) query.$or = [{ name: { $regex: filtered.search, $options: "i" } }, { slug: { $regex: filtered.search, $options: "i" } }];
+
+    let sort = {};
+    const sort_type = filtered.sort || "all";
+    switch (sort_type.toLowerCase()) {
+      case "newest":
+        sort = { created_at: -1 };
+        break;
+      case "oldest":
+        sort = { created_at: 1 };
+        break;
+      case "all":
+      default:
+        sort = {};
+        break;
+    }
+
+    const { sort: __, search: ___, ...final_query } = filtered;
+    const total = await GET_DB()
+      .collection(CATEGORY_COLLECTION_NAME)
+      .countDocuments({ ...final_query, ...query });
 
     const categories = await GET_DB()
       .collection(CATEGORY_COLLECTION_NAME)
-      .aggregate([{ $skip: skip }, { $limit: limit }])
+      .find({ ...final_query, ...query })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
       .toArray();
 
-    const totalPages = Math.ceil(total / limit);
+    const total_pages = Math.ceil(total / limit);
 
     return {
       data: categories,
       pagination: {
         total,
-        currentPage: page,
-        totalPages,
+        current_page: page,
+        total_pages,
         limit,
       },
     };
   } catch (error) {
-    throw new Error(`Failed to fetch categories: ${error.message}`);
+    throw new Error(error);
   }
 };
 
@@ -63,6 +105,14 @@ const find_all_categories = async () => {
   } catch (error) {
     throw new Error(`Failed to fetch categories: ${error.message}`);
   }
+};
+
+const find_category_by_id = async (id) => {
+  const category = await GET_DB()
+    .collection(CATEGORY_COLLECTION_NAME)
+    .findOne({ _id: new ObjectId(id) });
+
+  return category;
 };
 
 const update_category = async (id, data) => {
@@ -96,18 +146,11 @@ const delete_category = async (id) => {
   }
 };
 
-const find_category_by_id = async (id) => {
-  const category = await GET_DB()
-    .collection(CATEGORY_COLLECTION_NAME)
-    .findOne({ _id: new ObjectId(id) });
-
-  return category;
-};
-
 export const category_model = {
   CATEGORY_COLLECTION_NAME,
   CATEGORY_COLLECTION_SCHEMA,
   create_category,
+  create_many_categories,
   find_all_categories,
   find_all_categories_pagination,
   find_category_by_id,
