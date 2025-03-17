@@ -360,11 +360,9 @@ const Header = () => {
                                         {isLoggedIn && user ? (
                                             <UserMenu>
                                                 <UserInfoWrapper>
-                                                    {user.avatar_url ? (
+                                                    {user.avatar ? (
                                                         <Avatar
-                                                            src={
-                                                                user.avatar_url
-                                                            }
+                                                            src={user.avatar}
                                                             alt="Avatar"
                                                         />
                                                     ) : (

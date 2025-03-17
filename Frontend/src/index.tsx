@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css' // ✅ Import CSS của Bootstrap
 import 'bootstrap/dist/js/bootstrap.bundle.min.js' // ✅ Import Bootstrap JS
 import $ from 'jquery'
 import i18n from 'i18next'
+import 'boxicons/css/boxicons.min.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
