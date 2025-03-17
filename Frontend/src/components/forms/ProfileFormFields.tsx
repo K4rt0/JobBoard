@@ -2,35 +2,36 @@ import React, { useState, useEffect } from 'react'
 import { Badge, Form } from 'react-bootstrap'
 import Select, { MultiValue } from 'react-select'
 import { getSkillsList } from '@/services/skillService'
-import { FreelancerFormData, Skill } from '@/interfaces'
+import { Freelancer, ProfileFormData, Skill } from '@/interfaces'
 
 // Interface props chung cho các field
-interface FormFieldsProps {
-    formData: FreelancerFormData
+export interface FormFieldsProps {
+    formData: Freelancer
     handleInputChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => void
 }
 
 // Interface cho Skill field
-interface SkillsFormFieldsProps {
+export interface SkillsFormFieldsProps {
     formData: { skills: Skill[] }
     handleSkillsChange: (skills: Skill[]) => void
 }
-
 /** ========== Contact Form Fields ========== **/
-export const ContactFormFields: React.FC<FormFieldsProps> = ({
-    formData,
-    handleInputChange,
-}) => (
+export const ContactFormFields: React.FC<{
+    formData: ProfileFormData
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void
+}> = ({ formData, handleInputChange }) => (
     <>
         {[
             {
-                label: 'Email',
-                icon: 'lni lni-envelope',
-                name: 'email',
-                type: 'email',
-                placeholder: 'Enter your email',
+                label: 'Full Name',
+                icon: 'lni lni-user',
+                name: 'fullName',
+                type: 'text',
+                placeholder: 'Enter your full name',
             },
             {
                 label: 'Phone',
@@ -40,11 +41,11 @@ export const ContactFormFields: React.FC<FormFieldsProps> = ({
                 placeholder: 'Enter your phone number',
             },
             {
-                label: 'Location',
-                icon: 'lni lni-map-marker',
-                name: 'location',
-                type: 'text',
-                placeholder: 'Enter your location',
+                label: 'Birth Date',
+                icon: 'lni lni-calendar',
+                name: 'birthDate',
+                type: 'date',
+                placeholder: 'Enter your birth date (DD/MM/YYYY)',
             },
             {
                 label: 'Website',
@@ -53,6 +54,13 @@ export const ContactFormFields: React.FC<FormFieldsProps> = ({
                 type: 'text',
                 placeholder: 'Enter your website URL',
             },
+            // {
+            //     label: 'Location',
+            //     icon: 'lni lni-lcoation',
+            //     name: 'location',
+            //     type: 'text',
+            //     placeholder: 'Enter your location',
+            // },
         ].map((field) => (
             <Form.Group key={field.name} className="mb-4 position-relative">
                 <Form.Label className="fw-bold">
@@ -63,13 +71,10 @@ export const ContactFormFields: React.FC<FormFieldsProps> = ({
                     type={field.type}
                     name={field.name}
                     value={
-                        field.name === 'skills' // 🔥 Kiểm tra nếu field là `skills`
-                            ? formData.skills
-                                  ?.map((skill) => skill.name)
-                                  .join(', ') || '' // Chuyển `Skill[]` thành `string`
-                            : (formData[
-                                  field.name as keyof FreelancerFormData
-                              ] as string | number | undefined) || ''
+                        (formData[field.name as keyof ProfileFormData] as
+                            | string
+                            | number
+                            | undefined) || ''
                     }
                     onChange={handleInputChange}
                     className="py-2 border-1"
@@ -81,10 +86,12 @@ export const ContactFormFields: React.FC<FormFieldsProps> = ({
 )
 
 /** ========== Bio Form Fields ========== **/
-export const BioFormFields: React.FC<FormFieldsProps> = ({
-    formData,
-    handleInputChange,
-}) => (
+export const BioFormFields: React.FC<{
+    formData: ProfileFormData
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void
+}> = ({ formData, handleInputChange }) => (
     <Form.Group className="mb-2 position-relative">
         <Form.Label className="fw-bold">
             <i className="lni lni-text-format me-2"></i>Bio
@@ -97,6 +104,51 @@ export const BioFormFields: React.FC<FormFieldsProps> = ({
             onChange={handleInputChange}
             className="py-2 border-1"
             placeholder="Tell us about yourself"
+        />
+    </Form.Group>
+)
+
+/** ========== Experience Form Fields ========== **/
+export const ExperienceFormFields: React.FC<{
+    formData: ProfileFormData
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void
+}> = ({ formData, handleInputChange }) => (
+    <Form.Group className="mb-2 position-relative">
+        <Form.Label className="fw-bold">
+            <i className="lni lni-calendar me-2"></i>Experience (years)
+        </Form.Label>
+        <Form.Control
+            type="number"
+            name="experience"
+            value={formData.experience || 0}
+            onChange={handleInputChange}
+            className="py-2 border-1"
+            min="0"
+            placeholder="Enter your years of experience"
+        />
+    </Form.Group>
+)
+
+/** ========== Education Form Fields ========== **/
+export const EducationFormFields: React.FC<{
+    formData: ProfileFormData
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void
+}> = ({ formData, handleInputChange }) => (
+    <Form.Group className="mb-2 position-relative">
+        <Form.Label className="fw-bold">
+            <i className="lni lni-book me-2"></i>Education
+        </Form.Label>
+        <Form.Control
+            type="text"
+            name="education"
+            value={formData.education || ''}
+            onChange={handleInputChange}
+            className="py-2 border-1"
+            placeholder="Enter your highest education"
         />
     </Form.Group>
 )
@@ -123,9 +175,7 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
                 }
 
                 const formattedSkills = response.map((skill: Skill) => ({
-                    id:
-                        skill.id ||
-                        `skill-${Math.random().toString(36).substr(2, 9)}`, // Ensure ID exists
+                    _id: skill._id, // Ensure ID exists
                     name: skill.name.trim(),
                     description: skill.description,
                     slug: skill.slug,
@@ -147,10 +197,10 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
     const getFilteredOptions = () => {
         // First, get all skills that haven't been selected yet
         const selectedIds = formData.skills
-            .map((skill) => skill.id)
+            .map((skill) => skill._id)
             .filter(Boolean)
         const availableSkills = skillOptions.filter(
-            (skill) => !selectedIds.includes(skill.id),
+            (skill) => !selectedIds.includes(skill._id),
         )
 
         // Then filter by search text if there is any
@@ -188,13 +238,13 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
         selectedOptions.forEach((option) => {
             // Check if this skill is already in our updated list
             const alreadySelected = updatedSkills.some(
-                (skill) => skill.id === option.value,
+                (skill) => skill._id === option.value,
             )
 
             if (!alreadySelected) {
                 // Find the complete skill object
                 const skillToAdd = skillOptions.find(
-                    (skill) => skill.id === option.value,
+                    (skill) => skill._id === option.value,
                 )
 
                 if (skillToAdd) {
@@ -214,7 +264,7 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
     // Handle removing a skill
     const handleRemoveSkill = (skillId: string) => {
         const updatedSkills = formData.skills.filter(
-            (skill) => skill.id !== skillId,
+            (skill) => skill._id !== skillId,
         )
         handleSkillsChange(updatedSkills)
     }
@@ -228,11 +278,11 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
             <Select
                 isMulti
                 options={getFilteredOptions().map((skill) => ({
-                    value: skill.id,
+                    value: skill._id,
                     label: skill.name,
                 }))}
                 value={formData.skills.map((skill) => ({
-                    value: skill.id || '', // Ensure ID is not undefined
+                    value: skill._id || '', // Ensure ID is not undefined
                     label: skill.name,
                 }))}
                 onChange={handleChange}
@@ -253,12 +303,12 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
             <div className="mt-3">
                 {formData.skills?.map((skill) => (
                     <Badge
-                        key={skill.id || Math.random().toString()} // Ensure key is not undefined
+                        key={skill._id} // Ensure key is not undefined
                         pill
                         bg="primary"
                         className="me-2 mb-2"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleRemoveSkill(skill.id)}
+                        onClick={() => handleRemoveSkill(skill._id)}
                     >
                         {skill.name} ✕
                     </Badge>
@@ -289,44 +339,3 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
         </Form.Group>
     )
 }
-
-/** ========== Experience Form Fields ========== **/
-export const ExperienceFormFields: React.FC<FormFieldsProps> = ({
-    formData,
-    handleInputChange,
-}) => (
-    <Form.Group className="mb-2 position-relative">
-        <Form.Label className="fw-bold">
-            <i className="lni lni-calendar me-2"></i>Experience (years)
-        </Form.Label>
-        <Form.Control
-            type="number"
-            name="experience"
-            value={formData.experience || 0}
-            onChange={handleInputChange}
-            className="py-2 border-1"
-            min="0"
-            placeholder="Enter your years of experience"
-        />
-    </Form.Group>
-)
-
-/** ========== Education Form Fields ========== **/
-export const EducationFormFields: React.FC<FormFieldsProps> = ({
-    formData,
-    handleInputChange,
-}) => (
-    <Form.Group className="mb-2 position-relative">
-        <Form.Label className="fw-bold">
-            <i className="lni lni-book me-2"></i>Education
-        </Form.Label>
-        <Form.Control
-            type="text"
-            name="education"
-            value={formData.education || ''}
-            onChange={handleInputChange}
-            className="py-2 border-1"
-            placeholder="Enter your highest education"
-        />
-    </Form.Group>
-)

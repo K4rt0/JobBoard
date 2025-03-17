@@ -27,17 +27,3 @@ export const registerSchema = yup.object().shape({
         .required('Password is required'),
     agree_to_terms: yup.boolean().oneOf([true], 'You must accept the terms'),
 })
-export const changePasswordschema = yup.object().shape({
-    currentPassword: yup.string().required('Vui lòng nhập mật khẩu hiện tại'),
-    newPassword: yup
-        .string()
-        .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
-        .required('Vui lòng nhập mật khẩu mới'),
-    confirmPassword: yup
-        .string()
-        .oneOf(
-            [yup.ref('newPassword'), undefined],
-            'Mật khẩu xác nhận không khớp',
-        )
-        .required('Vui lòng xác nhận mật khẩu'),
-})

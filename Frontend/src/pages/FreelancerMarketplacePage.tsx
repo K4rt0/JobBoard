@@ -35,7 +35,7 @@ const FreelancerMarketplacePage: React.FC = () => {
                                             bio: "I'm a top-rated designer...",
                                             skills: [
                                                 {
-                                                    id: '1',
+                                                    _id: '1',
                                                     name: 'Logo Design',
                                                     description: '',
                                                     slug: '',
@@ -45,7 +45,7 @@ const FreelancerMarketplacePage: React.FC = () => {
                                                         new Date().toISOString(),
                                                 },
                                                 {
-                                                    id: '2',
+                                                    _id: '2',
                                                     name: 'Branding',
                                                     description: '',
                                                     slug: '',
@@ -77,7 +77,7 @@ const FreelancerMarketplacePage: React.FC = () => {
                                             bio: 'Providing quality service...',
                                             skills: [
                                                 {
-                                                    id: '3',
+                                                    _id: '3',
                                                     name: 'Excel',
                                                     description: '',
                                                     slug: '',
@@ -87,7 +87,7 @@ const FreelancerMarketplacePage: React.FC = () => {
                                                         new Date().toISOString(),
                                                 },
                                                 {
-                                                    id: '4',
+                                                    _id: '4',
                                                     name: 'Data Processing',
                                                     description: '',
                                                     slug: '',
