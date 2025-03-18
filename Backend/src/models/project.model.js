@@ -4,6 +4,13 @@ import { GET_DB } from "~/config/mongodb";
 const PROJECT_COLLECTION_NAME = "projects";
 const PROJECT_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string().required().min(3).max(100).trim().strict(),
+  avatar: Joi.object({
+    url: Joi.string().uri().default(null),
+    delete_hash: Joi.string().default(null),
+  }).default({
+    url: null,
+    delete_hash: null,
+  }),
   description: Joi.string().required().max(1000).trim().strict(),
   employer_id: Joi.string().hex().length(24).required(),
   required_skills: Joi.array().items(Joi.string().hex().length(24)).default([]),

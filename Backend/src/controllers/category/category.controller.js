@@ -56,9 +56,9 @@ const get_all_categories = async (req, res, next) => {
   }
 };
 
-const get_category_by_id = async (req, res, next) => {
+const get_category = async (req, res, next) => {
   try {
-    const category = await category_service.get_category_by_id(req.params.id);
+    const category = await category_service.get_category(req.params.id);
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh mục thành công !",
@@ -99,7 +99,7 @@ export const category_controller = {
   create_category,
   get_all_categories,
   get_all_categories_pagination,
-  get_category_by_id,
+  get_category,
   update_category,
   delete_category,
 };

@@ -57,9 +57,9 @@ const get_all_skills = async (req, res, next) => {
   }
 };
 
-const get_skill_by_id = async (req, res, next) => {
+const get_skill = async (req, res, next) => {
   try {
-    const skill = await skill_service.get_skill_by_id(req.params.id);
+    const skill = await skill_service.get_skill(req.params.id);
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu kỹ năng thành công !",
@@ -73,7 +73,6 @@ const get_skill_by_id = async (req, res, next) => {
 const update_skill = async (req, res, next) => {
   try {
     const result = await skill_service.update_skill(req.params.id, req.body);
-
     res.status(StatusCodes.OK).json({
       message: "Đã cập nhật dữ liệu kỹ năng thành công !",
       data: result,
@@ -100,7 +99,7 @@ export const skill_controller = {
   create_skill,
   get_all_skills,
   get_all_skills_pagination,
-  get_skill_by_id,
+  get_skill,
   update_skill,
   delete_skill,
 };
