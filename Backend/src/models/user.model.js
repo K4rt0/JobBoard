@@ -9,13 +9,38 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   email: Joi.string().required().email().trim().strict(),
   phone_number: Joi.string().min(10).max(15).trim().strict().default(null),
   birth_date: Joi.date().default(null),
+  location: Joi.string().max(50).default(null),
   role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
 
   avatar: Joi.object({
     url: Joi.string().uri().default(null),
     delete_hash: Joi.string().default(null),
-  }).default({ url: null, delete_hash: null }),
+  }).default({
+    url: null,
+    delete_hash: null,
+  }),
+
+  projects_finished: Joi.array()
+    .items(
+      Joi.object({
+        _id: Joi.string().hex().length(24).required(),
+        rating: Joi.number().min(1).max(5).default(null),
+      })
+    )
+    .default([]),
+
+  socials: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string().max(50).default(null),
+        icon: Joi.string().default(null),
+        url: Joi.string().uri().default(null),
+      })
+    )
+    .default([]),
+
   bio: Joi.string().max(500).default(null),
+  website: Joi.string().uri().default(null),
   education: Joi.string().max(100).default(null),
   experience: Joi.number().min(0).default(0),
   cv_url: Joi.string().uri().default(null),
