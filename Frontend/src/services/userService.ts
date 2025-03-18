@@ -5,6 +5,7 @@ import {
     Employer,
     Freelancer,
     ProfileFormData,
+    SocialLink,
     UserInfo,
     UserPasswordRequestDTO,
 } from '@/interfaces'
@@ -23,15 +24,7 @@ export const getCurrentUser = async (): Promise<
 > => {
     const response = await axiosInstance.get('/user/profile', {})
     const apiData = response.data.data as ApiUserResponse
-
-    // Mock social links for demonstration
-    const mockSocialLinks = {
-        facebook: 'https://facebook.com',
-        twitter: 'https://twitter.com',
-        linkedin: 'https://linkedin.com',
-        dribbble: 'https://dribbble.com',
-        pinterest: 'https://pinterest.com',
-    }
+    console.log(apiData)
 
     // Ánh xạ dữ liệu từ API sang interface
     const baseUserData: UserInfo = {
@@ -50,7 +43,7 @@ export const getCurrentUser = async (): Promise<
             : null,
         location: apiData.location || '',
         website: apiData.website || '',
-        socialLinks: mockSocialLinks,
+        socials: apiData.socials,
     }
 
     if (apiData.role === 'Freelancer') {
@@ -233,5 +226,28 @@ export const addUserSkills = async (skillIds: string[]): Promise<any> => {
         return response.data
     } catch (error) {
         throw new Error('Failed to add skills')
+    }
+}
+
+export const updateUserSocials = async (
+    socialLinks: SocialLink[],
+): Promise<SocialLink[]> => {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            // Thêm token nếu có
+        }
+
+        const response = await axiosInstance.patch(
+            '/user/update-socials',
+            { socials: socialLinks }, // Dữ liệu payload
+            { headers }, // Config với headers
+        )
+
+        // Trả về dữ liệu từ API, giả định cấu trúc { data: SocialLink[] }
+        return response.data.data || response.data // Điều chỉnh dựa trên cấu trúc API
+    } catch (error) {
+        handleApiError(error, 'Failed to update social links')
+        throw error
     }
 }

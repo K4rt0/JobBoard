@@ -3,6 +3,7 @@ import {
     addUserSkills,
     getCurrentUser,
     updateUserProfile,
+    updateUserSocials,
 } from '@/services/userService'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -13,6 +14,7 @@ import {
     Freelancer,
     Employer,
     ProfileFormData,
+    SocialLink,
 } from '@/interfaces'
 import { Button, Form } from 'react-bootstrap'
 import DashboardSidebar from '@/components/sidebars/DashboardSidebar'
@@ -23,6 +25,7 @@ import {
     SkillsFormFields,
     ExperienceFormFields,
     EducationFormFields,
+    SocialFormFields,
 } from '@/components/forms/ProfileFormFields'
 import ErrorPage from './ErrorPage'
 
@@ -34,6 +37,7 @@ type ModalType =
     | 'experience'
     | 'education'
     | 'company'
+    | 'socials'
     | null
 
 const MODAL_CONFIG = {
@@ -66,6 +70,11 @@ const MODAL_CONFIG = {
         title: 'Edit Company Info',
         icon: 'lni lni-briefcase',
         component: ContactFormFields,
+    },
+    socials: {
+        title: 'Edit Social Links',
+        icon: 'lni lni-link',
+        component: SocialFormFields,
     },
 }
 
@@ -108,8 +117,18 @@ const initialUserData: UserInfo = {
     updatedAt: null,
     location: '',
     website: '',
-    socialLinks: {},
+    socials: [],
 }
+
+const SOCIAL_PLATFORMS = {
+    'facebook.com': { name: 'Facebook', icon: 'lni-facebook' },
+    'instagram.com': { name: 'Instagram', icon: 'lni-instagram' },
+    'linkedin.com': { name: 'LinkedIn', icon: 'lni-linkedin' },
+    'twitter.com': { name: 'Twitter', icon: 'lni-twitter' },
+    'github.com': { name: 'GitHub', icon: 'lni-github' },
+} as const
+
+type SocialPlatformKeys = keyof typeof SOCIAL_PLATFORMS
 
 const ProfilePage: React.FC = () => {
     const [userData, setUserData] = useState<UserInfo | Freelancer | Employer>(
@@ -127,6 +146,7 @@ const ProfilePage: React.FC = () => {
     )
     const { user } = useAuth()
     const accessToken = user?.access_token
+
     const fetchUserProfile = async () => {
         if (!accessToken) {
             setError('No access token available')
@@ -148,22 +168,39 @@ const ProfilePage: React.FC = () => {
             setLoading(false)
         }
     }
-    // Fetch user profile data
+
     useEffect(() => {
         fetchUserProfile()
-    }, [accessToken, updateUserProfile])
+    }, [accessToken])
 
-    // Modal handlers
     const handleOpenModal = (
         modalType: ModalType,
         initialData: ProfileFormData = {},
     ): void => {
         if (modalType === 'contact') {
-            const { email, ...rest } = initialData // Loại bỏ email khỏi dữ liệu
+            const { email, ...rest } = initialData
             setFormData({
                 fullName: userData.fullName,
                 ...rest,
             })
+        } else if (modalType === 'socials') {
+            const defaultSocials: SocialLink[] = [
+                { name: 'Facebook', icon: 'lni-facebook', url: '' },
+                { name: 'Twitter', icon: 'lni-twitter', url: '' },
+                { name: 'LinkedIn', icon: 'lni-linkedin', url: '' },
+                { name: 'Dribbble', icon: 'lni-dribbble', url: '' },
+                { name: 'Pinterest', icon: 'lni-pinterest', url: '' },
+            ]
+            // Gộp dữ liệu hiện có từ userData.socials
+            const initialSocials = defaultSocials.map(
+                (defaultSocial, index) => {
+                    const existingSocial = userData.socials?.find(
+                        (s) => s.name === defaultSocial.name,
+                    )
+                    return existingSocial || defaultSocial
+                },
+            )
+            setFormData({ socials: initialSocials })
         } else {
             setFormData(initialData)
         }
@@ -175,7 +212,6 @@ const ProfilePage: React.FC = () => {
         setFormData({})
     }
 
-    // Form handlers
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ): void => {
@@ -187,7 +223,18 @@ const ProfilePage: React.FC = () => {
         setFormData((prev) => ({ ...prev, skills: selectedOptions }))
     }
 
-    // Avatar upload handler
+    const handleSocialLinkChange = (
+        index: number,
+        field: keyof SocialLink,
+        value: string,
+    ) => {
+        setFormData((prev) => {
+            const socials = [...(prev.socials || [])]
+            socials[index] = { ...socials[index], [field]: value }
+            return { ...prev, socials }
+        })
+    }
+
     const handleUploadAvatar = async (
         event: React.ChangeEvent<HTMLInputElement>,
     ) => {
@@ -201,6 +248,7 @@ const ProfilePage: React.FC = () => {
                 ...prev,
                 avatar: updatedData.avatar || '',
             }))
+            await fetchUserProfile()
             toast.success('Avatar uploaded successfully!')
         } catch (error) {
             toast.error('Failed to upload avatar')
@@ -209,7 +257,6 @@ const ProfilePage: React.FC = () => {
         }
     }
 
-    // CV upload handler
     const handleSaveCV = async () => {
         if (!cvUrl.trim()) {
             toast.error('Please enter a valid CV link.')
@@ -227,7 +274,7 @@ const ProfilePage: React.FC = () => {
             }))
 
             toast.success('CV link updated successfully!')
-            setIsEditingCV(false) // Ẩn input sau khi lưu thành công
+            setIsEditingCV(false)
         } catch (error) {
             toast.error('Failed to update CV link')
         } finally {
@@ -235,7 +282,6 @@ const ProfilePage: React.FC = () => {
         }
     }
 
-    // Submit form handler
     const handleSubmit = async (): Promise<void> => {
         try {
             let updatedData: UserInfo | Freelancer | Employer
@@ -247,10 +293,19 @@ const ProfilePage: React.FC = () => {
                     skills:
                         (updatedData as Freelancer).skills || formData.skills,
                 }))
+            } else if (showModal === 'socials' && formData.socials) {
+                const filteredSocials = formData.socials.filter(
+                    (social) => social.url.trim() !== '',
+                )
+                const socialLinks = await updateUserSocials(filteredSocials)
+                setUserData((prev) => ({
+                    ...prev,
+                    socials: socialLinks,
+                }))
+                await fetchUserProfile()
             } else {
                 updatedData = await updateUserProfile(formData)
                 setUserData((prev) => ({ ...prev, ...updatedData }))
-                // Kiểm tra nếu dữ liệu không đầy đủ (ví dụ: thiếu id hoặc email)
                 if (!updatedData.id || !updatedData.email) {
                     await fetchUserProfile()
                 }
@@ -268,6 +323,7 @@ const ProfilePage: React.FC = () => {
     if (error) return <ErrorPage />
 
     const currentModal = showModal ? MODAL_CONFIG[showModal] : null
+    console.log(userData)
 
     return (
         <div className="resume section">
@@ -285,7 +341,6 @@ const ProfilePage: React.FC = () => {
                                         <div className="col-lg-5 col-md-5 col-12">
                                             <div className="name-head text-center position-relative">
                                                 <div className="position-relative d-inline-block">
-                                                    {/* Ảnh đại diện với shadow */}
                                                     <img
                                                         className="rounded shadow img-fluid"
                                                         src={
@@ -294,13 +349,11 @@ const ProfilePage: React.FC = () => {
                                                         }
                                                         alt={userData.fullName}
                                                         style={{
-                                                            width: '10rem', // Kích thước cố định
-                                                            height: '10rem', // Vuông
+                                                            width: '10rem',
+                                                            height: '10rem',
                                                             objectFit: 'cover',
                                                         }}
                                                     />
-
-                                                    {/* Nút upload ảnh */}
                                                     <label
                                                         htmlFor="uploadAvatar"
                                                         className="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
@@ -325,7 +378,6 @@ const ProfilePage: React.FC = () => {
                                                         className="d-none"
                                                     />
                                                 </div>
-
                                                 {avatarUploading && (
                                                     <p className="mt-2 text-primary">
                                                         Uploading avatar...
@@ -337,35 +389,40 @@ const ProfilePage: React.FC = () => {
                                                 <p className="text-danger">
                                                     --{userData.role}--
                                                 </p>
-                                                {userData.socialLinks &&
-                                                Object.keys(
-                                                    userData.socialLinks,
-                                                ).length > 0 ? (
+                                                {userData.socials &&
+                                                userData.socials.length > 0 ? (
                                                     <ul className="social">
-                                                        {Object.entries(
-                                                            userData.socialLinks,
-                                                        ).map(
-                                                            ([
-                                                                platform,
-                                                                link,
-                                                            ]) => (
-                                                                <li
-                                                                    key={
-                                                                        platform
-                                                                    }
-                                                                >
-                                                                    <a
-                                                                        href={
-                                                                            link
+                                                        {userData.socials
+                                                            .filter(
+                                                                (social) =>
+                                                                    social.url &&
+                                                                    social.url.trim() !==
+                                                                        '',
+                                                            ) // Lọc các social có url hợp lệ
+                                                            .map(
+                                                                (
+                                                                    social,
+                                                                    index,
+                                                                ) => (
+                                                                    <li
+                                                                        key={
+                                                                            index
                                                                         }
                                                                     >
-                                                                        <i
-                                                                            className={`lni lni-${platform}`}
-                                                                        ></i>
-                                                                    </a>
-                                                                </li>
-                                                            ),
-                                                        )}
+                                                                        <a
+                                                                            href={
+                                                                                social.url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                        >
+                                                                            <i
+                                                                                className={`lni ${social.icon}`}
+                                                                            ></i>
+                                                                        </a>
+                                                                    </li>
+                                                                ),
+                                                            )}
                                                     </ul>
                                                 ) : (
                                                     <p>
@@ -373,6 +430,19 @@ const ProfilePage: React.FC = () => {
                                                         available
                                                     </p>
                                                 )}
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    className="rounded-pill px-3 mt-2"
+                                                    onClick={() =>
+                                                        handleOpenModal(
+                                                            'socials',
+                                                        )
+                                                    }
+                                                >
+                                                    <i className="lni lni-pencil me-1"></i>{' '}
+                                                    Edit Social Links
+                                                </Button>
                                             </div>
                                         </div>
                                         <div className="col-lg-7 col-md-7 col-12">
@@ -828,6 +898,14 @@ const ProfilePage: React.FC = () => {
                         <SkillsFormFields
                             formData={{ skills: formData.skills || [] }}
                             handleSkillsChange={handleSkillsChange}
+                        />
+                    )}
+                    {showModal === 'socials' && (
+                        <SocialFormFields
+                            formData={{
+                                socialLinks: formData.socials || [],
+                            }}
+                            handleSocialLinkChange={handleSocialLinkChange}
                         />
                     )}
                     {showModal === 'contact' && (

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Badge, Form } from 'react-bootstrap'
+import { Badge, Button, Form } from 'react-bootstrap'
 import Select, { MultiValue } from 'react-select'
 import { getSkillsList } from '@/services/skillService'
-import { Freelancer, ProfileFormData, Skill } from '@/interfaces'
+import { Freelancer, ProfileFormData, Skill, SocialLink } from '@/interfaces'
 
 // Interface props chung cho các field
 export interface FormFieldsProps {
@@ -293,5 +293,73 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
                 </div>
             </div>
         </Form.Group>
+    )
+}
+export const SocialFormFields: React.FC<{
+    formData: { socialLinks: SocialLink[] }
+    handleSocialLinkChange: (
+        index: number,
+        field: keyof SocialLink,
+        value: string,
+    ) => void
+}> = ({ formData, handleSocialLinkChange }) => {
+    // Danh sách 5 nền tảng cố định
+    const defaultPlatforms: SocialLink[] = [
+        { name: 'Facebook', icon: 'lni-facebook', url: '' },
+        { name: 'Twitter', icon: 'lni-twitter', url: '' },
+        { name: 'LinkedIn', icon: 'lni-linkedin', url: '' },
+        { name: 'Dribbble', icon: 'lni-dribbble', url: '' },
+        { name: 'Pinterest', icon: 'lni-pinterest', url: '' },
+    ]
+
+    // Gộp dữ liệu từ formData với danh sách mặc định
+    const socialLinks = defaultPlatforms.map((platform, index) => {
+        const existingLink = formData.socialLinks[index] || { url: '' }
+        return {
+            ...platform,
+            url: existingLink.url || '',
+        }
+    })
+
+    return (
+        <div className="form-group mb-4">
+            <label className="fw-bold mb-2">
+                <i className="lni lni-link me-2"></i>Social Links
+            </label>
+            {socialLinks.map((social, index) => (
+                <div
+                    key={index}
+                    className="d-flex align-items-center mb-3"
+                    style={{ maxWidth: '500px' }}
+                >
+                    <div
+                        className="input-group-prepend me-2"
+                        style={{ flex: '0 0 40px' }}
+                    >
+                        <span
+                            className="input-group-text d-flex align-items-center justify-content-center"
+                            style={{ width: '40px', height: '38px' }}
+                        >
+                            <i className={`lni ${social.icon}`}></i>
+                        </span>
+                    </div>
+
+                    {/* Input để nhập URL */}
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder={`Enter ${social.name} URL`}
+                        value={social.url}
+                        onChange={(e) =>
+                            handleSocialLinkChange(index, 'url', e.target.value)
+                        }
+                        style={{ flex: '1' }}
+                    />
+                </div>
+            ))}
+            <small className="text-muted">
+                Enter URLs for each platform. Only filled URLs will be saved.
+            </small>
+        </div>
     )
 }
