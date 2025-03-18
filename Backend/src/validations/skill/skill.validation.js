@@ -3,6 +3,7 @@ import Joi from "joi";
 const create_skill = async (req, res, next) => {
   const single_schema = Joi.object({
     name: Joi.string().required().max(50).trim().strict(),
+    is_disabled: Joi.boolean().default(false),
     description: Joi.string().max(200),
   });
   const multiple_schema = Joi.array().items(single_schema);
@@ -35,6 +36,7 @@ const get_all_skills_pagination = async (req, res, next) => {
 const update_skill = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string().min(2).max(50).trim().strict(),
+    is_disabled: Joi.boolean().default(false),
     description: Joi.string().max(200),
   });
 

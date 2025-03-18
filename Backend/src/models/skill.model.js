@@ -5,6 +5,7 @@ import { GET_DB } from "~/config/mongodb";
 const SKILL_COLLECTION_NAME = "skills";
 const SKILL_COLLECTION_SCHEMA = Joi.object({
   name: Joi.string().required().min(2).max(50).trim().strict(),
+  is_disabled: Joi.boolean().default(false),
   description: Joi.string().max(200).default(null),
   slug: Joi.string().trim().strict().default(null),
 });
@@ -115,6 +116,7 @@ const update_skill = async (id, data) => {
 
     const skill_data = {
       ...validated_data,
+      is_disabled: data.is_disabled,
       updated_at: Date.now(),
     };
 
@@ -128,21 +130,16 @@ const update_skill = async (id, data) => {
   }
 };
 
-const delete_skill = async (id) => {
+const delete_skill = async (query) => {
   try {
-    return await GET_DB()
-      .collection(SKILL_COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(id) });
+    return await GET_DB().collection(SKILL_COLLECTION_NAME).deleteOne(query);
   } catch (error) {
     throw new Error(error);
   }
 };
 
-const find_skill_by_id = async (id) => {
-  const skill = await GET_DB()
-    .collection(SKILL_COLLECTION_NAME)
-    .findOne({ _id: new ObjectId(id) });
-
+const find_skill = async (query) => {
+  const skill = await GET_DB().collection(SKILL_COLLECTION_NAME).findOne(query);
   return skill;
 };
 
@@ -153,7 +150,7 @@ export const skill_model = {
   create_many_skills,
   find_all_skills,
   find_all_skills_pagination,
-  find_skill_by_id,
+  find_skill,
   update_skill,
   delete_skill,
 };

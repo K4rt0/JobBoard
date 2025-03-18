@@ -45,9 +45,9 @@ const create_user = async (data) => {
   }
 };
 
-const find_all_users = async () => {
+const find_all_users = async (query = {}) => {
   try {
-    const users = await GET_DB().collection(USER_COLLECTION_NAME).find({}).toArray();
+    const users = await GET_DB().collection(USER_COLLECTION_NAME).find(query).toArray();
     return users;
   } catch (error) {
     throw new Error(`Failed to fetch users: ${error.message}`);
@@ -130,6 +130,19 @@ const update_user = async (user_id, data) => {
   }
 };
 
+const update_skills = async (user_id, skills) => {
+  try {
+    console.log(skills);
+    await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .updateOne({ _id: new ObjectId(user_id) }, { $set: { skills: skills } });
+
+    return { _id: user_id };
+  } catch (error) {
+    throw new Error(`Failed to update user skills: ${error.message}`);
+  }
+};
+
 export const user_model = {
   USER_COLLECTION_NAME,
   USER_COLLECTION_SCHEMA,
@@ -138,4 +151,5 @@ export const user_model = {
   find_all_with_pagination,
   find_all_users,
   update_user,
+  update_skills,
 };
