@@ -43,6 +43,7 @@ export interface ApiUserResponse {
     status: string
     created_at: number // Timestamp
     updated_at?: number | null
+    socials?: SocialLink[]
 }
 
 export interface UserInfo {
@@ -59,7 +60,7 @@ export interface UserInfo {
     updatedAt?: string | null
     location?: string
     website?: string
-    socialLinks?: Record<string, string>
+    socials?: SocialLink[]
 }
 
 export interface Freelancer extends UserInfo {
@@ -93,7 +94,7 @@ export interface ProfileFormData {
     status?: string | null
     location?: string | null
     website?: string | null
-    socialLinks?: Record<string, string> | null
+    socials?: SocialLink[] | null
     education?: string | null
     experience?: number | null
     cvUrl?: string | null
@@ -105,6 +106,12 @@ export interface ProfileFormData {
     reviews?: number | null
     companyName?: string | null
     companyDescription?: string | null
+}
+
+export interface SocialLink {
+    name: string
+    icon: string
+    url: string
 }
 
 /** ========== JOB INTERFACES ========== **/
@@ -145,6 +152,7 @@ export interface Skill {
     slug: string
     createdAt: string
     updatedAt: string
+    is_disabled?: boolean
 }
 
 /** ========== API RESPONSE FORMATS ========== **/

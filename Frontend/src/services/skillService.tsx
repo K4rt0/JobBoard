@@ -1,5 +1,6 @@
 import { handleApiError } from '@/utils/apiHandlerError'
 import axiosInstance from './axiosInstance'
+import axios from 'axios'
 
 export const getSkillsList = async (): Promise<any> => {
     try {
@@ -11,4 +12,11 @@ export const getSkillsList = async (): Promise<any> => {
     } catch (error) {
         handleApiError(error, 'Get user information failed')
     }
+}
+
+export const getSkillById = async (skillId: string) => {
+    const response = await axios.get(
+        `${process.env.REACT_APP_BASE_API_URL}/skill/${skillId}`,
+    )
+    return response.data.data
 }
