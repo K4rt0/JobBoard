@@ -134,10 +134,24 @@ const update_user = async (req, res, next) => {
   }
 };
 
+const update_skills = async (req, res, next) => {
+  const schema = Joi.object({
+    skills: Joi.array().items(Joi.string().hex().length(24).required()).required(),
+  });
+
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_validation = {
   create_user,
   get_all_users_pagination,
   update_user_status,
   change_user_password,
   update_user,
+  update_skills,
 };

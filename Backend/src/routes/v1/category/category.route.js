@@ -11,6 +11,6 @@ category_route
   .delete("/delete/:id", [auth_middleware.jwt_auth(true), category_validation.delete_category], category_controller.delete_category)
   .get("/get-all-pagination", category_validation.get_all_categories_pagination, category_controller.get_all_categories_pagination)
   .get("/get-all", category_controller.get_all_categories)
-  .get("/:id", category_controller.get_category_by_id);
+  .get("/:id", category_controller.get_category);
 
 export default category_route;

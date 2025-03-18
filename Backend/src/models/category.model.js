@@ -107,11 +107,8 @@ const find_all_categories = async () => {
   }
 };
 
-const find_category_by_id = async (id) => {
-  const category = await GET_DB()
-    .collection(CATEGORY_COLLECTION_NAME)
-    .findOne({ _id: new ObjectId(id) });
-
+const find_category = async (query) => {
+  const category = await GET_DB().collection(CATEGORY_COLLECTION_NAME).findOne(query);
   return category;
 };
 
@@ -136,11 +133,9 @@ const update_category = async (id, data) => {
   }
 };
 
-const delete_category = async (id) => {
+const delete_category = async (query) => {
   try {
-    return await GET_DB()
-      .collection(CATEGORY_COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(id) });
+    return await GET_DB().collection(CATEGORY_COLLECTION_NAME).deleteOne(query);
   } catch (error) {
     throw new Error(error);
   }
@@ -153,7 +148,7 @@ export const category_model = {
   create_many_categories,
   find_all_categories,
   find_all_categories_pagination,
-  find_category_by_id,
+  find_category,
   update_category,
   delete_category,
 };
