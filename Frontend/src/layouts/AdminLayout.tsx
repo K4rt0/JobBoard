@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import AdminSidebar from '../components/Sidebar'
 import styled from 'styled-components'
+import { useAuthStore } from '@/store/authStore'
+import { UserAuth } from '@/interfaces' // Make sure this import matches your actual UserAuth interface location
 
-// Styled Components
+// Styled Components (unchanged)
 const Layout = styled.div`
     display: flex;
     min-height: 100vh;
@@ -89,7 +91,7 @@ const DropdownMenu = styled.div<{ $isOpen: boolean }>`
     background: white;
     border-radius: 8px;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-    width: 150px; /* Giảm chiều rộng vì chỉ có 1 mục */
+    width: 150px;
     overflow: hidden;
     opacity: ${(props) => (props.$isOpen ? '1' : '0')};
     visibility: ${(props) => (props.$isOpen ? 'visible' : 'hidden')};
@@ -108,7 +110,7 @@ const MenuItem = styled.button`
     border: none;
     cursor: pointer;
     text-align: left;
-    color: #ef4444; /* Màu đỏ cho logout */
+    color: #ef4444;
     font-size: 14px;
     transition: background-color 0.2s ease;
 
@@ -129,7 +131,7 @@ const MainContent = styled.main`
     overflow-y: auto;
 `
 
-// SVG Icons
+// SVG Icons (unchanged)
 const ChevronDownIcon = () => (
     <svg
         width="16"
@@ -166,12 +168,7 @@ const AdminLayout: React.FC = () => {
     const navigate = useNavigate()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
-
-    // Mock admin data - chỉ giữ thông tin cơ bản
-    const adminUser = {
-        name: 'Admin User',
-        initials: 'AU', // First letters of first and last name
-    }
+    const { user, logout } = useAuthStore()
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -190,10 +187,22 @@ const AdminLayout: React.FC = () => {
     }, [])
 
     const handleLogout = () => {
+        logout()
         localStorage.removeItem('access-token')
         navigate('/admin/login')
-        setIsMenuOpen(false) // Đóng menu sau khi logout
+        setIsMenuOpen(false)
     }
+
+    // Fallback values if user data is not fully populated
+    const displayName = user?.full_name || user?.email || 'Admin'
+    const initials = user?.full_name
+        ? user.full_name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)
+        : user?.email?.slice(0, 2).toUpperCase() || 'AD'
 
     return (
         <Layout>
@@ -205,8 +214,8 @@ const AdminLayout: React.FC = () => {
                     <HeaderTitle>Admin Dashboard</HeaderTitle>
                     <UserMenuContainer ref={menuRef}>
                         <UserButton onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            <UserAvatar>{adminUser.initials}</UserAvatar>
-                            <UserName>{adminUser.name}</UserName>
+                            <UserAvatar>{initials}</UserAvatar>
+                            <UserName>{displayName}</UserName>
                             <ArrowIcon $isOpen={isMenuOpen}>
                                 <ChevronDownIcon />
                             </ArrowIcon>

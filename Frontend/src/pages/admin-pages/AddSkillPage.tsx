@@ -1,9 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import axios, { AxiosError } from 'axios'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-// Styled Components (CSS-in-JS để định dạng giao diện)
+const API_BASE_URL = 'http://localhost:3000/api/v1'
+
+// Interfaces
+interface Skill {
+    _id: string
+    name: string
+    description?: string
+    slug?: string
+    created_at?: number
+    updated_at?: number
+}
+
+interface Category {
+    _id: string
+    name: string
+}
+
+// Styled Components
 const PageContainer = styled.div`
-    margin-left: 280px; // Để tránh bị che bởi sidebar
+    margin-left: 280px;
     padding: 30px;
     min-height: 100vh;
     background: #f8fafc;
@@ -254,6 +274,24 @@ const Input = styled.input`
     }
 `
 
+const Select = styled.select`
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+    appearance: none;
+
+    &:focus {
+        outline: none;
+        border-color: #2042e3;
+        box-shadow: 0 0 0 3px rgba(32, 66, 227, 0.15);
+        background: #ffffff;
+    }
+`
+
 const ModalActions = styled.div`
     display: flex;
     justify-content: flex-end;
@@ -292,7 +330,56 @@ const SaveButton = styled.button`
     }
 `
 
-// Icons (SVG để hiển thị icon cho các nút và placeholder)
+// Delete confirmation modal styles
+const DeleteModalContent = styled.div`
+    text-align: center;
+    padding: 20px 10px;
+`
+
+const DeleteIcon = styled.div`
+    width: 70px;
+    height: 70px;
+    background: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-size: 30px;
+    margin: 0 auto 20px;
+`
+
+const DeleteMessage = styled.p`
+    font-size: 16px;
+    color: #4b5563;
+    margin-bottom: 25px;
+    line-height: 1.5;
+`
+
+const DeleteButtons = styled.div`
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+`
+
+const DeleteButton = styled.button`
+    padding: 12px 24px;
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+
+    &:hover {
+        background: #dc2626;
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+    }
+`
+
+// Icons
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -327,7 +414,7 @@ const EditIcon = () => (
     </svg>
 )
 
-const DeleteIcon = () => (
+const DeleteIconSvg = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -363,24 +450,84 @@ const EmptyIcon = () => (
     </svg>
 )
 
-// Main Component: Trang quản lý kỹ năng (SkillsPage)
+const TrashIcon = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="40"
+        height="40"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+    </svg>
+)
+
+// Main Component
 const SkillsPage: React.FC = () => {
-    // State để lưu danh sách kỹ năng (skills)
-    // Hiện tại lưu trong state (mất khi reload), cần tích hợp API để lấy từ backend
-    // Cấu trúc: { id: number, name: string }
-    const [skills, setSkills] = useState<{ id: number; name: string }[]>([])
-
-    // State để lưu dữ liệu kỹ năng mới hoặc kỹ năng đang chỉnh sửa
-    // Chỉ cần lưu tên kỹ năng (name)
+    const [skills, setSkills] = useState<Skill[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [newSkill, setNewSkill] = useState<string>('')
-
-    // State để kiểm soát hiển thị modal
+    const [selectedCategory, setSelectedCategory] = useState<string>('')
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
+    const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null)
 
-    // State để lưu ID của kỹ năng đang chỉnh sửa (null nếu là thêm mới)
-    const [editingId, setEditingId] = useState<number | null>(null)
+    // Fetch skills from API
+    const fetchSkills = async () => {
+        try {
+            const token = localStorage.getItem('access-token')
+            if (!token) {
+                toast.error('Please log in to fetch skills.')
+                return
+            }
+            const response = await axios.get<{ data: Skill[] }>(
+                `${API_BASE_URL}/skill/get-all`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            )
+            setSkills(response.data.data || [])
+        } catch (error) {
+            const axiosError = error as AxiosError
+            console.error('Error fetching skills:', axiosError.message)
+            toast.error('Failed to fetch skills. Please try again.')
+        }
+    }
 
-    // Hàm tạo chữ cái đầu tiên (initials) từ tên kỹ năng để hiển thị trong SkillIcon
+    // Fetch categories from API
+    const fetchCategories = async () => {
+        try {
+            const token = localStorage.getItem('access-token')
+            if (!token) {
+                toast.error('Please log in to fetch categories.')
+                return
+            }
+            const response = await axios.get<{ data: Category[] }>(
+                `${API_BASE_URL}/category/get-all`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            )
+            setCategories(response.data.data || [])
+        } catch (error) {
+            const axiosError = error as AxiosError
+            console.error('Error fetching categories:', axiosError.message)
+            toast.error('Failed to fetch categories. Please try again.')
+        }
+    }
+
+    useEffect(() => {
+        fetchSkills()
+        fetchCategories()
+    }, [])
+
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -389,71 +536,115 @@ const SkillsPage: React.FC = () => {
             .toUpperCase()
     }
 
-    // Hàm mở modal để thêm hoặc chỉnh sửa kỹ năng
-    // Nếu có skill truyền vào thì là chỉnh sửa, không thì là thêm mới
-    const handleOpenModal = (skill?: { id: number; name: string }) => {
+    const handleOpenModal = (skill?: Skill) => {
         if (skill) {
-            // Chế độ chỉnh sửa: điền thông tin kỹ năng vào form
             setNewSkill(skill.name)
-            setEditingId(skill.id)
+            setSelectedCategory('') // Không gửi category lên backend, chỉ dùng ở frontend
+            setEditingId(skill._id)
         } else {
-            // Chế độ thêm mới: reset form
             setNewSkill('')
+            setSelectedCategory('')
             setEditingId(null)
         }
         setIsModalOpen(true)
     }
 
-    // Hàm đóng modal và reset form
     const handleCloseModal = () => {
         setIsModalOpen(false)
-        // Đợi 300ms để reset form (tránh người dùng nhìn thấy form reset ngay lập tức)
         setTimeout(() => {
             setNewSkill('')
+            setSelectedCategory('')
             setEditingId(null)
         }, 300)
     }
 
-    // Hàm lưu kỹ năng (thêm mới hoặc cập nhật)
-    // Backend cần cung cấp API để:
-    // 1. Thêm kỹ năng mới (POST /skills)
-    // 2. Cập nhật kỹ năng (PUT /skills/:id)
-    const handleSaveSkill = () => {
-        // Kiểm tra tên kỹ năng không được để trống
-        if (newSkill.trim() === '') return
-
-        if (editingId) {
-            // Chế độ chỉnh sửa: cập nhật kỹ năng trong danh sách
-            // Gọi API: PUT /skills/:id với body { name }
-            setSkills(
-                skills.map((skill) =>
-                    skill.id === editingId
-                        ? { ...skill, name: newSkill.trim() }
-                        : skill,
-                ),
-            )
-        } else {
-            // Chế độ thêm mới: thêm kỹ năng vào danh sách
-            // Gọi API: POST /skills với body { name }
-            const skill = {
-                id: Date.now(), // Tạm thời dùng Date.now() để tạo ID, backend nên trả về ID thực
-                name: newSkill.trim(),
-            }
-            setSkills([...skills, skill])
+    const handleSaveSkill = async () => {
+        if (newSkill.trim() === '') {
+            toast.warn('Please enter a skill name.')
+            return
         }
 
-        // Đóng modal sau khi lưu
-        handleCloseModal()
+        const token = localStorage.getItem('access-token')
+        if (!token) {
+            toast.error('Please log in to save a skill.')
+            return
+        }
+
+        try {
+            if (editingId) {
+                const response = await axios.patch(
+                    `${API_BASE_URL}/skill/update/${editingId}`,
+                    { name: newSkill.trim() },
+                    { headers: { Authorization: `Bearer ${token}` } },
+                )
+                console.log('Update response:', response.data)
+                setSkills(
+                    skills.map((skill) =>
+                        skill._id === editingId
+                            ? { ...skill, name: newSkill.trim() }
+                            : skill,
+                    ),
+                )
+                toast.success('Skill updated successfully!')
+            } else {
+                const response = await axios.post(
+                    `${API_BASE_URL}/skill/create`,
+                    { name: newSkill.trim() },
+                    { headers: { Authorization: `Bearer ${token}` } },
+                )
+                console.log('Create response:', response.data)
+                fetchSkills()
+                toast.success('Skill created successfully!')
+            }
+            handleCloseModal()
+        } catch (error) {
+            const axiosError = error as AxiosError
+            console.error('Error saving skill:', axiosError.message)
+            toast.error(`Failed to save skill: ${axiosError.message}`)
+        }
     }
 
-    // Hàm xóa kỹ năng
-    // Backend cần cung cấp API: DELETE /skills/:id
-    const handleDeleteSkill = (id: number) => {
-        // Gọi API: DELETE /skills/:id
-        setSkills(skills.filter((skill) => skill.id !== id))
+    // Open delete confirmation modal
+    const openDeleteModal = (skill: Skill) => {
+        setSkillToDelete(skill)
+        setDeleteModalOpen(true)
     }
 
-    // Hàm xử lý khi người dùng nhấn Enter để lưu kỹ năng
+    // Close delete confirmation modal
+    const closeDeleteModal = () => {
+        setDeleteModalOpen(false)
+        setTimeout(() => {
+            setSkillToDelete(null)
+        }, 300)
+    }
+
+    // Confirm deletion
+    const confirmDelete = async () => {
+        if (!skillToDelete) return
+
+        const token = localStorage.getItem('access-token')
+        if (!token) {
+            toast.error('Please log in to delete a skill.')
+            return
+        }
+
+        try {
+            await axios.delete(
+                `${API_BASE_URL}/skill/delete/${skillToDelete._id}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            )
+            setSkills(skills.filter((skill) => skill._id !== skillToDelete._id))
+            toast.success('Skill deleted successfully!')
+            closeDeleteModal()
+        } catch (error) {
+            const axiosError = error as AxiosError
+            console.error('Error deleting skill:', axiosError.message)
+            toast.error(`Failed to delete skill: ${axiosError.message}`)
+        }
+    }
+
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             handleSaveSkill()
@@ -462,7 +653,7 @@ const SkillsPage: React.FC = () => {
 
     return (
         <PageContainer>
-            {/* Header: Tiêu đề và nút thêm kỹ năng */}
+            <ToastContainer />
             <Header>
                 <Title>Skill Management</Title>
                 <AddButton onClick={() => handleOpenModal()}>
@@ -470,34 +661,29 @@ const SkillsPage: React.FC = () => {
                 </AddButton>
             </Header>
 
-            {/* Danh sách kỹ năng */}
             <SkillsContainer>
                 {skills.length > 0 ? (
                     skills.map((skill) => (
-                        <SkillCard key={skill.id}>
+                        <SkillCard key={skill._id}>
                             <SkillInfo>
-                                {/* Hiển thị chữ cái đầu tiên của tên kỹ năng trong icon */}
                                 <SkillIcon>{getInitials(skill.name)}</SkillIcon>
                                 <SkillName>{skill.name}</SkillName>
                             </SkillInfo>
                             <ActionButtons>
-                                {/* Nút chỉnh sửa kỹ năng */}
                                 <IconButton
                                     onClick={() => handleOpenModal(skill)}
                                 >
                                     <EditIcon />
                                 </IconButton>
-                                {/* Nút xóa kỹ năng */}
                                 <IconButton
-                                    onClick={() => handleDeleteSkill(skill.id)}
+                                    onClick={() => openDeleteModal(skill)}
                                 >
-                                    <DeleteIcon />
+                                    <DeleteIconSvg />
                                 </IconButton>
                             </ActionButtons>
                         </SkillCard>
                     ))
                 ) : (
-                    // Hiển thị placeholder khi không có kỹ năng
                     <NoSkills>
                         <EmptyIllustration>
                             <EmptyIcon />
@@ -511,7 +697,7 @@ const SkillsPage: React.FC = () => {
                 )}
             </SkillsContainer>
 
-            {/* Modal để thêm hoặc chỉnh sửa kỹ năng */}
+            {/* Edit/Add Skill Modal */}
             <ModalOverlay isOpen={isModalOpen} onClick={handleCloseModal}>
                 <Modal onClick={(e) => e.stopPropagation()}>
                     <ModalHeader>
@@ -521,7 +707,6 @@ const SkillsPage: React.FC = () => {
                         <CloseButton onClick={handleCloseModal}>×</CloseButton>
                     </ModalHeader>
 
-                    {/* Form nhập tên kỹ năng */}
                     <InputGroup>
                         <InputLabel>Skill Name</InputLabel>
                         <Input
@@ -534,7 +719,23 @@ const SkillsPage: React.FC = () => {
                         />
                     </InputGroup>
 
-                    {/* Nút hành động trong modal */}
+                    <InputGroup>
+                        <InputLabel>Category (Optional)</InputLabel>
+                        <Select
+                            value={selectedCategory}
+                            onChange={(e) =>
+                                setSelectedCategory(e.target.value)
+                            }
+                        >
+                            <option value="">Select a category</option>
+                            {categories.map((category) => (
+                                <option key={category._id} value={category._id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </InputGroup>
+
                     <ModalActions>
                         <CancelButton onClick={handleCloseModal}>
                             Cancel
@@ -543,6 +744,36 @@ const SkillsPage: React.FC = () => {
                             {editingId ? 'Update' : 'Save'}
                         </SaveButton>
                     </ModalActions>
+                </Modal>
+            </ModalOverlay>
+
+            {/* Delete Confirmation Modal */}
+            <ModalOverlay isOpen={deleteModalOpen} onClick={closeDeleteModal}>
+                <Modal onClick={(e) => e.stopPropagation()}>
+                    <ModalHeader>
+                        <ModalTitle>Delete Skill</ModalTitle>
+                        <CloseButton onClick={closeDeleteModal}>×</CloseButton>
+                    </ModalHeader>
+
+                    <DeleteModalContent>
+                        <DeleteIcon>
+                            <TrashIcon />
+                        </DeleteIcon>
+                        <DeleteMessage>
+                            Are you sure you want to delete the skill &quot;
+                            {skillToDelete?.name}&quot;? <br />
+                            This action cannot be undone.
+                        </DeleteMessage>
+
+                        <DeleteButtons>
+                            <CancelButton onClick={closeDeleteModal}>
+                                Cancel
+                            </CancelButton>
+                            <DeleteButton onClick={confirmDelete}>
+                                Delete
+                            </DeleteButton>
+                        </DeleteButtons>
+                    </DeleteModalContent>
                 </Modal>
             </ModalOverlay>
         </PageContainer>

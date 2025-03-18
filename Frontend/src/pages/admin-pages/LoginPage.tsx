@@ -7,7 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     hasIcon?: boolean
 }
 
-// Styled Components (giữ nguyên)
+// Styled Components (unchanged)
 const PageContainer = styled.div`
     min-height: 100vh;
     display: flex;
@@ -197,7 +197,7 @@ const ErrorMessage = styled.p`
     margin-bottom: 10px;
 `
 
-// SVG Icons
+// SVG Icons (unchanged)
 const EmailIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -243,7 +243,6 @@ const AdminLoginPage: React.FC = () => {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError('')
-        console.log('Dữ liệu gửi đi:', { username, password })
 
         try {
             const response = await fetch(
@@ -261,15 +260,9 @@ const AdminLoginPage: React.FC = () => {
             )
 
             const data = await response.json()
-            console.log('Status:', response.status, 'Phản hồi:', data)
 
             if (response.ok) {
-                console.log('Access Token:', data.data.access_token)
-                localStorage.setItem('access-token', data.data.access_token) // Key là access-token
-                console.log(
-                    'Token trong localStorage:',
-                    localStorage.getItem('access-token'),
-                ) // Kiểm tra ngay sau khi lưu
+                localStorage.setItem('access-token', data.data.access_token)
                 navigate('/admin/dashboard')
             } else {
                 setError(
@@ -277,7 +270,6 @@ const AdminLoginPage: React.FC = () => {
                 )
             }
         } catch (error) {
-            console.error('Chi tiết lỗi:', error)
             setError('Có lỗi xảy ra. Vui lòng kiểm tra kết nối!')
         }
     }
