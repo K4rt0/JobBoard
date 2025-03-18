@@ -29,7 +29,7 @@ export const refresh_token = async (): Promise<string | null> => {
 
         // 🟢 Gửi request refresh token (dùng refreshAxiosInstance để tránh vòng lặp)
         const response = await refreshAxiosInstance.post(
-            `/user/refresh-token`,
+            `/auth/refresh-token`,
             { refresh_token },
             { headers: { 'Content-Type': 'application/json' } },
         )
