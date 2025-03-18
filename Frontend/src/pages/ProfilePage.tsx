@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { getCurrentUser, updateUserProfile } from '@/services/userService'
+import {
+    addUserSkills,
+    getCurrentUser,
+    updateUserProfile,
+} from '@/services/userService'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '@/hooks/useAuth'
@@ -123,33 +127,31 @@ const ProfilePage: React.FC = () => {
     )
     const { user } = useAuth()
     const accessToken = user?.access_token
-
-    // Fetch user profile data
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-            if (!accessToken) {
-                setError('No access token available')
-                setLoading(false)
-                return
-            }
-
-            try {
-                setLoading(true)
-                const data = await getCurrentUser()
-                setUserData(data)
-            } catch (err) {
-                const errorMessage =
-                    err instanceof Error
-                        ? err.message
-                        : 'Failed to load profile data'
-                setError(errorMessage)
-            } finally {
-                setLoading(false)
-            }
+    const fetchUserProfile = async () => {
+        if (!accessToken) {
+            setError('No access token available')
+            setLoading(false)
+            return
         }
 
+        try {
+            setLoading(true)
+            const data = await getCurrentUser()
+            setUserData(data)
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to load profile data'
+            setError(errorMessage)
+        } finally {
+            setLoading(false)
+        }
+    }
+    // Fetch user profile data
+    useEffect(() => {
         fetchUserProfile()
-    }, [accessToken])
+    }, [accessToken, updateUserProfile])
 
     // Modal handlers
     const handleOpenModal = (
@@ -236,9 +238,23 @@ const ProfilePage: React.FC = () => {
     // Submit form handler
     const handleSubmit = async (): Promise<void> => {
         try {
-            console.log('Submitting formData:', formData)
-            const updatedData = await updateUserProfile(formData)
-            setUserData((prev) => ({ ...prev, ...updatedData }))
+            let updatedData: UserInfo | Freelancer | Employer
+            if (showModal === 'skills' && formData.skills) {
+                const skillIds = formData.skills.map((skill) => skill._id)
+                updatedData = await addUserSkills(skillIds)
+                setUserData((prev) => ({
+                    ...prev,
+                    skills:
+                        (updatedData as Freelancer).skills || formData.skills,
+                }))
+            } else {
+                updatedData = await updateUserProfile(formData)
+                setUserData((prev) => ({ ...prev, ...updatedData }))
+                // Kiểm tra nếu dữ liệu không đầy đủ (ví dụ: thiếu id hoặc email)
+                if (!updatedData.id || !updatedData.email) {
+                    await fetchUserProfile()
+                }
+            }
             toast.success('Profile updated successfully!')
             handleCloseModal()
         } catch (err) {

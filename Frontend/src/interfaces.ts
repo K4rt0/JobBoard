@@ -145,6 +145,7 @@ export interface Skill {
     slug: string
     createdAt: string
     updatedAt: string
+    is_disabled?: boolean
 }
 
 /** ========== API RESPONSE FORMATS ========== **/
