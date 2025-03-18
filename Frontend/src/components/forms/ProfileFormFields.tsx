@@ -17,6 +17,7 @@ export interface SkillsFormFieldsProps {
     formData: { skills: Skill[] }
     handleSkillsChange: (skills: Skill[]) => void
 }
+
 /** ========== Contact Form Fields ========== **/
 export const ContactFormFields: React.FC<{
     formData: ProfileFormData
@@ -54,13 +55,6 @@ export const ContactFormFields: React.FC<{
                 type: 'text',
                 placeholder: 'Enter your website URL',
             },
-            // {
-            //     label: 'Location',
-            //     icon: 'lni lni-lcoation',
-            //     name: 'location',
-            //     type: 'text',
-            //     placeholder: 'Enter your location',
-            // },
         ].map((field) => (
             <Form.Group key={field.name} className="mb-4 position-relative">
                 <Form.Label className="fw-bold">
@@ -154,7 +148,6 @@ export const EducationFormFields: React.FC<{
 )
 
 /** ========== Skills Form Fields ========== **/
-/** ========== Skills Form Fields ========== **/
 export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
     formData,
     handleSkillsChange,
@@ -176,6 +169,7 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
                     slug: skill.slug,
                     createdAt: skill.createdAt,
                     updatedAt: skill.updatedAt,
+                    is_disabled: skill.is_disabled || false, // Đảm bảo có is_disabled
                 }))
                 setSkillOptions(formattedSkills)
             } catch (error) {
@@ -190,7 +184,7 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
             .map((skill) => skill._id)
             .filter(Boolean)
         const availableSkills = skillOptions.filter(
-            (skill) => !selectedIds.includes(skill._id),
+            (skill) => !selectedIds.includes(skill._id) && !skill.is_disabled, // Chỉ lấy skill chưa bị disable
         )
         return inputValue
             ? availableSkills
@@ -213,9 +207,9 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
         const updatedSkills: Skill[] = selectedOptions
             .map((option) => {
                 const skill = skillOptions.find((s) => s._id === option.value)
-                return skill // Return skill or undefined
+                return skill
             })
-            .filter((skill): skill is Skill => !!skill) // Filter out undefined and assert type
+            .filter((skill): skill is Skill => !!skill)
 
         handleSkillsChange(updatedSkills)
         setInputValue('')
@@ -295,6 +289,8 @@ export const SkillsFormFields: React.FC<SkillsFormFieldsProps> = ({
         </Form.Group>
     )
 }
+
+/** ========== Social Form Fields ========== **/
 export const SocialFormFields: React.FC<{
     formData: { socialLinks: SocialLink[] }
     handleSocialLinkChange: (
@@ -303,7 +299,6 @@ export const SocialFormFields: React.FC<{
         value: string,
     ) => void
 }> = ({ formData, handleSocialLinkChange }) => {
-    // Danh sách 5 nền tảng cố định
     const defaultPlatforms: SocialLink[] = [
         { name: 'Facebook', icon: 'lni-facebook', url: '' },
         { name: 'Twitter', icon: 'lni-twitter', url: '' },
@@ -312,7 +307,6 @@ export const SocialFormFields: React.FC<{
         { name: 'Pinterest', icon: 'lni-pinterest', url: '' },
     ]
 
-    // Gộp dữ liệu từ formData với danh sách mặc định
     const socialLinks = defaultPlatforms.map((platform, index) => {
         const existingLink = formData.socialLinks[index] || { url: '' }
         return {
@@ -344,7 +338,6 @@ export const SocialFormFields: React.FC<{
                         </span>
                     </div>
 
-                    {/* Input để nhập URL */}
                     <input
                         type="text"
                         className="form-control"

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import styled from 'styled-components'
-import axios, { AxiosError, AxiosResponse } from 'axios'
-import { ToastContainer, toast } from 'react-toastify' // Import Toastify
-import 'react-toastify/dist/ReactToastify.css' // Import CSS của Toastify
+import axios, { AxiosError } from 'axios'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -41,6 +41,13 @@ const Header = styled.div`
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 `
 
 const Title = styled.h1`
@@ -85,13 +92,92 @@ const AddButton = styled.button`
         width: 18px;
         height: 18px;
     }
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+    }
+`
+
+const SearchContainer = styled.div`
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    position: relative;
+`
+
+const SearchInput = styled.input`
+    width: 100%;
+    padding: 14px 16px 14px 45px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    &:focus {
+        outline: none;
+        border-color: #2042e3;
+        box-shadow: 0 0 0 3px rgba(32, 66, 227, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        padding: 12px 12px 12px 40px;
+    }
+`
+
+const SearchIcon = styled.div`
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+
+    @media (max-width: 768px) {
+        left: 12px;
+    }
+`
+
+const ClearButton = styled.button`
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: #f3f4f6;
+        color: #1f2937;
+    }
+
+    @media (max-width: 768px) {
+        right: 12px;
+    }
+`
+
+const SearchStats = styled.div`
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 15px;
 `
 
 const CategoriesContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    margin-top: 30px;
+    margin-top: 20px;
 `
 
 const CategoryCard = styled.div`
@@ -314,7 +400,19 @@ const SaveButton = styled.button`
     }
 `
 
-// New components for delete confirmation modal
+const WarningIcon = styled.div`
+    width: 60px;
+    height: 60px;
+    background: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-size: 30px;
+    margin: 0 auto 20px;
+`
+
 const ConfirmationMessage = styled.p`
     font-size: 16px;
     color: #4b5563;
@@ -345,19 +443,7 @@ const DeleteButton = styled.button`
     }
 `
 
-const WarningIcon = styled.div`
-    width: 60px;
-    height: 60px;
-    background: #fee2e2;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ef4444;
-    font-size: 30px;
-    margin: 0 auto 20px;
-`
-
+// Icons
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -446,6 +532,43 @@ const AlertIcon = () => (
     </svg>
 )
 
+const SearchIconSvg = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="20"
+        height="20"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+    </svg>
+)
+
+const CloseIconSvg = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="16"
+        height="16"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+        />
+    </svg>
+)
+
+// Main Component
 const CategoryPage: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([])
     const [newCategories, setNewCategories] = useState<string>('')
@@ -455,22 +578,44 @@ const CategoryPage: React.FC = () => {
     const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
         null,
     )
+    const [searchQuery, setSearchQuery] = useState<string>('')
 
     const fetchCategories = async () => {
         try {
+            const token = localStorage.getItem('access-token')
+            if (!token) {
+                toast.error('Please log in to fetch categories.')
+                window.location.href = '/login'
+                return
+            }
             const response = await axios.get<{ data: Category[] }>(
                 `${API_BASE_URL}/category/get-all`,
+                { headers: { Authorization: `Bearer ${token}` } },
             )
             setCategories(response.data.data || [])
         } catch (error) {
-            console.error('Error fetching categories:', error)
-            toast.error('Failed to fetch categories. Please try again.')
+            const axiosError = error as AxiosError<ErrorResponse>
+            if (axiosError.response?.status === 401) {
+                toast.error('Session expired. Please log in again.')
+                window.location.href = '/login'
+            } else {
+                console.error('Error fetching categories:', axiosError.message)
+                toast.error('Failed to fetch categories. Please try again.')
+            }
         }
     }
 
     useEffect(() => {
         fetchCategories()
     }, [])
+
+    const filteredCategories = useMemo(() => {
+        return categories.filter(
+            (category) =>
+                searchQuery === '' ||
+                category.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
+    }, [categories, searchQuery])
 
     const getInitials = (name: string): string => {
         return name
@@ -509,20 +654,17 @@ const CategoryPage: React.FC = () => {
             toast.warn('Please enter at least one category name.')
             return
         }
+        if (categoryNames.some((name) => name.length < 2 || name.length > 50)) {
+            toast.warn('Category name must be between 2 and 50 characters.')
+            return
+        }
 
         const token = localStorage.getItem('access-token')
         if (!token) {
             toast.error('Please log in to create a category.')
+            window.location.href = '/login'
             return
         }
-
-        console.log('Token:', token)
-        console.log(
-            'Data to send:',
-            categoryNames.length === 1
-                ? { name: categoryNames[0] }
-                : categoryNames.map((name: string) => ({ name })),
-        )
 
         try {
             if (editingId) {
@@ -531,7 +673,6 @@ const CategoryPage: React.FC = () => {
                     { name: categoryNames[0] },
                     { headers: { Authorization: `Bearer ${token}` } },
                 )
-                console.log('Update response:', response.data)
                 setCategories(
                     categories.map((cat) =>
                         cat._id === editingId
@@ -548,7 +689,6 @@ const CategoryPage: React.FC = () => {
                         : categoryNames.map((name: string) => ({ name })),
                     { headers: { Authorization: `Bearer ${token}` } },
                 )
-                console.log('Create response:', response.data)
                 fetchCategories()
                 toast.success('Category created successfully!')
             }
@@ -583,20 +723,17 @@ const CategoryPage: React.FC = () => {
         const token = localStorage.getItem('access-token')
         if (!token) {
             toast.error('Please log in to delete a category.')
+            window.location.href = '/login'
             return
         }
 
         try {
             await axios.delete(
                 `${API_BASE_URL}/category/delete/${categoryToDelete._id}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                },
+                { headers: { Authorization: `Bearer ${token}` } },
             )
             setCategories(
-                categories.filter(
-                    (category) => category._id !== categoryToDelete._id,
-                ),
+                categories.filter((cat) => cat._id !== categoryToDelete._id),
             )
             toast.success('Category deleted successfully!')
             handleCloseDeleteModal()
@@ -619,18 +756,54 @@ const CategoryPage: React.FC = () => {
         }
     }
 
+    const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
+            setSearchQuery('')
+        }
+    }
+
+    const handleClearSearch = () => {
+        setSearchQuery('')
+    }
+
     return (
         <PageContainer>
-            <ToastContainer /> {/* Thêm ToastContainer để hiển thị thông báo */}
+            <ToastContainer />
             <Header>
                 <Title>Category Management</Title>
                 <AddButton onClick={() => handleOpenModal()}>
                     <PlusIcon /> Add New Categories
                 </AddButton>
             </Header>
+
+            <SearchContainer>
+                <SearchIcon>
+                    <SearchIconSvg />
+                </SearchIcon>
+                <SearchInput
+                    type="text"
+                    placeholder="Search categories..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyPress}
+                />
+                {searchQuery && (
+                    <ClearButton onClick={handleClearSearch}>
+                        <CloseIconSvg />
+                    </ClearButton>
+                )}
+            </SearchContainer>
+
+            <SearchStats>
+                <span>
+                    {filteredCategories.length} categor
+                    {filteredCategories.length !== 1 ? 'ies' : 'y'} found
+                </span>
+            </SearchStats>
+
             <CategoriesContainer>
-                {categories.length > 0 ? (
-                    categories.map((category) => (
+                {filteredCategories.length > 0 ? (
+                    filteredCategories.map((category) => (
                         <CategoryCard key={category._id}>
                             <CategoryInfo>
                                 <CategoryIcon>
@@ -659,15 +832,25 @@ const CategoryPage: React.FC = () => {
                         <EmptyIllustration>
                             <EmptyIcon />
                         </EmptyIllustration>
-                        <ModalTitle>No Categories Added Yet</ModalTitle>
+                        <ModalTitle>
+                            {searchQuery
+                                ? 'No matching categories found'
+                                : 'No Categories Added Yet'}
+                        </ModalTitle>
                         <EmptyText>
-                            Start adding your categories to organize your
-                            content
+                            {searchQuery
+                                ? 'Try adjusting your search'
+                                : 'Start adding your categories to organize your content'}
                         </EmptyText>
+                        {!searchQuery && (
+                            <AddButton onClick={() => handleOpenModal()}>
+                                <PlusIcon /> Add New Categories
+                            </AddButton>
+                        )}
                     </NoCategories>
                 )}
             </CategoriesContainer>
-            {/* Add/Edit Category Modal */}
+
             <ModalOverlay isOpen={isModalOpen} onClick={handleCloseModal}>
                 <Modal onClick={(e) => e.stopPropagation()}>
                     <ModalHeader>
@@ -676,7 +859,6 @@ const CategoryPage: React.FC = () => {
                         </ModalTitle>
                         <CloseButton onClick={handleCloseModal}>×</CloseButton>
                     </ModalHeader>
-
                     <InputGroup>
                         <InputLabel>
                             {editingId
@@ -693,9 +875,9 @@ const CategoryPage: React.FC = () => {
                                     : 'Enter category names, one per line'
                             }
                             autoFocus
+                            maxLength={50}
                         />
                     </InputGroup>
-
                     <ModalActions>
                         <CancelButton onClick={handleCloseModal}>
                             Cancel
@@ -706,7 +888,7 @@ const CategoryPage: React.FC = () => {
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
-            {/* Delete Confirmation Modal */}
+
             <ModalOverlay
                 isOpen={isDeleteModalOpen}
                 onClick={handleCloseDeleteModal}
@@ -718,11 +900,9 @@ const CategoryPage: React.FC = () => {
                             ×
                         </CloseButton>
                     </ModalHeader>
-
                     <WarningIcon>
                         <AlertIcon />
                     </WarningIcon>
-
                     <ConfirmationMessage>
                         Are you sure you want to delete the category{' '}
                         <HighlightedText>
@@ -732,7 +912,6 @@ const CategoryPage: React.FC = () => {
                         <br />
                         This action cannot be undone.
                     </ConfirmationMessage>
-
                     <ModalActions>
                         <CancelButton onClick={handleCloseDeleteModal}>
                             Cancel

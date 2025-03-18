@@ -1,9 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import axios, { AxiosError } from 'axios'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-// Styled Components (CSS-in-JS để định dạng giao diện)
+const API_BASE_URL = 'http://localhost:3000/api/v1'
+
+// Interfaces
+interface User {
+    _id: string
+    full_name: string
+    email: string
+    role: 'Freelancer' | 'Employer'
+    status: 'Active' | 'Deleted' | 'Blocked'
+}
+
+// Styled Components
 const PageContainer = styled.div`
-    margin-left: 280px; // Để tránh bị che bởi sidebar
+    margin-left: 280px;
     padding: 30px;
     min-height: 100vh;
     background: #f8fafc;
@@ -90,6 +104,7 @@ const TableCell = styled.td`
 const ActionButtons = styled.div`
     display: flex;
     gap: 10px;
+    align-items: center;
 `
 
 const IconButton = styled.button`
@@ -111,15 +126,80 @@ const IconButton = styled.button`
     }
 `
 
-const RoleBadge = styled.span<{ role: 'freelancer' | 'employee' }>`
+const RoleBadge = styled.span<{ role: 'Freelancer' | 'Employer' }>`
     display: inline-block;
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 500;
     background: ${({ role }) =>
-        role === 'freelancer' ? '#eef2ff' : '#ecfdf5'};
-    color: ${({ role }) => (role === 'freelancer' ? '#2042e3' : '#047857')};
+        role === 'Freelancer' ? '#eef2ff' : '#ecfdf5'};
+    color: ${({ role }) => (role === 'Freelancer' ? '#2042e3' : '#047857')};
+`
+
+const StatusBadge = styled.span<{ status: 'Active' | 'Deleted' | 'Blocked' }>`
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: ${({ status }) =>
+        status === 'Active'
+            ? '#ecfdf5'
+            : status === 'Deleted'
+              ? '#fee2e2'
+              : '#fef3c7'};
+    color: ${({ status }) =>
+        status === 'Active'
+            ? '#047857'
+            : status === 'Deleted'
+              ? '#ef4444'
+              : '#d97706'};
+`
+
+const ToggleSwitch = styled.label`
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+`
+
+const ToggleInput = styled.input`
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .slider {
+        background-color: #2042e3;
+    }
+
+    &:checked + .slider:before {
+        transform: translateX(26px);
+    }
+`
+
+const ToggleSlider = styled.span`
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+
+    &:before {
+        position: absolute;
+        content: '';
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
 `
 
 const ModalOverlay = styled.div<{ isOpen: boolean }>`
@@ -268,7 +348,6 @@ const SaveButton = styled.button`
     }
 `
 
-// Icons (SVG để hiển thị icon cho các nút)
 const EditIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -287,88 +366,91 @@ const EditIcon = () => (
     </svg>
 )
 
-// Interface cho dữ liệu user
-interface User {
-    id: string
-    name: string
-    email: string
-    role: 'freelancer' | 'employee'
-}
-
 // Main Component: Trang quản lý người dùng (UserManagement)
 const UserManagement: React.FC = () => {
-    // Fake dữ liệu user
-    const [users, setUsers] = useState<User[]>([
-        {
-            id: '1',
-            name: 'Nguyen Van A',
-            email: 'a@gmail.com',
-            role: 'freelancer',
-        },
-        { id: '2', name: 'Tran Van B', email: 'b@gmail.com', role: 'employee' },
-        { id: '3', name: 'Le Thi C', email: 'c@gmail.com', role: 'freelancer' },
-    ])
+    const [users, setUsers] = useState<User[]>([])
+    const [retryCount, setRetryCount] = useState(0)
+    const maxRetries = 3
 
-    // State để kiểm soát hiển thị modal
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
-
-    // State để lưu dữ liệu user đang chỉnh sửa
-    const [editingUser, setEditingUser] = useState<User | null>(null)
-
-    // Hàm mở modal và thiết lập dữ liệu user cần sửa
-    const handleOpenModal = (user: User) => {
-        setEditingUser({ ...user })
-        setIsModalOpen(true)
-    }
-
-    // Hàm đóng modal và reset dữ liệu
-    const handleCloseModal = () => {
-        setIsModalOpen(false)
-        // Đợi 300ms để reset form (tránh người dùng nhìn thấy form reset ngay lập tức)
-        setTimeout(() => {
-            setEditingUser(null)
-        }, 300)
-    }
-
-    // Hàm cập nhật giá trị khi chỉnh sửa
-    const handleInputChange = (key: keyof User, value: string) => {
-        if (editingUser) {
-            setEditingUser({ ...editingUser, [key]: value })
+    const fetchUsers = async () => {
+        try {
+            const token = localStorage.getItem('access-token')
+            if (!token) {
+                toast.error('Please log in to fetch users.')
+                window.location.href = '/login'
+                return
+            }
+            const response = await axios.get<{ data: User[] }>(
+                `${API_BASE_URL}/user/get-all`,
+                { headers: { Authorization: `Bearer ${token}` } },
+            )
+            setUsers(response.data.data || [])
+            setRetryCount(0) // Reset retry count on success
+        } catch (error) {
+            const axiosError = error as AxiosError
+            if (axiosError.response?.status === 401) {
+                toast.error('Session expired. Please log in again.')
+                window.location.href = '/login'
+            } else if (retryCount < maxRetries) {
+                setTimeout(() => {
+                    setRetryCount(retryCount + 1)
+                    fetchUsers()
+                }, 1000 * retryCount)
+                toast.error(
+                    `Failed to fetch users. Retrying (${retryCount + 1}/${maxRetries})...`,
+                )
+            } else {
+                console.error('Error fetching users:', axiosError.message)
+                toast.error(
+                    'Failed to fetch users. Please try again or check your connection.',
+                )
+            }
         }
     }
 
-    // Hàm lưu thay đổi
-    const handleSaveUser = () => {
-        if (!editingUser) return
+    useEffect(() => {
+        fetchUsers()
+    }, [])
 
-        // Kiểm tra các trường bắt buộc không được để trống
-        if (editingUser.name.trim() === '' || editingUser.email.trim() === '')
+    const handleToggleStatus = async (user: User) => {
+        const newStatus = user.status === 'Active' ? 'Blocked' : 'Active'
+        const token = localStorage.getItem('access-token')
+        if (!token) {
+            toast.error('Please log in to update user status.')
+            window.location.href = '/login'
             return
+        }
 
-        // Cập nhật user trong danh sách
-        setUsers(
-            users.map((user) =>
-                user.id === editingUser.id ? editingUser : user,
-            ),
-        )
-
-        // Hiển thị thông báo thành công (tạm thời dùng alert, có thể thay bằng toast)
-        setTimeout(() => {
-            alert('User information updated successfully!')
-        }, 300)
-
-        // Đóng modal sau khi lưu
-        handleCloseModal()
+        try {
+            const userData = { status: newStatus }
+            await axios.patch(
+                `${API_BASE_URL}/user/${user._id}/status`,
+                userData,
+                { headers: { Authorization: `Bearer ${token}` } },
+            )
+            setUsers(
+                users.map((u) =>
+                    u._id === user._id ? { ...u, status: newStatus } : u,
+                ),
+            )
+            toast.success(
+                `User ${newStatus === 'Active' ? 'enabled' : 'disabled'} successfully!`,
+            )
+        } catch (error) {
+            const axiosError = error as AxiosError
+            console.error('Error toggling user status:', axiosError.message)
+            toast.error(
+                `Failed to update user status: ${axiosError.message}. Please try again.`,
+            )
+        }
     }
 
     return (
         <PageContainer>
-            {/* Header: Tiêu đề */}
+            <ToastContainer />
             <Header>
                 <Title>User Management</Title>
             </Header>
-
-            {/* Bảng danh sách người dùng */}
             <UsersContainer>
                 <UserTable>
                     <TableHead>
@@ -376,99 +458,61 @@ const UserManagement: React.FC = () => {
                             <TableHeader>Name</TableHeader>
                             <TableHeader>Email</TableHeader>
                             <TableHeader>Role</TableHeader>
+                            <TableHeader>Status</TableHeader>
                             <TableHeader>Actions</TableHeader>
                         </tr>
                     </TableHead>
                     <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>
-                                    <RoleBadge role={user.role}>
-                                        {user.role === 'freelancer'
-                                            ? 'Freelancer'
-                                            : 'Employee'}
-                                    </RoleBadge>
+                        {users.length > 0 ? (
+                            users.map((user) => (
+                                <TableRow key={user._id}>
+                                    <TableCell>{user.full_name}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>
+                                        <RoleBadge role={user.role}>
+                                            {user.role}
+                                        </RoleBadge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={user.status}>
+                                            {user.status}
+                                        </StatusBadge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <ActionButtons>
+                                            <ToggleSwitch>
+                                                <ToggleInput
+                                                    type="checkbox"
+                                                    checked={
+                                                        user.status === 'Active'
+                                                    }
+                                                    onChange={() =>
+                                                        handleToggleStatus(user)
+                                                    }
+                                                />
+                                                <ToggleSlider className="slider" />
+                                            </ToggleSwitch>
+                                        </ActionButtons>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <tr>
+                                <TableCell
+                                    colSpan={5}
+                                    style={{
+                                        textAlign: 'center',
+                                        padding: '20px',
+                                    }}
+                                >
+                                    No users found. Please try again or check
+                                    your connection.
                                 </TableCell>
-                                <TableCell>
-                                    <ActionButtons>
-                                        <IconButton
-                                            onClick={() =>
-                                                handleOpenModal(user)
-                                            }
-                                        >
-                                            <EditIcon />
-                                        </IconButton>
-                                    </ActionButtons>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                            </tr>
+                        )}
                     </TableBody>
                 </UserTable>
             </UsersContainer>
-
-            {/* Modal để chỉnh sửa thông tin người dùng */}
-            <ModalOverlay isOpen={isModalOpen} onClick={handleCloseModal}>
-                <Modal onClick={(e) => e.stopPropagation()}>
-                    <ModalHeader>
-                        <ModalTitle>Edit User</ModalTitle>
-                        <CloseButton onClick={handleCloseModal}>×</CloseButton>
-                    </ModalHeader>
-
-                    {/* Form nhập tên người dùng */}
-                    <InputGroup>
-                        <InputLabel>Name</InputLabel>
-                        <Input
-                            type="text"
-                            value={editingUser?.name || ''}
-                            onChange={(e) =>
-                                handleInputChange('name', e.target.value)
-                            }
-                            placeholder="Enter user name"
-                            autoFocus
-                        />
-                    </InputGroup>
-
-                    {/* Form nhập email */}
-                    <InputGroup>
-                        <InputLabel>Email</InputLabel>
-                        <Input
-                            type="email"
-                            value={editingUser?.email || ''}
-                            onChange={(e) =>
-                                handleInputChange('email', e.target.value)
-                            }
-                            placeholder="Enter user email"
-                        />
-                    </InputGroup>
-
-                    {/* Form chọn role */}
-                    <InputGroup>
-                        <InputLabel>Role</InputLabel>
-                        <Select
-                            value={editingUser?.role || 'freelancer'}
-                            onChange={(e) =>
-                                handleInputChange(
-                                    'role',
-                                    e.target.value as 'freelancer' | 'employee',
-                                )
-                            }
-                        >
-                            <option value="freelancer">Freelancer</option>
-                            <option value="employee">Employee</option>
-                        </Select>
-                    </InputGroup>
-
-                    {/* Nút hành động trong modal */}
-                    <ModalActions>
-                        <CancelButton onClick={handleCloseModal}>
-                            Cancel
-                        </CancelButton>
-                        <SaveButton onClick={handleSaveUser}>Update</SaveButton>
-                    </ModalActions>
-                </Modal>
-            </ModalOverlay>
         </PageContainer>
     )
 }
