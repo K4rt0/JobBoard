@@ -37,7 +37,6 @@ const ProtectedRoute = () => {
                     setIsAuthenticated(true) // Đặt true nếu token hợp lệ
                 }
             } catch (e) {
-                console.error('Lỗi giải mã token:', e)
                 setIsAuthenticated(false) // Đặt false nếu lỗi giải mã
             }
         }
@@ -46,12 +45,8 @@ const ProtectedRoute = () => {
 
     if (isAuthenticated === null) return <div>Loading...</div> // Tránh flicker
     if (!isAuthenticated) {
-        console.log(
-            'Chưa đăng nhập hoặc token không hợp lệ, chuyển hướng đến /admin/login',
-        )
         return <Navigate to="/admin/login" replace />
     }
-    console.log('Đã đăng nhập, tiếp tục truy cập route')
     return <Outlet />
 }
 

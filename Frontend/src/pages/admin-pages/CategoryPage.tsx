@@ -1,9 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import axios, { AxiosError, AxiosResponse } from 'axios'
+import { ToastContainer, toast } from 'react-toastify' // Import Toastify
+import 'react-toastify/dist/ReactToastify.css' // Import CSS của Toastify
 
-// Styled Components (CSS-in-JS để định dạng giao diện)
+const API_BASE_URL = 'http://localhost:3000/api/v1'
+
+interface Category {
+    _id: string
+    name: string
+}
+
+interface ModalOverlayProps {
+    isOpen: boolean
+}
+
+interface ErrorResponse {
+    statusCode: number
+    message: string
+    stack?: string
+}
+
+// Styled Components
 const PageContainer = styled.div`
-    margin-left: 280px; // Để tránh bị che bởi sidebar
+    margin-left: 280px;
     padding: 30px;
     min-height: 100vh;
     background: #f8fafc;
@@ -167,7 +187,7 @@ const EmptyText = styled.p`
     margin-bottom: 25px;
 `
 
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
+const ModalOverlay = styled.div<ModalOverlayProps>`
     position: fixed;
     top: 0;
     left: 0;
@@ -294,7 +314,50 @@ const SaveButton = styled.button`
     }
 `
 
-// Icons (SVG để hiển thị icon cho các nút và placeholder)
+// New components for delete confirmation modal
+const ConfirmationMessage = styled.p`
+    font-size: 16px;
+    color: #4b5563;
+    margin-bottom: 25px;
+    text-align: center;
+    line-height: 1.5;
+`
+
+const HighlightedText = styled.span`
+    font-weight: 600;
+    color: #1f2937;
+`
+
+const DeleteButton = styled.button`
+    padding: 12px 24px;
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+
+    &:hover {
+        background: #dc2626;
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+    }
+`
+
+const WarningIcon = styled.div`
+    width: 60px;
+    height: 60px;
+    background: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-size: 30px;
+    margin: 0 auto 20px;
+`
+
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -365,133 +428,225 @@ const EmptyIcon = () => (
     </svg>
 )
 
-// Main Component: Trang quản lý danh mục (CategoryPage)
+const AlertIcon = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="30"
+        height="30"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        />
+    </svg>
+)
+
 const CategoryPage: React.FC = () => {
-    // State để lưu danh sách danh mục (categories)
-    const [categories, setCategories] = useState<
-        { id: number; name: string }[]
-    >([])
-
-    // State để lưu dữ liệu danh mục mới hoặc danh mục đang chỉnh sửa
-    const [newCategories, setNewCategories] = useState<string>('') // Sử dụng textarea để nhập nhiều danh mục
-
-    // State để kiểm soát hiển thị modal
+    const [categories, setCategories] = useState<Category[]>([])
+    const [newCategories, setNewCategories] = useState<string>('')
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+        null,
+    )
 
-    // State để lưu ID của danh mục đang chỉnh sửa (null nếu là thêm mới)
-    const [editingId, setEditingId] = useState<number | null>(null)
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get<{ data: Category[] }>(
+                `${API_BASE_URL}/category/get-all`,
+            )
+            setCategories(response.data.data || [])
+        } catch (error) {
+            console.error('Error fetching categories:', error)
+            toast.error('Failed to fetch categories. Please try again.')
+        }
+    }
 
-    // Hàm tạo chữ cái đầu tiên (initials) từ tên danh mục để hiển thị trong CategoryIcon
-    const getInitials = (name: string) => {
+    useEffect(() => {
+        fetchCategories()
+    }, [])
+
+    const getInitials = (name: string): string => {
         return name
             .split(' ')
-            .map((word) => word[0])
+            .map((word: string) => word[0])
             .join('')
             .toUpperCase()
     }
 
-    // Hàm mở modal để thêm hoặc chỉnh sửa danh mục
-    const handleOpenModal = (category?: { id: number; name: string }) => {
+    const handleOpenModal = (category?: Category) => {
         if (category) {
-            // Chế độ chỉnh sửa: điền thông tin danh mục vào form
-            setNewCategories(category.name) // Chỉ chỉnh sửa 1 danh mục
-            setEditingId(category.id)
+            setNewCategories(category.name)
+            setEditingId(category._id)
         } else {
-            // Chế độ thêm mới: reset form để nhập nhiều danh mục
             setNewCategories('')
             setEditingId(null)
         }
         setIsModalOpen(true)
     }
 
-    // Hàm đóng modal và reset form
     const handleCloseModal = () => {
         setIsModalOpen(false)
-        // Đợi 300ms để reset form (tránh người dùng nhìn thấy form reset ngay lập tức)
         setTimeout(() => {
             setNewCategories('')
             setEditingId(null)
         }, 300)
     }
 
-    // Hàm lưu danh mục (thêm nhiều danh mục cùng lúc hoặc cập nhật)
-    const handleSaveCategory = () => {
-        // Phân tách các dòng trong textarea thành mảng
+    const handleSaveCategory = async () => {
         const categoryNames = newCategories
             .split('\n')
-            .map((name) => name.trim())
-            .filter((name) => name !== '')
+            .map((name: string) => name.trim())
+            .filter((name: string) => name !== '')
 
-        if (categoryNames.length === 0) return
-
-        if (editingId) {
-            // Chế độ chỉnh sửa: cập nhật danh mục duy nhất
-            setCategories(
-                categories.map((category) =>
-                    category.id === editingId
-                        ? { ...category, name: categoryNames[0] } // Chỉ lấy dòng đầu tiên để chỉnh sửa
-                        : category,
-                ),
-            )
-        } else {
-            // Chế độ thêm mới: thêm tất cả danh mục từ các dòng
-            const newCategoriesToAdd = categoryNames.map((name) => ({
-                id: Date.now() + Math.random(), // Tạm thời tạo ID duy nhất, backend nên trả ID
-                name,
-            }))
-            setCategories([...categories, ...newCategoriesToAdd])
+        if (categoryNames.length === 0) {
+            toast.warn('Please enter at least one category name.')
+            return
         }
 
-        // Đóng modal sau khi lưu
-        handleCloseModal()
+        const token = localStorage.getItem('access-token')
+        if (!token) {
+            toast.error('Please log in to create a category.')
+            return
+        }
+
+        console.log('Token:', token)
+        console.log(
+            'Data to send:',
+            categoryNames.length === 1
+                ? { name: categoryNames[0] }
+                : categoryNames.map((name: string) => ({ name })),
+        )
+
+        try {
+            if (editingId) {
+                const response = await axios.patch(
+                    `${API_BASE_URL}/category/update/${editingId}`,
+                    { name: categoryNames[0] },
+                    { headers: { Authorization: `Bearer ${token}` } },
+                )
+                console.log('Update response:', response.data)
+                setCategories(
+                    categories.map((cat) =>
+                        cat._id === editingId
+                            ? { ...cat, name: categoryNames[0] }
+                            : cat,
+                    ),
+                )
+                toast.success('Category updated successfully!')
+            } else {
+                const response = await axios.post(
+                    `${API_BASE_URL}/category/create`,
+                    categoryNames.length === 1
+                        ? { name: categoryNames[0] }
+                        : categoryNames.map((name: string) => ({ name })),
+                    { headers: { Authorization: `Bearer ${token}` } },
+                )
+                console.log('Create response:', response.data)
+                fetchCategories()
+                toast.success('Category created successfully!')
+            }
+            handleCloseModal()
+        } catch (error) {
+            const axiosError = error as AxiosError<ErrorResponse>
+            console.error(
+                'Error saving category:',
+                axiosError.response?.data || axiosError.message,
+            )
+            toast.error(
+                `Failed to save category: ${axiosError.response?.data?.message || axiosError.message}`,
+            )
+        }
     }
 
-    // Hàm xóa danh mục
-    const handleDeleteCategory = (id: number) => {
-        setCategories(categories.filter((category) => category.id !== id))
+    const handleConfirmDelete = (category: Category) => {
+        setCategoryToDelete(category)
+        setIsDeleteModalOpen(true)
     }
 
-    // Hàm xử lý khi người dùng nhấn Enter để lưu danh mục
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false)
+        setTimeout(() => {
+            setCategoryToDelete(null)
+        }, 300)
+    }
+
+    const handleDeleteCategory = async () => {
+        if (!categoryToDelete) return
+
+        const token = localStorage.getItem('access-token')
+        if (!token) {
+            toast.error('Please log in to delete a category.')
+            return
+        }
+
+        try {
+            await axios.delete(
+                `${API_BASE_URL}/category/delete/${categoryToDelete._id}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            )
+            setCategories(
+                categories.filter(
+                    (category) => category._id !== categoryToDelete._id,
+                ),
+            )
+            toast.success('Category deleted successfully!')
+            handleCloseDeleteModal()
+        } catch (error) {
+            const axiosError = error as AxiosError<ErrorResponse>
+            console.error(
+                'Error deleting category:',
+                axiosError.response?.data || axiosError.message,
+            )
+            toast.error(
+                `Failed to delete category: ${axiosError.response?.data?.message || axiosError.message}`,
+            )
+        }
+    }
+
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault() // Ngăn tạo dòng mới nếu không dùng Shift
+            e.preventDefault()
             handleSaveCategory()
         }
     }
 
     return (
         <PageContainer>
-            {/* Header: Tiêu đề và nút thêm danh mục */}
+            <ToastContainer /> {/* Thêm ToastContainer để hiển thị thông báo */}
             <Header>
                 <Title>Category Management</Title>
                 <AddButton onClick={() => handleOpenModal()}>
                     <PlusIcon /> Add New Categories
                 </AddButton>
             </Header>
-
-            {/* Danh sách danh mục */}
             <CategoriesContainer>
                 {categories.length > 0 ? (
                     categories.map((category) => (
-                        <CategoryCard key={category.id}>
+                        <CategoryCard key={category._id}>
                             <CategoryInfo>
-                                {/* Hiển thị chữ cái đầu tiên của tên danh mục trong icon */}
                                 <CategoryIcon>
                                     {getInitials(category.name)}
                                 </CategoryIcon>
                                 <CategoryName>{category.name}</CategoryName>
                             </CategoryInfo>
                             <ActionButtons>
-                                {/* Nút chỉnh sửa danh mục */}
                                 <IconButton
                                     onClick={() => handleOpenModal(category)}
                                 >
                                     <EditIcon />
                                 </IconButton>
-                                {/* Nút xóa danh mục */}
                                 <IconButton
                                     onClick={() =>
-                                        handleDeleteCategory(category.id)
+                                        handleConfirmDelete(category)
                                     }
                                 >
                                     <DeleteIcon />
@@ -500,7 +655,6 @@ const CategoryPage: React.FC = () => {
                         </CategoryCard>
                     ))
                 ) : (
-                    // Hiển thị placeholder khi không có danh mục
                     <NoCategories>
                         <EmptyIllustration>
                             <EmptyIcon />
@@ -513,8 +667,7 @@ const CategoryPage: React.FC = () => {
                     </NoCategories>
                 )}
             </CategoriesContainer>
-
-            {/* Modal để thêm hoặc chỉnh sửa danh mục */}
+            {/* Add/Edit Category Modal */}
             <ModalOverlay isOpen={isModalOpen} onClick={handleCloseModal}>
                 <Modal onClick={(e) => e.stopPropagation()}>
                     <ModalHeader>
@@ -524,7 +677,6 @@ const CategoryPage: React.FC = () => {
                         <CloseButton onClick={handleCloseModal}>×</CloseButton>
                     </ModalHeader>
 
-                    {/* Form nhập nhiều tên danh mục */}
                     <InputGroup>
                         <InputLabel>
                             {editingId
@@ -544,7 +696,6 @@ const CategoryPage: React.FC = () => {
                         />
                     </InputGroup>
 
-                    {/* Nút hành động trong modal */}
                     <ModalActions>
                         <CancelButton onClick={handleCloseModal}>
                             Cancel
@@ -552,6 +703,43 @@ const CategoryPage: React.FC = () => {
                         <SaveButton onClick={handleSaveCategory}>
                             {editingId ? 'Update' : 'Save All'}
                         </SaveButton>
+                    </ModalActions>
+                </Modal>
+            </ModalOverlay>
+            {/* Delete Confirmation Modal */}
+            <ModalOverlay
+                isOpen={isDeleteModalOpen}
+                onClick={handleCloseDeleteModal}
+            >
+                <Modal onClick={(e) => e.stopPropagation()}>
+                    <ModalHeader>
+                        <ModalTitle>Delete Category</ModalTitle>
+                        <CloseButton onClick={handleCloseDeleteModal}>
+                            ×
+                        </CloseButton>
+                    </ModalHeader>
+
+                    <WarningIcon>
+                        <AlertIcon />
+                    </WarningIcon>
+
+                    <ConfirmationMessage>
+                        Are you sure you want to delete the category{' '}
+                        <HighlightedText>
+                            “{categoryToDelete?.name}”
+                        </HighlightedText>
+                        ?
+                        <br />
+                        This action cannot be undone.
+                    </ConfirmationMessage>
+
+                    <ModalActions>
+                        <CancelButton onClick={handleCloseDeleteModal}>
+                            Cancel
+                        </CancelButton>
+                        <DeleteButton onClick={handleDeleteCategory}>
+                            Delete
+                        </DeleteButton>
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
