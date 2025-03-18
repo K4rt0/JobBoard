@@ -4,6 +4,7 @@ import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { ObjectId } from "mongodb";
 import { imgur_service } from "~/services/utils/imgur.service";
+import { skill_model } from "~/models/skill.model";
 
 const create_user = async (data) => {
   try {
@@ -23,14 +24,14 @@ const create_user = async (data) => {
   }
 };
 
-const get_user_by_id = async (user_id) => {
+const get_user = async (user_id) => {
   try {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
 
-    const { password, refresh_token, ...userWithoutSensitiveInfo } = user;
+    const { password, refresh_token, ...user_without_sensitive_info } = user;
 
-    return userWithoutSensitiveInfo;
+    return user_without_sensitive_info;
   } catch (error) {
     throw error;
   }
@@ -110,11 +111,47 @@ const update_user = async (user_id, data, file) => {
   }
 };
 
+const update_skills = async (user_id, skill_ids) => {
+  try {
+    const seen = new Set();
+    const duplicates = skill_ids.filter((id) => (seen.has(id) ? true : seen.add(id) && false));
+
+    const skills = await skill_model.find_all_skills();
+    const skill_ids_set = new Set(skills.map((skill) => skill._id.toString()));
+    const invalid_skill_ids = skill_ids.filter((skill_id) => !skill_ids_set.has(skill_id.toString()));
+
+    if (duplicates.length > 0 || invalid_skill_ids.length > 0) throw new ApiError(StatusCodes.BAD_REQUEST, "Đã có lỗi xảy ra khi thêm kỹ năng !");
+
+    const updated_skills = skills
+      .filter((skill) => skill_ids.includes(skill._id.toString()))
+      .map((skill) => ({
+        _id: skill._id,
+        is_disabled: skill.is_disabled,
+      }));
+
+    return await user_model.update_skills(user_id, updated_skills);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const update_socials = async (user_id, socials) => {
+  try {
+    const result = await user_model.update_user(user_id, { socials });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const user_service = {
   create_user,
-  get_user_by_id,
+  get_user,
   get_all_users,
   get_all_users_pagination,
   change_user_password,
   update_user,
+  update_skills,
+  update_socials,
 };

@@ -5,9 +5,11 @@ import {
     Employer,
     Freelancer,
     ProfileFormData,
+    SocialLink,
     UserInfo,
     UserPasswordRequestDTO,
 } from '@/interfaces'
+import { getSkillById } from './skillService'
 
 /**
  * Lấy danh sách tất cả người dùng (Chỉ Admin)
@@ -22,15 +24,7 @@ export const getCurrentUser = async (): Promise<
 > => {
     const response = await axiosInstance.get('/user/profile', {})
     const apiData = response.data.data as ApiUserResponse
-
-    // Mock social links for demonstration
-    const mockSocialLinks = {
-        facebook: 'https://facebook.com',
-        twitter: 'https://twitter.com',
-        linkedin: 'https://linkedin.com',
-        dribbble: 'https://dribbble.com',
-        pinterest: 'https://pinterest.com',
-    }
+    console.log(apiData)
 
     // Ánh xạ dữ liệu từ API sang interface
     const baseUserData: UserInfo = {
@@ -49,30 +43,37 @@ export const getCurrentUser = async (): Promise<
             : null,
         location: apiData.location || '',
         website: apiData.website || '',
-        socialLinks: mockSocialLinks,
+        socials: apiData.socials,
     }
 
     if (apiData.role === 'Freelancer') {
+        // Lấy danh sách kỹ năng từ _id
+        const skills = apiData.skills
+            ? await Promise.all(
+                  apiData.skills.map((skill: any) => getSkillById(skill._id)),
+              )
+            : []
+
         return {
             ...baseUserData,
             education: apiData.education || null,
             experience: apiData.experience ? parseInt(apiData.experience) : 0,
             cvUrl: apiData.cv_url || null,
-            skills: apiData.skills || [],
-            hourlyRate: 0, // Giả định nếu API không trả
-            currency: 'USD', // Giả định nếu API không trả
-            rating: 0, // Giả định nếu API không trả
-            level: 0, // Giả định nếu API không trả
-            reviews: 0, // Giả định nếu API không trả
+            skills: skills || [], // Gán kỹ năng vào đây
+            hourlyRate: 0,
+            currency: 'USD',
+            rating: 0,
+            level: 0,
+            reviews: 0,
         } as Freelancer
     } else if (apiData.role === 'Employer') {
         return {
             ...baseUserData,
             companyName: apiData.company_name || null,
             companyDescription: apiData.company_description || null,
-            hourlyRate: 0, // Giả định nếu API không trả
-            currency: 'USD', // Giả định nếu API không trả
-            rating: 0, // Giả định nếu API không trả
+            hourlyRate: 0,
+            currency: 'USD',
+            rating: 0,
         } as Employer
     }
 
@@ -208,5 +209,45 @@ export const changePassword = async (data: UserPasswordRequestDTO) => {
         return response.data
     } catch (error) {
         handleApiError(error, 'Registration failed')
+    }
+}
+
+export const addUserSkills = async (skillIds: string[]): Promise<any> => {
+    try {
+        const response = await axiosInstance.patch(
+            `/user/update-skills`, // Replace with your actual API endpoint
+            { skills: skillIds },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            },
+        )
+        return response.data
+    } catch (error) {
+        throw new Error('Failed to add skills')
+    }
+}
+
+export const updateUserSocials = async (
+    socialLinks: SocialLink[],
+): Promise<SocialLink[]> => {
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            // Thêm token nếu có
+        }
+
+        const response = await axiosInstance.patch(
+            '/user/update-socials',
+            { socials: socialLinks }, // Dữ liệu payload
+            { headers }, // Config với headers
+        )
+
+        // Trả về dữ liệu từ API, giả định cấu trúc { data: SocialLink[] }
+        return response.data.data || response.data // Điều chỉnh dựa trên cấu trúc API
+    } catch (error) {
+        handleApiError(error, 'Failed to update social links')
+        throw error
     }
 }

@@ -11,6 +11,8 @@ user_route
   .post("/register", user_validation.create_user, user_controller.create_user)
   .patch("/change-password", [auth_middleware.jwt_auth(), user_validation.change_user_password], user_controller.change_user_password)
   .patch("/change-info", [auth_middleware.jwt_auth(), user_validation.update_user], user_controller.update_user)
+  .patch("/update-skills", [auth_middleware.jwt_auth(), user_validation.update_skills], user_controller.update_skills)
+  .patch("/update-socials", [auth_middleware.jwt_auth(), user_validation.update_socials], user_controller.update_socials)
 
   // Admin
   .get("/get-all", auth_middleware.jwt_auth(true), user_controller.get_all_users)

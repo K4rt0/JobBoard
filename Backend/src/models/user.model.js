@@ -9,13 +9,38 @@ const USER_COLLECTION_SCHEMA = Joi.object({
   email: Joi.string().required().email().trim().strict(),
   phone_number: Joi.string().min(10).max(15).trim().strict().default(null),
   birth_date: Joi.date().default(null),
+  location: Joi.string().max(50).default(null),
   role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
 
   avatar: Joi.object({
     url: Joi.string().uri().default(null),
     delete_hash: Joi.string().default(null),
-  }).default({ url: null, delete_hash: null }),
+  }).default({
+    url: null,
+    delete_hash: null,
+  }),
+
+  projects_finished: Joi.array()
+    .items(
+      Joi.object({
+        _id: Joi.string().hex().length(24).required(),
+        rating: Joi.number().min(1).max(5).default(null),
+      })
+    )
+    .default([]),
+
+  socials: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string().max(50).default(null),
+        icon: Joi.string().default(null),
+        url: Joi.string().uri().default(null),
+      })
+    )
+    .default([]),
+
   bio: Joi.string().max(500).default(null),
+  website: Joi.string().uri().default(null),
   education: Joi.string().max(100).default(null),
   experience: Joi.number().min(0).default(0),
   cv_url: Joi.string().uri().default(null),
@@ -45,9 +70,9 @@ const create_user = async (data) => {
   }
 };
 
-const find_all_users = async () => {
+const find_all_users = async (query = {}) => {
   try {
-    const users = await GET_DB().collection(USER_COLLECTION_NAME).find({}).toArray();
+    const users = await GET_DB().collection(USER_COLLECTION_NAME).find(query).toArray();
     return users;
   } catch (error) {
     throw new Error(`Failed to fetch users: ${error.message}`);
@@ -130,6 +155,19 @@ const update_user = async (user_id, data) => {
   }
 };
 
+const update_skills = async (user_id, skills) => {
+  try {
+    console.log(skills);
+    await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .updateOne({ _id: new ObjectId(user_id) }, { $set: { skills: skills } });
+
+    return { _id: user_id };
+  } catch (error) {
+    throw new Error(`Failed to update user skills: ${error.message}`);
+  }
+};
+
 export const user_model = {
   USER_COLLECTION_NAME,
   USER_COLLECTION_SCHEMA,
@@ -138,4 +176,5 @@ export const user_model = {
   find_all_with_pagination,
   find_all_users,
   update_user,
+  update_skills,
 };

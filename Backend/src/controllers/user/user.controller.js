@@ -13,7 +13,7 @@ const get_user = async (req, res, next) => {
         message: "Không tìm thấy người dùng !",
         data: result,
       });
-    const result = await user_service.get_user_by_id(user_id);
+    const result = await user_service.get_user(user_id);
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",
       data: result,
@@ -115,6 +115,30 @@ const update_user = async (req, res, next) => {
   }
 };
 
+const update_skills = async (req, res, next) => {
+  try {
+    await user_service.update_skills(req._id, req.body.skills);
+
+    res.status(StatusCodes.OK).json({
+      message: "Thêm kỹ năng thành công !",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update_socials = async (req, res, next) => {
+  try {
+    await user_service.update_socials(req._id, req.body.socials);
+
+    res.status(StatusCodes.OK).json({
+      message: "Cập nhật thông tin mạng xã hội thành công !",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_controller = {
   // Admin
   get_user,
@@ -126,4 +150,6 @@ export const user_controller = {
   create_user,
   change_user_password,
   update_user,
+  update_skills,
+  update_socials,
 };
