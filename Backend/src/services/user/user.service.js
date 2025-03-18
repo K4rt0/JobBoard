@@ -135,6 +135,16 @@ const update_skills = async (user_id, skill_ids) => {
   }
 };
 
+const update_socials = async (user_id, socials) => {
+  try {
+    const result = await user_model.update_user(user_id, { socials });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const user_service = {
   create_user,
   get_user,
@@ -143,4 +153,5 @@ export const user_service = {
   change_user_password,
   update_user,
   update_skills,
+  update_socials,
 };

@@ -147,6 +147,27 @@ const update_skills = async (req, res, next) => {
   }
 };
 
+const update_socials = async (req, res, next) => {
+  const schema = Joi.object({
+    socials: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().max(50).required(),
+          icon: Joi.string().required(),
+          url: Joi.string().uri().required(),
+        })
+      )
+      .required(),
+  });
+
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_validation = {
   create_user,
   get_all_users_pagination,
@@ -154,4 +175,5 @@ export const user_validation = {
   change_user_password,
   update_user,
   update_skills,
+  update_socials,
 };
