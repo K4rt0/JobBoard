@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import styled from 'styled-components'
 import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { debounce } from 'lodash'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
-// Interfaces
 interface Skill {
     _id: string
     name: string
@@ -17,7 +17,13 @@ interface Skill {
     is_disabled: boolean
 }
 
-// Styled Components
+interface Pagination {
+    total: number
+    current_page: number
+    total_pages: number
+    limit: number
+}
+
 const PageContainer = styled.div`
     margin-left: 280px;
     padding: 30px;
@@ -95,10 +101,20 @@ const AddButton = styled.button`
     }
 `
 
-const SearchContainer = styled.div`
-    width: 100%;
-    margin-top: 5px;
+const SearchFilterContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
     margin-bottom: 20px;
+    width: 100%;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+`
+
+const SearchContainer = styled.div`
+    flex: 1;
     position: relative;
 `
 
@@ -163,6 +179,43 @@ const ClearButton = styled.button`
     }
 `
 
+const SortContainer = styled.div`
+    width: 200px;
+    position: relative;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`
+
+const SortSelect = styled.select`
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    appearance: none;
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+        border-color: #2042e3;
+        box-shadow: 0 0 0 3px rgba(32, 66, 227, 0.15);
+    }
+`
+
+const SortIcon = styled.div`
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    pointer-events: none;
+`
+
 const SearchStats = styled.div`
     font-size: 14px;
     color: #6b7280;
@@ -171,6 +224,7 @@ const SearchStats = styled.div`
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
+    justify-content: space-between;
 `
 
 const FilterTag = styled.div`
@@ -305,6 +359,57 @@ const EmptyText = styled.p`
     margin-bottom: 25px;
 `
 
+const PaginationContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 5px;
+    flex-wrap: wrap;
+`
+
+const PageButton = styled.button<{ isActive?: boolean }>`
+    padding: 8px 14px;
+    border: ${(props) =>
+        props.isActive ? '1px solid #2042e3' : '1px solid #e5e7eb'};
+    background: ${(props) => (props.isActive ? '#eef2ff' : '#ffffff')};
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: ${(props) => (props.isActive ? '#2042e3' : '#4b5563')};
+    font-weight: ${(props) => (props.isActive ? '600' : '500')};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: ${(props) => (props.isActive ? '#eef2ff' : '#f3f4f6')};
+        border-color: ${(props) => (props.isActive ? '#2042e3' : '#d1d5db')};
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f3f4f6;
+        border-color: #e5e7eb;
+    }
+`
+
+const LimitSelect = styled.select`
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #4b5563;
+    background: #ffffff;
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+        border-color: #2042e3;
+    }
+`
+
 const ModalOverlay = styled.div<{ isOpen: boolean }>`
     position: fixed;
     top: 0;
@@ -413,18 +518,19 @@ const CancelButton = styled.button`
     }
 `
 
-const SaveButton = styled.button`
+const SaveButton = styled.button<{ disabled?: boolean }>`
     padding: 12px 24px;
     background: #2042e3;
     color: #ffffff;
     border: none;
     border-radius: 10px;
-    cursor: pointer;
+    cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(32, 66, 227, 0.15);
+    opacity: ${(props) => (props.disabled ? 0.6 : 1)};
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: #1a33b9;
         box-shadow: 0 6px 16px rgba(32, 66, 227, 0.25);
     }
@@ -461,18 +567,19 @@ const DeleteButtons = styled.div`
     gap: 12px;
 `
 
-const DeleteButton = styled.button`
+const DeleteButton = styled.button<{ disabled?: boolean }>`
     padding: 12px 24px;
     background: #ef4444;
     color: #ffffff;
     border: none;
     border-radius: 10px;
-    cursor: pointer;
+    cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    opacity: ${(props) => (props.disabled ? 0.6 : 1)};
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: #dc2626;
         box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
     }
@@ -534,7 +641,6 @@ const ToggleLabel = styled.span`
     color: #4b5563;
 `
 
-// Icons
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -641,6 +747,24 @@ const SearchIconSvg = () => (
     </svg>
 )
 
+const SortIconSvg = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="18"
+        height="18"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+        />
+    </svg>
+)
+
 const CloseIconSvg = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -659,9 +783,50 @@ const CloseIconSvg = () => (
     </svg>
 )
 
-// Main Component
+const ChevronLeftIcon = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="16"
+        height="16"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+        />
+    </svg>
+)
+
+const ChevronRightIcon = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        width="16"
+        height="16"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+        />
+    </svg>
+)
+
 const SkillsPage: React.FC = () => {
     const [skills, setSkills] = useState<Skill[]>([])
+    const [pagination, setPagination] = useState<Pagination>({
+        total: 0,
+        current_page: 1,
+        total_pages: 1,
+        limit: 10,
+    })
     const [newSkill, setNewSkill] = useState<string>('')
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -670,60 +835,100 @@ const SkillsPage: React.FC = () => {
     const [isDisabled, setIsDisabled] = useState<boolean>(false)
     const [searchQuery, setSearchQuery] = useState<string>('')
     const [statusFilter, setStatusFilter] = useState<string | null>(null)
+    const [sortType, setSortType] = useState<string>('all')
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [itemsPerPage, setItemsPerPage] = useState<number>(10)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isSaving, setIsSaving] = useState<boolean>(false)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const inputRef = useRef<HTMLInputElement>(null)
 
-    const fetchSkills = async () => {
-        try {
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error('Please log in to fetch skills.')
-                window.location.href = '/login'
-                return
+    const fetchSkills = useCallback(
+        async (page = 1, limit = 10, search = '', sort = 'all') => {
+            try {
+                setIsLoading(true)
+                const token = localStorage.getItem('access-token')
+                if (!token) {
+                    toast.error('Please log in to fetch skills.')
+                    window.location.href = '/login'
+                    return
+                }
+                let url = `${API_BASE_URL}/skill/get-all-pagination?page=${page}&limit=${limit}`
+                if (search.trim())
+                    url += `&search=${encodeURIComponent(search.trim())}`
+                if (sort !== 'all') url += `&sort=${sort}`
+
+                const response = await axios.get<{
+                    data: Skill[]
+                    pagination: Pagination
+                }>(url, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+                setSkills(response.data.data || [])
+                setPagination(
+                    response.data.pagination || {
+                        total: 0,
+                        current_page: 1,
+                        total_pages: 1,
+                        limit,
+                    },
+                )
+            } catch (error) {
+                const axiosError = error as AxiosError
+                if (axiosError.response?.status === 401) {
+                    toast.error('Session expired. Redirecting to login...')
+                    setTimeout(() => (window.location.href = '/login'), 1500)
+                } else {
+                    toast.error('Failed to fetch skills. Please try again.')
+                }
+                setSkills([])
+                setPagination({
+                    total: 0,
+                    current_page: page,
+                    total_pages: 1,
+                    limit,
+                })
+            } finally {
+                setIsLoading(false)
             }
-            const response = await axios.get<{ data: Skill[] }>(
-                `${API_BASE_URL}/skill/get-all`,
-                { headers: { Authorization: `Bearer ${token}` } },
-            )
-            setSkills(response.data.data || [])
-        } catch (error) {
-            const axiosError = error as AxiosError
-            if (axiosError.response?.status === 401) {
-                toast.error('Session expired. Please log in again.')
-                window.location.href = '/login'
-            } else {
-                console.error('Error fetching skills:', axiosError.message)
-                toast.error('Failed to fetch skills. Please try again.')
-            }
-        }
-    }
+        },
+        [],
+    )
+
+    const fetchSkillsDebounced = useMemo(
+        () =>
+            debounce(
+                (page, limit, search, sort) =>
+                    fetchSkills(page, limit, search, sort),
+                300,
+            ),
+        [fetchSkills],
+    )
 
     useEffect(() => {
-        fetchSkills()
-    }, [])
+        fetchSkillsDebounced(currentPage, itemsPerPage, searchQuery, sortType)
+        return () => fetchSkillsDebounced.cancel()
+    }, [currentPage, itemsPerPage, searchQuery, sortType, fetchSkillsDebounced])
 
     const filteredSkills = useMemo(() => {
         return skills.filter((skill) => {
-            const matchesSearch =
-                searchQuery === '' ||
-                skill.name.toLowerCase().includes(searchQuery.toLowerCase())
-
             const matchesStatus =
                 statusFilter === null ||
                 (statusFilter === 'enabled' && !skill.is_disabled) ||
                 (statusFilter === 'disabled' && skill.is_disabled)
-
-            return matchesSearch && matchesStatus
+            return matchesStatus
         })
-    }, [skills, searchQuery, statusFilter])
+    }, [skills, statusFilter])
 
-    const getInitials = (name: string) => {
+    const getInitials = useCallback((name: string) => {
         return name
             .split(' ')
             .map((word) => word[0])
             .join('')
             .toUpperCase()
-    }
+    }, [])
 
-    const handleOpenModal = (skill?: Skill) => {
+    const handleOpenModal = useCallback((skill?: Skill) => {
         if (skill) {
             setNewSkill(skill.name)
             setEditingId(skill._id)
@@ -734,18 +939,19 @@ const SkillsPage: React.FC = () => {
             setIsDisabled(false)
         }
         setIsModalOpen(true)
-    }
+        setTimeout(() => inputRef.current?.focus(), 0)
+    }, [])
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setIsModalOpen(false)
         setTimeout(() => {
             setNewSkill('')
             setEditingId(null)
             setIsDisabled(false)
         }, 300)
-    }
+    }, [])
 
-    const handleSaveSkill = async () => {
+    const handleSaveSkill = useCallback(async () => {
         if (newSkill.trim() === '') {
             toast.warn('Please enter a skill name.')
             return
@@ -766,76 +972,54 @@ const SkillsPage: React.FC = () => {
             return
         }
 
-        let attempt = 0
-        const maxAttempts = 3
-
-        while (attempt < maxAttempts) {
-            try {
-                const skillData = {
-                    name: newSkill.trim(),
-                    is_disabled: isDisabled,
-                }
-
-                if (editingId) {
-                    const response = await axios.patch(
-                        `${API_BASE_URL}/skill/update/${editingId}`,
-                        skillData,
-                        { headers: { Authorization: `Bearer ${token}` } },
-                    )
-                    console.log('Update response:', response.data)
-                    setSkills(
-                        skills.map((skill) =>
-                            skill._id === editingId
-                                ? { ...skill, ...skillData }
-                                : skill,
-                        ),
-                    )
-                    toast.success('Skill updated successfully!')
-                } else {
-                    const response = await axios.post(
-                        `${API_BASE_URL}/skill/create`,
-                        skillData,
-                        { headers: { Authorization: `Bearer ${token}` } },
-                    )
-                    console.log('Create response:', response.data)
-                    fetchSkills()
-                    toast.success('Skill created successfully!')
-                }
-                handleCloseModal()
-                break
-            } catch (error) {
-                attempt++
-                const axiosError = error as AxiosError
-                console.error(
-                    'Error saving skill (attempt ' + attempt + '):',
-                    axiosError.message,
+        setIsSaving(true)
+        try {
+            const skillData = { name: newSkill.trim(), is_disabled: isDisabled }
+            if (editingId) {
+                await axios.patch(
+                    `${API_BASE_URL}/skill/update/${editingId}`,
+                    skillData,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    },
                 )
-                if (attempt === maxAttempts) {
-                    toast.error(
-                        `Failed to save skill after ${maxAttempts} attempts: ${axiosError.message}. Check your connection.`,
-                    )
-                } else {
-                    await new Promise((resolve) =>
-                        setTimeout(resolve, 1000 * attempt),
-                    )
-                }
+                toast.success('Skill updated successfully!')
+            } else {
+                await axios.post(`${API_BASE_URL}/skill/create`, skillData, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+                toast.success('Skill created successfully!')
             }
+            fetchSkills(currentPage, itemsPerPage, searchQuery, sortType)
+            handleCloseModal()
+        } catch (error) {
+            const axiosError = error as AxiosError
+            toast.error(`Failed to save skill: ${axiosError.message}`)
+        } finally {
+            setIsSaving(false)
         }
-    }
+    }, [
+        newSkill,
+        isDisabled,
+        editingId,
+        currentPage,
+        itemsPerPage,
+        searchQuery,
+        sortType,
+        handleCloseModal,
+    ])
 
-    const openDeleteModal = (skill: Skill) => {
+    const openDeleteModal = useCallback((skill: Skill) => {
         setSkillToDelete(skill)
         setDeleteModalOpen(true)
-    }
+    }, [])
 
-    const closeDeleteModal = () => {
+    const closeDeleteModal = useCallback(() => {
         setDeleteModalOpen(false)
-        setTimeout(() => {
-            setSkillToDelete(null)
-        }, 300)
-    }
+        setTimeout(() => setSkillToDelete(null), 300)
+    }, [])
 
-    const confirmDelete = async () => {
+    const confirmDelete = useCallback(async () => {
         if (!skillToDelete) return
 
         const token = localStorage.getItem('access-token')
@@ -845,44 +1029,117 @@ const SkillsPage: React.FC = () => {
             return
         }
 
+        setIsDeleting(true)
         try {
             await axios.delete(
                 `${API_BASE_URL}/skill/delete/${skillToDelete._id}`,
-                { headers: { Authorization: `Bearer ${token}` } },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                },
             )
             toast.success('Skill deleted successfully!')
-            fetchSkills()
+            const isLastItemOnPage =
+                filteredSkills.length === 1 && currentPage > 1
+            if (isLastItemOnPage) {
+                setCurrentPage((prev) => prev - 1)
+            } else {
+                fetchSkills(currentPage, itemsPerPage, searchQuery, sortType)
+            }
             closeDeleteModal()
         } catch (error) {
             const axiosError = error as AxiosError
-            console.error('Error deleting skill:', axiosError.message)
             toast.error(`Failed to delete skill: ${axiosError.message}`)
+        } finally {
+            setIsDeleting(false)
         }
-    }
+    }, [
+        skillToDelete,
+        currentPage,
+        itemsPerPage,
+        searchQuery,
+        sortType,
+        filteredSkills,
+        closeDeleteModal,
+    ])
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            handleSaveSkill()
-        }
-    }
+    const handleKeyPress = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                handleSaveSkill()
+            }
+        },
+        [handleSaveSkill],
+    )
 
-    const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Escape') {
-            setSearchQuery('')
-        }
-    }
+    const handleSearchKeyPress = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                setCurrentPage(1)
+                fetchSkills(1, itemsPerPage, searchQuery, sortType)
+            } else if (e.key === 'Escape') {
+                setSearchQuery('')
+                setCurrentPage(1)
+                fetchSkills(1, itemsPerPage, '', sortType)
+            }
+        },
+        [itemsPerPage, searchQuery, sortType],
+    )
 
-    const handleClearSearch = () => {
+    const handleClearSearch = useCallback(() => {
         setSearchQuery('')
-    }
+        setCurrentPage(1)
+        fetchSkills(1, itemsPerPage, '', sortType)
+    }, [itemsPerPage, sortType])
 
-    const handleStatusFilter = (status: string | null) => {
+    const handleStatusFilter = useCallback((status: string | null) => {
         setStatusFilter(status)
-    }
+        setCurrentPage(1)
+    }, [])
 
-    const handleClearFilter = () => {
+    const handleClearFilter = useCallback(() => {
         setStatusFilter(null)
-    }
+        setCurrentPage(1)
+    }, [])
+
+    const handleSortChange = useCallback(
+        (e: React.ChangeEvent<HTMLSelectElement>) => {
+            setSortType(e.target.value)
+            setCurrentPage(1)
+        },
+        [],
+    )
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page)
+    }, [])
+
+    const handleLimitChange = useCallback(
+        (e: React.ChangeEvent<HTMLSelectElement>) => {
+            setItemsPerPage(Number(e.target.value))
+            setCurrentPage(1)
+        },
+        [],
+    )
+
+    const paginationNumbers = useMemo(() => {
+        const numbers = []
+        const maxPages = 5
+        const halfMaxPages = Math.floor(maxPages / 2)
+        let startPage = Math.max(1, pagination.current_page - halfMaxPages)
+        const endPage = Math.min(
+            pagination.total_pages,
+            startPage + maxPages - 1,
+        )
+
+        if (endPage - startPage + 1 < maxPages) {
+            startPage = Math.max(1, endPage - maxPages + 1)
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            numbers.push(i)
+        }
+        return numbers
+    }, [pagination.current_page, pagination.total_pages])
 
     return (
         <PageContainer>
@@ -894,62 +1151,84 @@ const SkillsPage: React.FC = () => {
                 </AddButton>
             </Header>
 
-            <SearchContainer>
-                <SearchIcon>
-                    <SearchIconSvg />
-                </SearchIcon>
-                <SearchInput
-                    type="text"
-                    placeholder="Search skills..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyPress}
-                />
-                {searchQuery && (
-                    <ClearButton onClick={handleClearSearch}>
-                        <CloseIconSvg />
-                    </ClearButton>
-                )}
-            </SearchContainer>
+            <SearchFilterContainer>
+                <SearchContainer>
+                    <SearchIcon>
+                        <SearchIconSvg />
+                    </SearchIcon>
+                    <SearchInput
+                        type="text"
+                        placeholder="Search skills..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearchKeyPress}
+                    />
+                    {searchQuery && (
+                        <ClearButton onClick={handleClearSearch}>
+                            <CloseIconSvg />
+                        </ClearButton>
+                    )}
+                </SearchContainer>
+                <SortContainer>
+                    <SortSelect value={sortType} onChange={handleSortChange}>
+                        <option value="all">All Skills</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </SortSelect>
+                    <SortIcon>
+                        <SortIconSvg />
+                    </SortIcon>
+                </SortContainer>
+            </SearchFilterContainer>
 
             <SearchStats>
-                <span>
-                    {filteredSkills.length} skill
-                    {filteredSkills.length !== 1 ? 's' : ''} found
-                </span>
-
-                {!statusFilter && (
-                    <>
-                        <span>|</span>
-                        <span
-                            onClick={() => handleStatusFilter('enabled')}
-                            style={{ cursor: 'pointer', color: '#2042e3' }}
-                        >
-                            Filter enabled
-                        </span>
-                        <span>|</span>
-                        <span
-                            onClick={() => handleStatusFilter('disabled')}
-                            style={{ cursor: 'pointer', color: '#2042e3' }}
-                        >
-                            Filter disabled
-                        </span>
-                    </>
-                )}
-
-                {statusFilter && (
-                    <FilterTag>
-                        {statusFilter === 'enabled' ? 'Enabled' : 'Disabled'}
-                        <button onClick={handleClearFilter}>
-                            <CloseIconSvg />
-                        </button>
-                    </FilterTag>
-                )}
+                <div>
+                    <span>
+                        {filteredSkills.length} skill
+                        {filteredSkills.length !== 1 ? 's' : ''} found
+                    </span>
+                    {!statusFilter && (
+                        <>
+                            <span> | </span>
+                            <span
+                                onClick={() => handleStatusFilter('enabled')}
+                                style={{ cursor: 'pointer', color: '#2042e3' }}
+                            >
+                                Filter enabled
+                            </span>
+                            <span> | </span>
+                            <span
+                                onClick={() => handleStatusFilter('disabled')}
+                                style={{ cursor: 'pointer', color: '#2042e3' }}
+                            >
+                                Filter disabled
+                            </span>
+                        </>
+                    )}
+                    {statusFilter && (
+                        <FilterTag>
+                            {statusFilter === 'enabled'
+                                ? 'Enabled'
+                                : 'Disabled'}
+                            <button onClick={handleClearFilter}>
+                                <CloseIconSvg />
+                            </button>
+                        </FilterTag>
+                    )}
+                </div>
+                <LimitSelect value={itemsPerPage} onChange={handleLimitChange}>
+                    <option value={10}>10 per page</option>
+                    <option value={25}>25 per page</option>
+                    <option value={50}>50 per page</option>
+                    <option value={100}>100 per page</option>
+                </LimitSelect>
             </SearchStats>
 
-            <SkillsContainer>
-                {filteredSkills.length > 0 ? (
-                    filteredSkills.map((skill) => (
+            {isLoading ? (
+                <NoSkills>Loading skills...</NoSkills>
+            ) : filteredSkills.length > 0 ? (
+                <SkillsContainer>
+                    {filteredSkills.map((skill) => (
                         <SkillCard key={skill._id}>
                             <SkillInfo>
                                 <SkillIcon>{getInitials(skill.name)}</SkillIcon>
@@ -982,30 +1261,67 @@ const SkillsPage: React.FC = () => {
                                 </IconButton>
                             </ActionButtons>
                         </SkillCard>
-                    ))
-                ) : (
-                    <NoSkills>
-                        <EmptyIllustration>
-                            <EmptyIcon />
-                        </EmptyIllustration>
-                        <ModalTitle>
-                            {searchQuery || statusFilter
-                                ? 'No matching skills found'
-                                : 'No skills found'}
-                        </ModalTitle>
-                        <EmptyText>
-                            {searchQuery || statusFilter
-                                ? 'Try adjusting your search or filters'
-                                : 'Start adding skills to build your list'}
-                        </EmptyText>
-                        <AddButton onClick={() => handleOpenModal()}>
-                            <PlusIcon /> Add New Skill
-                        </AddButton>
-                    </NoSkills>
-                )}
-            </SkillsContainer>
+                    ))}
+                </SkillsContainer>
+            ) : (
+                <NoSkills>
+                    <EmptyIllustration>
+                        <EmptyIcon />
+                    </EmptyIllustration>
+                    <ModalTitle>
+                        {searchQuery || statusFilter
+                            ? 'No matching skills found'
+                            : 'No skills found'}
+                    </ModalTitle>
+                    <EmptyText>
+                        {searchQuery || statusFilter
+                            ? 'Try adjusting your search or filters'
+                            : 'Start adding skills to build your list'}
+                    </EmptyText>
+                    <AddButton onClick={() => handleOpenModal()}>
+                        <PlusIcon /> Add New Skill
+                    </AddButton>
+                </NoSkills>
+            )}
 
-            {/* Add/Edit Skill Modal */}
+            {pagination.total_pages > 1 && (
+                <PaginationContainer>
+                    <PageButton
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                    >
+                        First
+                    </PageButton>
+                    <PageButton
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeftIcon />
+                    </PageButton>
+                    {paginationNumbers.map((page) => (
+                        <PageButton
+                            key={page}
+                            isActive={page === currentPage}
+                            onClick={() => handlePageChange(page)}
+                        >
+                            {page}
+                        </PageButton>
+                    ))}
+                    <PageButton
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === pagination.total_pages}
+                    >
+                        <ChevronRightIcon />
+                    </PageButton>
+                    <PageButton
+                        onClick={() => handlePageChange(pagination.total_pages)}
+                        disabled={currentPage === pagination.total_pages}
+                    >
+                        Last
+                    </PageButton>
+                </PaginationContainer>
+            )}
+
             <ModalOverlay isOpen={isModalOpen}>
                 <Modal>
                     <ModalHeader>
@@ -1019,12 +1335,12 @@ const SkillsPage: React.FC = () => {
                     <InputGroup>
                         <InputLabel>Skill Name</InputLabel>
                         <Input
+                            ref={inputRef}
                             type="text"
                             placeholder="Enter skill name"
                             value={newSkill}
                             onChange={(e) => setNewSkill(e.target.value)}
                             onKeyDown={handleKeyPress}
-                            autoFocus
                         />
                     </InputGroup>
                     <InputGroup>
@@ -1046,14 +1362,20 @@ const SkillsPage: React.FC = () => {
                         <CancelButton onClick={handleCloseModal}>
                             Cancel
                         </CancelButton>
-                        <SaveButton onClick={handleSaveSkill}>
-                            {editingId ? 'Update' : 'Save'}
+                        <SaveButton
+                            onClick={handleSaveSkill}
+                            disabled={isSaving}
+                        >
+                            {isSaving
+                                ? 'Saving...'
+                                : editingId
+                                  ? 'Update'
+                                  : 'Save'}
                         </SaveButton>
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
 
-            {/* Delete Confirmation Modal */}
             <ModalOverlay isOpen={deleteModalOpen}>
                 <Modal>
                     <ModalHeader>
@@ -1067,16 +1389,19 @@ const SkillsPage: React.FC = () => {
                             <TrashIcon />
                         </DeleteIcon>
                         <DeleteMessage>
-                            Are you sure you want to delete the skill &quot;
-                            <strong>{skillToDelete?.name}</strong>&quot;? This
-                            action cannot be undone.
+                            Are you sure you want to delete the skill{' '}
+                            <strong>{skillToDelete?.name}</strong>? This action
+                            cannot be undone.
                         </DeleteMessage>
                         <DeleteButtons>
                             <CancelButton onClick={closeDeleteModal}>
                                 Cancel
                             </CancelButton>
-                            <DeleteButton onClick={confirmDelete}>
-                                Delete
+                            <DeleteButton
+                                onClick={confirmDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
                             </DeleteButton>
                         </DeleteButtons>
                     </DeleteModalContent>
