@@ -18,6 +18,7 @@
         "bootstrap": "^5.3.3",
         "boxicons": "^2.1.4",
         "i18next": "^24.2.2",
+        "lodash": "^4.17.21",
         "react": "^19.0.0",
         "react-bootstrap": "^2.10.9",
         "react-bootstrap-icons": "^1.11.5",
@@ -59,6 +60,7 @@
     },
     "devDependencies": {
         "@types/jquery": "^3.5.32",
+        "@types/lodash": "^4.17.16",
         "@types/react-bootstrap": "^0.32.37",
         "@types/react-icons": "^2.2.7",
         "@types/react-select": "^5.0.0",
