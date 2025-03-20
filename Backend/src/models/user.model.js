@@ -29,6 +29,16 @@ const USER_COLLECTION_SCHEMA = Joi.object({
     )
     .default([]),
 
+  projects_applied: Joi.array()
+    .items(
+      Joi.object({
+        _id: Joi.string().hex().length(24).required(),
+        applied_at: Joi.date().timestamp("javascript").default(Date.now),
+        status: Joi.string().valid("pending", "accepted", "rejected").default("pending"),
+      })
+    )
+    .default([]),
+
   socials: Joi.array()
     .items(
       Joi.object({
@@ -157,7 +167,6 @@ const update_user = async (user_id, data) => {
 
 const update_skills = async (user_id, skills) => {
   try {
-    console.log(skills);
     await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .updateOne({ _id: new ObjectId(user_id) }, { $set: { skills: skills } });
