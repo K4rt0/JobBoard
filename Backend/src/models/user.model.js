@@ -157,7 +157,6 @@ const update_user = async (user_id, data) => {
 
 const update_skills = async (user_id, skills) => {
   try {
-    console.log(skills);
     await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .updateOne({ _id: new ObjectId(user_id) }, { $set: { skills: skills } });
