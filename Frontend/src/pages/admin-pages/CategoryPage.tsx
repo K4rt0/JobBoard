@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import axios, { AxiosError } from 'axios'
-import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import axios, { AxiosError, AxiosResponse } from 'axios'
+import { ToastContainer, toast } from 'react-toastify' // Import Toastify
+import 'react-toastify/dist/ReactToastify.css' // Import CSS của Toastify
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
-
-// Interfaces
-interface Skill {
-    _id: string
-    name: string
-    description?: string
-    slug?: string
-    created_at?: number
-    updated_at?: number
-}
 
 interface Category {
     _id: string
     name: string
+}
+
+interface ModalOverlayProps {
+    isOpen: boolean
+}
+
+interface ErrorResponse {
+    statusCode: number
+    message: string
+    stack?: string
 }
 
 // Styled Components
@@ -87,14 +87,14 @@ const AddButton = styled.button`
     }
 `
 
-const SkillsContainer = styled.div`
+const CategoriesContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     margin-top: 30px;
 `
 
-const SkillCard = styled.div`
+const CategoryCard = styled.div`
     background: #ffffff;
     padding: 20px;
     border-radius: 14px;
@@ -110,13 +110,13 @@ const SkillCard = styled.div`
     }
 `
 
-const SkillInfo = styled.div`
+const CategoryInfo = styled.div`
     display: flex;
     align-items: center;
     gap: 15px;
 `
 
-const SkillIcon = styled.div`
+const CategoryIcon = styled.div`
     width: 46px;
     height: 46px;
     background: #eef2ff;
@@ -128,7 +128,7 @@ const SkillIcon = styled.div`
     font-size: 20px;
 `
 
-const SkillName = styled.h3`
+const CategoryName = styled.h3`
     font-size: 16px;
     color: #1f2937;
     font-weight: 600;
@@ -159,7 +159,7 @@ const IconButton = styled.button`
     }
 `
 
-const NoSkills = styled.div`
+const NoCategories = styled.div`
     text-align: center;
     padding: 60px 20px;
     background: #ffffff;
@@ -187,7 +187,7 @@ const EmptyText = styled.p`
     margin-bottom: 25px;
 `
 
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
+const ModalOverlay = styled.div<ModalOverlayProps>`
     position: fixed;
     top: 0;
     left: 0;
@@ -257,7 +257,7 @@ const InputLabel = styled.label`
     color: #4b5563;
 `
 
-const Input = styled.input`
+const Textarea = styled.textarea`
     width: 100%;
     padding: 14px 16px;
     border: 1px solid #e5e7eb;
@@ -265,24 +265,8 @@ const Input = styled.input`
     font-size: 15px;
     transition: all 0.3s ease;
     background: #f9fafb;
-
-    &:focus {
-        outline: none;
-        border-color: #2042e3;
-        box-shadow: 0 0 0 3px rgba(32, 66, 227, 0.15);
-        background: #ffffff;
-    }
-`
-
-const Select = styled.select`
-    width: 100%;
-    padding: 14px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    background: #f9fafb;
-    appearance: none;
+    min-height: 150px;
+    resize: vertical;
 
     &:focus {
         outline: none;
@@ -330,36 +314,18 @@ const SaveButton = styled.button`
     }
 `
 
-// Delete confirmation modal styles
-const DeleteModalContent = styled.div`
-    text-align: center;
-    padding: 20px 10px;
-`
-
-const DeleteIcon = styled.div`
-    width: 70px;
-    height: 70px;
-    background: #fee2e2;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ef4444;
-    font-size: 30px;
-    margin: 0 auto 20px;
-`
-
-const DeleteMessage = styled.p`
+// New components for delete confirmation modal
+const ConfirmationMessage = styled.p`
     font-size: 16px;
     color: #4b5563;
     margin-bottom: 25px;
+    text-align: center;
     line-height: 1.5;
 `
 
-const DeleteButtons = styled.div`
-    display: flex;
-    justify-content: center;
-    gap: 12px;
+const HighlightedText = styled.span`
+    font-weight: 600;
+    color: #1f2937;
 `
 
 const DeleteButton = styled.button`
@@ -379,7 +345,19 @@ const DeleteButton = styled.button`
     }
 `
 
-// Icons
+const WarningIcon = styled.div`
+    width: 60px;
+    height: 60px;
+    background: #fee2e2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    font-size: 30px;
+    margin: 0 auto 20px;
+`
+
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -414,7 +392,7 @@ const EditIcon = () => (
     </svg>
 )
 
-const DeleteIconSvg = () => (
+const DeleteIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -450,100 +428,64 @@ const EmptyIcon = () => (
     </svg>
 )
 
-const TrashIcon = () => (
+const AlertIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
-        width="40"
-        height="40"
+        width="30"
+        height="30"
     >
         <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
         />
     </svg>
 )
 
-// Main Component
-const SkillsPage: React.FC = () => {
-    const [skills, setSkills] = useState<Skill[]>([])
+const CategoryPage: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([])
-    const [newSkill, setNewSkill] = useState<string>('')
-    const [selectedCategory, setSelectedCategory] = useState<string>('')
+    const [newCategories, setNewCategories] = useState<string>('')
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
-    const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+        null,
+    )
 
-    // Fetch skills from API
-    const fetchSkills = async () => {
-        try {
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error('Please log in to fetch skills.')
-                return
-            }
-            const response = await axios.get<{ data: Skill[] }>(
-                `${API_BASE_URL}/skill/get-all`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                },
-            )
-            setSkills(response.data.data || [])
-        } catch (error) {
-            const axiosError = error as AxiosError
-            console.error('Error fetching skills:', axiosError.message)
-            toast.error('Failed to fetch skills. Please try again.')
-        }
-    }
-
-    // Fetch categories from API
     const fetchCategories = async () => {
         try {
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error('Please log in to fetch categories.')
-                return
-            }
             const response = await axios.get<{ data: Category[] }>(
                 `${API_BASE_URL}/category/get-all`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                },
             )
             setCategories(response.data.data || [])
         } catch (error) {
-            const axiosError = error as AxiosError
-            console.error('Error fetching categories:', axiosError.message)
+            console.error('Error fetching categories:', error)
             toast.error('Failed to fetch categories. Please try again.')
         }
     }
 
     useEffect(() => {
-        fetchSkills()
         fetchCategories()
     }, [])
 
-    const getInitials = (name: string) => {
+    const getInitials = (name: string): string => {
         return name
             .split(' ')
-            .map((word) => word[0])
+            .map((word: string) => word[0])
             .join('')
             .toUpperCase()
     }
 
-    const handleOpenModal = (skill?: Skill) => {
-        if (skill) {
-            setNewSkill(skill.name)
-            setSelectedCategory('') // Không gửi category lên backend, chỉ dùng ở frontend
-            setEditingId(skill._id)
+    const handleOpenModal = (category?: Category) => {
+        if (category) {
+            setNewCategories(category.name)
+            setEditingId(category._id)
         } else {
-            setNewSkill('')
-            setSelectedCategory('')
+            setNewCategories('')
             setEditingId(null)
         }
         setIsModalOpen(true)
@@ -552,232 +494,257 @@ const SkillsPage: React.FC = () => {
     const handleCloseModal = () => {
         setIsModalOpen(false)
         setTimeout(() => {
-            setNewSkill('')
-            setSelectedCategory('')
+            setNewCategories('')
             setEditingId(null)
         }, 300)
     }
 
-    const handleSaveSkill = async () => {
-        if (newSkill.trim() === '') {
-            toast.warn('Please enter a skill name.')
+    const handleSaveCategory = async () => {
+        const categoryNames = newCategories
+            .split('\n')
+            .map((name: string) => name.trim())
+            .filter((name: string) => name !== '')
+
+        if (categoryNames.length === 0) {
+            toast.warn('Please enter at least one category name.')
             return
         }
 
         const token = localStorage.getItem('access-token')
         if (!token) {
-            toast.error('Please log in to save a skill.')
+            toast.error('Please log in to create a category.')
             return
         }
+
+        console.log('Token:', token)
+        console.log(
+            'Data to send:',
+            categoryNames.length === 1
+                ? { name: categoryNames[0] }
+                : categoryNames.map((name: string) => ({ name })),
+        )
 
         try {
             if (editingId) {
                 const response = await axios.patch(
-                    `${API_BASE_URL}/skill/update/${editingId}`,
-                    { name: newSkill.trim() },
+                    `${API_BASE_URL}/category/update/${editingId}`,
+                    { name: categoryNames[0] },
                     { headers: { Authorization: `Bearer ${token}` } },
                 )
                 console.log('Update response:', response.data)
-                setSkills(
-                    skills.map((skill) =>
-                        skill._id === editingId
-                            ? { ...skill, name: newSkill.trim() }
-                            : skill,
+                setCategories(
+                    categories.map((cat) =>
+                        cat._id === editingId
+                            ? { ...cat, name: categoryNames[0] }
+                            : cat,
                     ),
                 )
-                toast.success('Skill updated successfully!')
+                toast.success('Category updated successfully!')
             } else {
                 const response = await axios.post(
-                    `${API_BASE_URL}/skill/create`,
-                    { name: newSkill.trim() },
+                    `${API_BASE_URL}/category/create`,
+                    categoryNames.length === 1
+                        ? { name: categoryNames[0] }
+                        : categoryNames.map((name: string) => ({ name })),
                     { headers: { Authorization: `Bearer ${token}` } },
                 )
                 console.log('Create response:', response.data)
-                fetchSkills()
-                toast.success('Skill created successfully!')
+                fetchCategories()
+                toast.success('Category created successfully!')
             }
             handleCloseModal()
         } catch (error) {
-            const axiosError = error as AxiosError
-            console.error('Error saving skill:', axiosError.message)
-            toast.error(`Failed to save skill: ${axiosError.message}`)
+            const axiosError = error as AxiosError<ErrorResponse>
+            console.error(
+                'Error saving category:',
+                axiosError.response?.data || axiosError.message,
+            )
+            toast.error(
+                `Failed to save category: ${axiosError.response?.data?.message || axiosError.message}`,
+            )
         }
     }
 
-    // Open delete confirmation modal
-    const openDeleteModal = (skill: Skill) => {
-        setSkillToDelete(skill)
-        setDeleteModalOpen(true)
+    const handleConfirmDelete = (category: Category) => {
+        setCategoryToDelete(category)
+        setIsDeleteModalOpen(true)
     }
 
-    // Close delete confirmation modal
-    const closeDeleteModal = () => {
-        setDeleteModalOpen(false)
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false)
         setTimeout(() => {
-            setSkillToDelete(null)
+            setCategoryToDelete(null)
         }, 300)
     }
 
-    // Confirm deletion
-    const confirmDelete = async () => {
-        if (!skillToDelete) return
+    const handleDeleteCategory = async () => {
+        if (!categoryToDelete) return
 
         const token = localStorage.getItem('access-token')
         if (!token) {
-            toast.error('Please log in to delete a skill.')
+            toast.error('Please log in to delete a category.')
             return
         }
 
         try {
             await axios.delete(
-                `${API_BASE_URL}/skill/delete/${skillToDelete._id}`,
+                `${API_BASE_URL}/category/delete/${categoryToDelete._id}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 },
             )
-            setSkills(skills.filter((skill) => skill._id !== skillToDelete._id))
-            toast.success('Skill deleted successfully!')
-            closeDeleteModal()
+            setCategories(
+                categories.filter(
+                    (category) => category._id !== categoryToDelete._id,
+                ),
+            )
+            toast.success('Category deleted successfully!')
+            handleCloseDeleteModal()
         } catch (error) {
-            const axiosError = error as AxiosError
-            console.error('Error deleting skill:', axiosError.message)
-            toast.error(`Failed to delete skill: ${axiosError.message}`)
+            const axiosError = error as AxiosError<ErrorResponse>
+            console.error(
+                'Error deleting category:',
+                axiosError.response?.data || axiosError.message,
+            )
+            toast.error(
+                `Failed to delete category: ${axiosError.response?.data?.message || axiosError.message}`,
+            )
         }
     }
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            handleSaveSkill()
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            handleSaveCategory()
         }
     }
 
     return (
         <PageContainer>
-            <ToastContainer />
+            <ToastContainer /> {/* Thêm ToastContainer để hiển thị thông báo */}
             <Header>
-                <Title>Skill Management</Title>
+                <Title>Category Management</Title>
                 <AddButton onClick={() => handleOpenModal()}>
-                    <PlusIcon /> Add New Skill
+                    <PlusIcon /> Add New Categories
                 </AddButton>
             </Header>
-
-            <SkillsContainer>
-                {skills.length > 0 ? (
-                    skills.map((skill) => (
-                        <SkillCard key={skill._id}>
-                            <SkillInfo>
-                                <SkillIcon>{getInitials(skill.name)}</SkillIcon>
-                                <SkillName>{skill.name}</SkillName>
-                            </SkillInfo>
+            <CategoriesContainer>
+                {categories.length > 0 ? (
+                    categories.map((category) => (
+                        <CategoryCard key={category._id}>
+                            <CategoryInfo>
+                                <CategoryIcon>
+                                    {getInitials(category.name)}
+                                </CategoryIcon>
+                                <CategoryName>{category.name}</CategoryName>
+                            </CategoryInfo>
                             <ActionButtons>
                                 <IconButton
-                                    onClick={() => handleOpenModal(skill)}
+                                    onClick={() => handleOpenModal(category)}
                                 >
                                     <EditIcon />
                                 </IconButton>
                                 <IconButton
-                                    onClick={() => openDeleteModal(skill)}
+                                    onClick={() =>
+                                        handleConfirmDelete(category)
+                                    }
                                 >
-                                    <DeleteIconSvg />
+                                    <DeleteIcon />
                                 </IconButton>
                             </ActionButtons>
-                        </SkillCard>
+                        </CategoryCard>
                     ))
                 ) : (
-                    <NoSkills>
+                    <NoCategories>
                         <EmptyIllustration>
                             <EmptyIcon />
                         </EmptyIllustration>
-                        <ModalTitle>No Skills Added Yet</ModalTitle>
+                        <ModalTitle>No Categories Added Yet</ModalTitle>
                         <EmptyText>
-                            Start adding your skills to build your professional
-                            profile
+                            Start adding your categories to organize your
+                            content
                         </EmptyText>
-                    </NoSkills>
+                    </NoCategories>
                 )}
-            </SkillsContainer>
-
-            {/* Edit/Add Skill Modal */}
+            </CategoriesContainer>
+            {/* Add/Edit Category Modal */}
             <ModalOverlay isOpen={isModalOpen} onClick={handleCloseModal}>
                 <Modal onClick={(e) => e.stopPropagation()}>
                     <ModalHeader>
                         <ModalTitle>
-                            {editingId ? 'Edit Skill' : 'Add New Skill'}
+                            {editingId ? 'Edit Category' : 'Add New Categories'}
                         </ModalTitle>
                         <CloseButton onClick={handleCloseModal}>×</CloseButton>
                     </ModalHeader>
 
                     <InputGroup>
-                        <InputLabel>Skill Name</InputLabel>
-                        <Input
-                            type="text"
-                            value={newSkill}
-                            onChange={(e) => setNewSkill(e.target.value)}
+                        <InputLabel>
+                            {editingId
+                                ? 'Category Name'
+                                : 'Category Names (one per line)'}
+                        </InputLabel>
+                        <Textarea
+                            value={newCategories}
+                            onChange={(e) => setNewCategories(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="Enter skill name"
+                            placeholder={
+                                editingId
+                                    ? 'Enter category name'
+                                    : 'Enter category names, one per line'
+                            }
                             autoFocus
                         />
-                    </InputGroup>
-
-                    <InputGroup>
-                        <InputLabel>Category (Optional)</InputLabel>
-                        <Select
-                            value={selectedCategory}
-                            onChange={(e) =>
-                                setSelectedCategory(e.target.value)
-                            }
-                        >
-                            <option value="">Select a category</option>
-                            {categories.map((category) => (
-                                <option key={category._id} value={category._id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </Select>
                     </InputGroup>
 
                     <ModalActions>
                         <CancelButton onClick={handleCloseModal}>
                             Cancel
                         </CancelButton>
-                        <SaveButton onClick={handleSaveSkill}>
-                            {editingId ? 'Update' : 'Save'}
+                        <SaveButton onClick={handleSaveCategory}>
+                            {editingId ? 'Update' : 'Save All'}
                         </SaveButton>
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
-
             {/* Delete Confirmation Modal */}
-            <ModalOverlay isOpen={deleteModalOpen} onClick={closeDeleteModal}>
+            <ModalOverlay
+                isOpen={isDeleteModalOpen}
+                onClick={handleCloseDeleteModal}
+            >
                 <Modal onClick={(e) => e.stopPropagation()}>
                     <ModalHeader>
-                        <ModalTitle>Delete Skill</ModalTitle>
-                        <CloseButton onClick={closeDeleteModal}>×</CloseButton>
+                        <ModalTitle>Delete Category</ModalTitle>
+                        <CloseButton onClick={handleCloseDeleteModal}>
+                            ×
+                        </CloseButton>
                     </ModalHeader>
 
-                    <DeleteModalContent>
-                        <DeleteIcon>
-                            <TrashIcon />
-                        </DeleteIcon>
-                        <DeleteMessage>
-                            Are you sure you want to delete the skill &quot;
-                            {skillToDelete?.name}&quot;? <br />
-                            This action cannot be undone.
-                        </DeleteMessage>
+                    <WarningIcon>
+                        <AlertIcon />
+                    </WarningIcon>
 
-                        <DeleteButtons>
-                            <CancelButton onClick={closeDeleteModal}>
-                                Cancel
-                            </CancelButton>
-                            <DeleteButton onClick={confirmDelete}>
-                                Delete
-                            </DeleteButton>
-                        </DeleteButtons>
-                    </DeleteModalContent>
+                    <ConfirmationMessage>
+                        Are you sure you want to delete the category{' '}
+                        <HighlightedText>
+                            “{categoryToDelete?.name}”
+                        </HighlightedText>
+                        ?
+                        <br />
+                        This action cannot be undone.
+                    </ConfirmationMessage>
+
+                    <ModalActions>
+                        <CancelButton onClick={handleCloseDeleteModal}>
+                            Cancel
+                        </CancelButton>
+                        <DeleteButton onClick={handleDeleteCategory}>
+                            Delete
+                        </DeleteButton>
+                    </ModalActions>
                 </Modal>
             </ModalOverlay>
         </PageContainer>
     )
 }
 
-export default SkillsPage
+export default CategoryPage

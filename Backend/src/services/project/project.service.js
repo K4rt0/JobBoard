@@ -5,9 +5,9 @@ import { skill_model } from "~/models/skill.model";
 import { user_model } from "~/models/user.model";
 import { slugify } from "~/utils/formatters";
 
-const validate_project = async (project_id, user_id) => {
+const validate_project = async (project_id, protect = true) => {
   try {
-    const project = await project_model.find_project({ _id: new ObjectId(project_id) });
+    const project = await project_model.find_project({ _id: new ObjectId(project_id) }, protect);
     if (!project) throw new Error("Dự án không tồn tại !");
 
     return project;
@@ -129,6 +129,30 @@ const update_project_status = async (project_id, project_status) => {
   }
 };
 
+const apply_project = async (user_id, project_id) => {
+  try {
+    const project = await validate_project(project_id, false);
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+
+    console.log(project);
+
+    if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
+
+    if (project.applicants.includes(user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
+
+    project.applicants.push({
+      _id: user._id,
+      applied_at: new Date().now,
+      status: "pending",
+    });
+    project.updated_at = new Date();
+
+    return await project_model.update_project(project_id, project);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const project_service = {
   create_project,
   update_project,
@@ -136,4 +160,5 @@ export const project_service = {
   get_all_projects_pagination,
   update_project_status,
   get_project,
+  apply_project,
 };

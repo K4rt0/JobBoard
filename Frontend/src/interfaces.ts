@@ -1,54 +1,113 @@
+/** ========== USER INTERFACES ========== **/
+export interface UserPasswordRequestDTO {
+    old_password: string
+    new_password: string
+    retype_new_password: string
+}
 export interface UserRequestDTO {
     full_name: string
     email: string
     password: string
 }
-
 export interface UserAuth {
     id: string
     full_name?: string
-    avatar_url?: string
+    avatar?: string
     email?: string
     role?: string
     access_token: string
     refresh_token: string
 }
-// Define the shape of the user data
-export interface UserInfoData {
+export interface Avatar {
+    url: string
+    delete_hash: string
+}
+
+export interface ApiUserResponse {
+    _id: string
+    full_name: string
+    email: string
+    phone_number: string
+    birth_date?: string | null
+    role: string
+    avatar?: Avatar | null
+    bio?: string | null
+    education?: string | null
+    experience?: string | null // API trả về string, cần chuyển sang number khi sử dụng
+    cv_url?: string | null
+    skills?: Skill[]
+    company_name?: string | null
+    company_description?: string | null
+    location?: string
+    website?: string
+    status: string
+    created_at: number // Timestamp
+    updated_at?: number | null
+}
+
+export interface UserInfo {
+    id: string
     fullName: string
     email: string
     phoneNumber: string
+    birthDate?: string | null
     role: string
-    bio: string
-    skills: string[]
-    experience: number
-    education: string | null
-    cvUrl: string | null
+    bio?: string | null
+    avatar?: string | null // Chỉ lưu URL
     status: string
     createdAt: string
-    location?: string // Optional, as API doesn't provide this yet
-    website?: string // Optional
-    socialLinks?: Record<string, string> // For social media links
+    updatedAt?: string | null
+    location?: string
+    website?: string
+    socialLinks?: Record<string, string>
 }
 
-// Type definitions
-export interface Freelancer {
-    id: number
-    name: string
-    country: string
-    countryCode: string
-    skills: string
-    categories: string
-    description: string
-    hourlyRate: number
-    currency: string
-    rating: number
-    level: number
-    reviews: number
-    avatar: string
+export interface Freelancer extends UserInfo {
+    education?: string | null
+    experience: number
+    cvUrl?: string | null
+    skills: Skill[]
+    hourlyRate?: number
+    currency?: string
+    rating?: number
+    level?: number
+    reviews?: number
 }
 
-// Define the form data type
+export interface Employer extends UserInfo {
+    companyName?: string | null
+    companyDescription?: string | null
+    hourlyRate?: number
+    currency?: string
+    rating?: number
+}
+
+export interface ProfileFormData {
+    fullName?: string | null
+    email?: string | null
+    phoneNumber?: string | null
+    birthDate?: string | null
+    role?: string | null
+    bio?: string | null
+    avatar?: File | string | null
+    status?: string | null
+    location?: string | null
+    website?: string | null
+    socialLinks?: Record<string, string> | null
+    education?: string | null
+    experience?: number | null
+    cvUrl?: string | null
+    skills?: Skill[] | null
+    hourlyRate?: number | null
+    currency?: string | null
+    rating?: number | null
+    level?: number | null
+    reviews?: number | null
+    companyName?: string | null
+    companyDescription?: string | null
+}
+
+/** ========== JOB INTERFACES ========== **/
 export interface JobFormData {
     title: string
     category: string
@@ -58,19 +117,44 @@ export interface JobFormData {
     description: string
     companyName: string
     industry?: string
-
     companyDescription?: string
     logo?: FileList
     recruiterName: string
     recruiterEmail: string
     termsAgreed: boolean
 }
+
 export interface Job {
-    id: number
+    id: string
     title: string
     company: string
     location: string
     salary: string
     type: string
     posted: string
+    description?: string
+    companyWebsite?: string
+    companyLogo?: string
 }
+
+/** ========== SKILL INTERFACES ========== **/
+export interface Skill {
+    _id: string
+    name: string
+    description: string
+    slug: string
+    createdAt: string
+    updatedAt: string
+}
+
+/** ========== API RESPONSE FORMATS ========== **/
+export interface ApiResponse<T> {
+    message: string
+    data: T
+}
+
+/** ========== SKILL API RESPONSE ========== **/
+export type SkillResponse = ApiResponse<Skill>
+
+/** ========== USER API RESPONSE ========== **/
+export type UserResponse = ApiResponse<UserInfo>

@@ -5,9 +5,18 @@ import { GET_DB } from "~/config/mongodb";
 const PROJECT_COLLECTION_NAME = "projects";
 const PROJECT_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string().required().min(3).max(100).trim().strict(),
-  salary: Joi.number().min(0).required(),
+  salary: Joi.object({
+    min: Joi.number().min(0).required(),
+    max: Joi.number().min(0).required(),
+  })
+    .required()
+    .custom((value, helpers) => {
+      if (value.min > value.max) return helpers.message("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+      return value;
+    }),
   location: Joi.string().max(50).required(),
   description: Joi.string().required().max(1000).trim().strict(),
+  expiry_date: Joi.date().timestamp("javascript").required(),
 
   category_id: Joi.string().hex().length(24).required(),
   employer_id: Joi.string().hex().length(24).required(),
@@ -67,9 +76,9 @@ const find_project = async (query, protect = true) => {
   }
 };
 
-const find_all_projects = async () => {
+const find_all_projects = async (protect = true) => {
   try {
-    const projection = protect ? { applicants: 0 } : {};
+    const projection = !protect ? { applicants: 0 } : {};
     const projects = await GET_DB().collection(PROJECT_COLLECTION_NAME).find({}, { projection }).toArray();
     return projects;
   } catch (error) {

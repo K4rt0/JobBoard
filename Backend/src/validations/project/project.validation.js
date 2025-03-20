@@ -3,9 +3,18 @@ import Joi from "joi";
 const create_project = async (req, res, next) => {
   const schema = Joi.object({
     title: Joi.string().min(3).max(100).trim().strict().required(),
-    salary: Joi.number().min(0).required(),
+    salary: Joi.object({
+      min: Joi.number().min(0).required(),
+      max: Joi.number().min(0).required(),
+    })
+      .required()
+      .custom((value, helpers) => {
+        if (value.min > value.max) return helpers.message("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+        return value;
+      }),
     location: Joi.string().max(50).required(),
     description: Joi.string().max(1000).trim().strict().required(),
+    expiry_date: Joi.date().timestamp("javascript").required(),
 
     category_id: Joi.string().hex().length(24).required(),
 
@@ -38,9 +47,18 @@ const create_project = async (req, res, next) => {
 const update_project = async (req, res, next) => {
   const schema = Joi.object({
     title: Joi.string().min(3).max(100).trim().strict(),
-    salary: Joi.number().min(0),
+    salary: Joi.object({
+      min: Joi.number().min(0).required(),
+      max: Joi.number().min(0).required(),
+    })
+      .required()
+      .custom((value, helpers) => {
+        if (value.min > value.max) return helpers.message("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+        return value;
+      }),
     location: Joi.string().max(50),
     description: Joi.string().max(1000).trim().strict().required(),
+    expiry_date: Joi.date().timestamp("javascript").required(),
 
     employer_id: Joi.string().hex().length(24).required(),
     category_id: Joi.string().hex().length(24).required(),
@@ -115,10 +133,24 @@ const update_project_status = async (req, res, next) => {
   }
 };
 
+const apply_project = async (req, res, next) => {
+  const schema = Joi.object({
+    project_id: Joi.string().hex().length(24).required(),
+  });
+
+  try {
+    await schema.validateAsync(req.params, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_validation = {
   create_project,
   update_project,
   get_all_projects_pagination,
   get_project,
   update_project_status,
+  apply_project,
 };

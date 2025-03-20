@@ -93,6 +93,19 @@ const update_project_status = async (req, res, next) => {
   }
 };
 
+const apply_project = async (req, res, next) => {
+  try {
+    const result = await project_service.apply_project(req._id, req.params.project_id);
+
+    res.status(StatusCodes.OK).json({
+      message: "Ứng tuyển dự án thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_controller = {
   create_project,
   update_project,
@@ -100,4 +113,5 @@ export const project_controller = {
   get_all_projects_pagination,
   get_project,
   update_project_status,
+  apply_project,
 };
