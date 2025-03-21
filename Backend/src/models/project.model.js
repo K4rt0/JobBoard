@@ -86,25 +86,56 @@ const find_all_projects = async (protect = true) => {
   }
 };
 
-const find_all_projects_pagination = async (page, limit, filter, protect = true) => {
+const find_all_projects_pagination = async (page = 1, limit = 10, filtered = {}) => {
   try {
     const skip = (page - 1) * limit;
-    const projection = protect ? { applicants: 0 } : {};
-    const projects = await GET_DB().collection(PROJECT_COLLECTION_NAME).find(filter, { projection }).skip(skip).limit(limit).toArray();
+    const query = {};
 
-    const total = await GET_DB().collection(PROJECT_COLLECTION_NAME).countDocuments(filter);
+    if (filtered.status && filtered.status !== "all" && ["active", "deleted", "blocked"].includes(filtered.status)) query.status = filtered.status;
+    if (filtered.search) query.$or = [{ full_name: { $regex: filtered.search, $options: "i" } }, { email: { $regex: filtered.search, $options: "i" } }, { phone_number: { $regex: filtered.search, $options: "i" } }];
+
+    let sort = {};
+    const sort_type = filtered.sort || "all";
+    switch (sort_type.toLowerCase()) {
+      case "newest":
+        sort = { created_at: -1 };
+        break;
+      case "oldest":
+        sort = { created_at: 1 };
+        break;
+      case "all":
+      default:
+        sort = {};
+        break;
+    }
+
+    const { status: _, sort: __, search: ___, ...final_query } = filtered;
+
+    const total = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .countDocuments({ ...final_query, ...query });
+    const projection = { password: 0, refresh_token: 0 };
+    const users = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .find({ ...final_query, ...query }, { projection })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    const total_page = Math.ceil(total / limit);
 
     return {
-      data: projects,
+      data: users,
       pagination: {
-        page,
-        limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        current_page: page,
+        total_page,
+        limit,
       },
     };
   } catch (error) {
-    throw new Error(error);
+    throw new Error(`Failed to fetch users: ${error.message}`);
   }
 };
 
