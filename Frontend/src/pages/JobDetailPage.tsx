@@ -1,30 +1,47 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button, Form, InputGroup } from 'react-bootstrap'
+import { useParams } from 'react-router-dom'
+import { ApiResponse, Job, Skill } from '@/interfaces'
+import { getJobByProjectId } from '@/services/jobSearchService'
 
 const JobDetailPage = () => {
-    // Dữ liệu mẫu cho danh sách freelancer (có thể thay bằng API sau)
-    const freelancers = [
-        {
-            id: 1,
-            name: 'ahmmadqazi584',
-            image: 'assets/images/universal-image/freelancer1.png',
-            bid: '$25 USD in 3 days',
-            rating: 4.9,
-            reviews: 13,
-            description:
-                "Hi Fabio M., Just reviewed your job post and noticed you're looking for a skilled Java Developer—this aligns perfectly with my expertise! With over 6 years of experience and a track record of delivering 50+ web apps [More]",
-        },
-        {
-            id: 2,
-            name: 'johnDoe123',
-            image: 'assets/images/universal-image/freelancer2.png',
-            bid: '$30 USD in 5 days',
-            rating: 4.7,
-            reviews: 8,
-            description:
-                'Experienced web developer with 5 years in front-end development, specializing in React and Node.js [More]',
-        },
-    ]
+    const [job, setJob] = useState<Job | null>(null)
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const { jobId } = useParams<{ jobId: string }>()
+    useEffect(() => {
+        const fetchJob = async () => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                if (!jobId) {
+                    throw new Error('Job ID is not provided')
+                }
+
+                // Fetch job data (skills are already fetched in getJobByProjectId)
+                const jobData = await getJobByProjectId(jobId)
+                setJob(jobData)
+            } catch (err) {
+                setError('Failed to fetch job details. Please try again later.')
+                console.error(err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchJob()
+    }, [jobId])
+
+    if (isLoading) {
+        return <div>Loading...</div>
+    }
+
+    if (error || !job) {
+        return <div>{error || 'No job data available.'}</div>
+    }
+
+    console.log('skills: ' + JSON.stringify(job.skills))
 
     return (
         <div className="job-details section">
@@ -50,198 +67,62 @@ const JobDetailPage = () => {
                                 </div>
                                 <div className="salary-type col-auto order-sm-3">
                                     <span className="salary-range">
-                                        $5000 - $8000
+                                        ${job.salary.min} - ${job.salary.max}
                                     </span>
                                     <span className="badge badge-success">
-                                        Full Time
+                                        {job.job_type
+                                            .split('-')
+                                            .map(
+                                                (word) =>
+                                                    word
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                    word.slice(1),
+                                            )
+                                            .join(' ')}
                                     </span>
                                 </div>
                                 <div className="content col">
-                                    <h5 className="title">
-                                        Website front end development
-                                    </h5>
+                                    <h5 className="title">{job.title}</h5>
                                     <ul className="meta">
                                         <li>
-                                            <strong className="text-primary">
-                                                <a href="http://www.graygrids.com">
-                                                    GrayGrids
-                                                </a>
-                                            </strong>
-                                        </li>
-                                        <li>
                                             <i className="lni lni-map-marker"></i>{' '}
-                                            2023 Willshire Glen, GA-30009
+                                            {job.location}
                                         </li>
                                     </ul>
                                 </div>
                             </div>
                             <div className="job-details-body">
-                                <h6 className="mb-3">Job Description</h6>
-                                <p>
-                                    Lorem ipsum dolor sit amet consectetur,
-                                    adipisicing elit. Similique, ex iusto!
-                                    Tenetur iusto dolore amet voluptates esse?
-                                    Ut debitis perferendis, impedit ullam ea
-                                    officia sapiente soluta cupiditate molestiae
-                                    eius enim aut laboriosam, saepe deleniti.
-                                    Excepturi nobis amet fugit ipsa corrupti!
-                                </p>
-                                <p>
-                                    Lorem ipsum dolor sit amet consectetur
-                                    adipisicing elit. Quo ratione odit qui
-                                    inventore maiores labore tenetur earum! Quam
-                                    eaque, deleniti quibusdam deserunt quos
-                                    reprehenderit dolor, in quo voluptates
-                                    maxime nostrum.
-                                </p>
-                                <h6 className="mb-3 mt-4">Responsibilities</h6>
-                                <ul>
-                                    <li>
-                                        Proven work experience as a web designer
-                                    </li>
-                                    <li>
-                                        Demonstrable graphic design skills with
-                                        a strong portfolio
-                                    </li>
-                                    <li>
-                                        Proficiency in HTML, CSS and JavaScript
-                                        for rapid prototyping
-                                    </li>
-                                    <li>
-                                        Experience working in an Agile/Scrum
-                                        development process
-                                    </li>
-                                    <li>
-                                        Proven work experience as a web designer
-                                    </li>
-                                    <li>
-                                        Excellent visual design skills with
-                                        sensitivity to user-system interaction
-                                    </li>
-                                    <li>
-                                        Ability to solve problems creatively and
-                                        effectively
-                                    </li>
-                                    <li>
-                                        Proven work experience as a web designer
-                                    </li>
-                                    <li>
-                                        Up-to-date with the latest Web trends,
-                                        techniques and technologies
-                                    </li>
-                                    <li>
-                                        BS/MS in Human-Computer Interaction,
-                                        Interaction Design or a Visual Arts
-                                        subject
-                                    </li>
+                                <h6 className="mb-3 mt-4">Required Skills</h6>
+                                <div className="skills-list">
+                                    {job.skills.length > 0 ? (
+                                        job.skills.map((skill, index) => (
+                                            <span
+                                                key={index}
+                                                className="badge badge-primary text-white bg-primary mr-2 mb-2"
+                                            >
+                                                {skill.name}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p>No skills specified</p>
+                                    )}
+                                </div>
+
+                                <h6 className="mb-3 mt-4">Requirements</h6>
+                                <ul className="list-unstyled">
+                                    {job.requirements.map((req, index) => (
+                                        <li key={index}>{req}</li>
+                                    ))}
                                 </ul>
-                                <h6 className="mb-3 mt-4">
-                                    Education + Experience
-                                </h6>
-                                <ul>
-                                    <li>
-                                        Advanced degree or equivalent experience
-                                        in graphic and web design
-                                    </li>
-                                    <li>
-                                        3 or more years of professional design
-                                        experience
-                                    </li>
-                                    <li>Direct response email experience</li>
-                                    <li>Ecommerce website design experience</li>
-                                    <li>
-                                        Familiarity with mobile and web apps
-                                        preferred
-                                    </li>
-                                    <li>
-                                        Excellent communication skills, most
-                                        notably a demonstrated ability to
-                                        solicit and address creative and design
-                                        feedback
-                                    </li>
-                                    <li>
-                                        Must be able to work under pressure and
-                                        meet deadlines while maintaining a
-                                        positive attitude and providing
-                                        exemplary customer service
-                                    </li>
-                                    <li>
-                                        Ability to work independently and to
-                                        carry out assignments to completion
-                                        within parameters of instructions given,
-                                        prescribed routines, and standard
-                                        accepted practices
-                                    </li>
-                                </ul>
+
                                 <h6 className="mb-3 mt-4">Benefits</h6>
-                                <ul>
-                                    <li>Medical insurance</li>
-                                    <li>Dental insurance</li>
-                                    <li>Vision insurance</li>
-                                    <li>
-                                        Supplemental benefits (Short Term
-                                        Disability, Cancer & Accident).
-                                    </li>
-                                    <li>
-                                        Employer-sponsored Basic Life & AD&D
-                                        Insurance
-                                    </li>
-                                    <li>
-                                        Employer-sponsored Long Term Disability
-                                    </li>
-                                    <li>
-                                        Employer-sponsored Value Adds – Fresh
-                                        Beanies
-                                    </li>
-                                    <li>401(k) with matching</li>
+
+                                <ul className="list-unstyled">
+                                    {job.benefits.map((benefit, index) => (
+                                        <li key={index}>{benefit}</li>
+                                    ))}
                                 </ul>
-                            </div>
-                        </div>
-                        {/* Freelancers Bidding Section */}
-                        <div className="card mt-4 shadow-sm">
-                            <div className="card-body p-4">
-                                <h6 className="mb-3">
-                                    {freelancers.length} freelancers are bidding
-                                    on average $152 for this job
-                                </h6>
-                                <hr />
-                                {freelancers.map((freelancer) => (
-                                    <div
-                                        key={freelancer.id}
-                                        className="d-flex align-items-center mb-3"
-                                    >
-                                        <img
-                                            src={freelancer.image}
-                                            alt={freelancer.name}
-                                            className="rounded-circle"
-                                            style={{
-                                                width: '50px',
-                                                height: '50px',
-                                                objectFit: 'cover',
-                                            }}
-                                        />
-                                        <div className="ms-3">
-                                            <h6 className="mb-0">
-                                                {freelancer.name}
-                                            </h6>
-                                            <div className="text-muted small">
-                                                {freelancer.bid}
-                                            </div>
-                                            <div className="text-warning small">
-                                                {freelancer.rating}{' '}
-                                                <i className="fa fa-star"></i> (
-                                                {freelancer.reviews} Reviews)
-                                            </div>
-                                            <p className="text-muted small mb-0">
-                                                {freelancer.description.slice(
-                                                    0,
-                                                    100,
-                                                )}
-                                                ...
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     </div>
@@ -281,82 +162,87 @@ const JobDetailPage = () => {
                                     <h6 className="title">Job Overview</h6>
                                     <ul className="job-overview list-unstyled">
                                         <li>
-                                            <strong>Published on:</strong> Nov
-                                            6, 2023
+                                            <strong>Published on:</strong>{' '}
+                                            {new Date(
+                                                job.created_at,
+                                            ).toLocaleDateString()}
                                         </li>
                                         <li>
-                                            <strong>Vacancy:</strong> 02
+                                            <strong>Vacancy:</strong>{' '}
+                                            {job.quantity}
                                         </li>
                                         <li>
                                             <strong>Employment Status:</strong>{' '}
-                                            Full-time
+                                            {job.job_type
+                                                .split('-')
+                                                .map(
+                                                    (word) =>
+                                                        word
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                        word.slice(1),
+                                                )
+                                                .join(' ')}
                                         </li>
                                         <li>
-                                            <strong>Experience:</strong> 2 to 3
-                                            year(s)
+                                            <strong>Experience:</strong>{' '}
+                                            {job.experience} year(s)
                                         </li>
                                         <li>
                                             <strong>Job Location:</strong>{' '}
-                                            Willshire Glen
+                                            {job.location}
                                         </li>
                                         <li>
-                                            <strong>Salary:</strong> $5k - $8k
+                                            <strong>Salary:</strong> $
+                                            {job.salary.min} - ${job.salary.max}
                                         </li>
                                         <li>
-                                            <strong>Gender:</strong> Any
+                                            <strong>Gender:</strong>{' '}
+                                            {job.gender}
                                         </li>
                                         <li>
                                             <strong>
                                                 Application Deadline:
                                             </strong>{' '}
-                                            Dec 15, 2023
+                                            {new Date(
+                                                parseInt(job.expiry_date),
+                                            ).toLocaleDateString()}
                                         </li>
                                     </ul>
                                 </div>
                             </div>
                             {/* Sidebar (Job Overview) End */}
-                            {/* Bid on Project Section */}
-                            <div className="card mt-4 shadow-sm">
-                                <div className="card-body">
-                                    <h6 className="mb-3">Place your bid</h6>
-                                    <div className="mb-3">
-                                        <label
-                                            htmlFor="bidAmount"
-                                            className="form-label"
-                                        >
-                                            Bid amount
-                                        </label>
-                                        <InputGroup>
-                                            <Form.Control
-                                                type="number"
-                                                id="bidAmount"
-                                                placeholder="USD"
-                                                defaultValue={50}
-                                                min={0}
-                                            />
-                                            <InputGroup.Text>
-                                                USD
-                                            </InputGroup.Text>
-                                        </InputGroup>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label
-                                            htmlFor="email"
-                                            className="form-label"
-                                        >
-                                            Email address
-                                        </label>
-                                        <Form.Control
-                                            type="email"
-                                            id="email"
-                                            placeholder="jane@freelancer.com"
-                                        />
-                                    </div>
-                                    <Button variant="primary" className="w-100">
-                                        Bid on the project
-                                    </Button>
+                            {/* Sidebar (Contact Information) Start */}
+                            <div className="sidebar-widget">
+                                <div className="inner">
+                                    <h6 className="title">
+                                        Contact Information
+                                    </h6>
+                                    <ul className="job-overview list-unstyled">
+                                        <li>
+                                            <strong>Contact Name:</strong>{' '}
+                                            {job.contact.full_name}
+                                        </li>
+                                        <li>
+                                            <strong>Email:</strong>{' '}
+                                            <a
+                                                href={`mailto:${job.contact.email}`}
+                                            >
+                                                {job.contact.email}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <strong>Phone:</strong>{' '}
+                                            <a
+                                                href={`tel:${job.contact.phone_number}`}
+                                            >
+                                                {job.contact.phone_number}
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
+                            {/* Sidebar (Contact Information) End */}
                         </div>
                     </div>
                     {/* Job Sidebar Wrap End */}

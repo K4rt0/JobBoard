@@ -99,7 +99,7 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                         <div className="d-flex flex-column h-100">
                             <div className="d-flex flex-column align-items-end">
                                 <Link
-                                    to={`/jobs/${job.slug || job._id}`}
+                                    to={`/jobs/${job._id}`}
                                     className="btn btn-primary mb-2 px-4"
                                 >
                                     Apply

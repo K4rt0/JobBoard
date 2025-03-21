@@ -24,7 +24,6 @@ export const getCurrentUser = async (): Promise<
 > => {
     const response = await axiosInstance.get('/user/profile', {})
     const apiData = response.data.data as ApiUserResponse
-    console.log(apiData)
 
     // Ánh xạ dữ liệu từ API sang interface
     const baseUserData: BaseUserInfo = {
@@ -45,6 +44,7 @@ export const getCurrentUser = async (): Promise<
         website: apiData.website || '',
         socials: apiData.socials,
     }
+    console.log(apiData.skills)
 
     if (apiData.role === 'Freelancer') {
         // Lấy danh sách kỹ năng từ _id

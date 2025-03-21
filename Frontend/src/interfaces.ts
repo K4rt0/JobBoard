@@ -188,7 +188,7 @@ export interface Job {
     description: string
     category_id: string
     expiry_date: string
-    skills: string[]
+    skills: Skill[]
     requirements: string[]
     benefits: string[]
     contact: Contact
@@ -198,6 +198,36 @@ export interface Job {
     gender: string
     job_type: string
     status: string
+    created_at: number
+    updated_at: number
+}
+export interface JobApiResponse {
+    _id: string
+    title: string
+    salary: {
+        min: number
+        max: string
+    }
+    quantity: number
+    location: string
+    description: string
+    category_id: string
+    expiry_date: string
+    skills: string[]
+    requirements: string[]
+    benefits: string[]
+    contact: {
+        full_name: string
+        email: string
+        phone_number: string
+    }
+    experience: number
+    employer_id: string
+    slug: string
+    gender: string
+    job_type: string
+    status: string
+    applicants: string[]
     created_at: number
     updated_at: number
 }

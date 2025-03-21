@@ -30,7 +30,7 @@ const AppRoutes = () => {
                 {/* User routes with MainLayout */}
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/job/:jobId" element={<JobDetailPage />} />
+                    <Route path="/jobs/:jobId" element={<JobDetailPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/post-job" element={<PostJobPage />} />
                     <Route path="/jobs" element={<JobSearchPage />} />
