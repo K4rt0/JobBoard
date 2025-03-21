@@ -85,23 +85,16 @@ const get_all_projects_pagination = async (query) => {
 
     const filter = {};
 
-    if (search) {
-      filter.title = { $regex: search, $options: "i" };
-    }
-    if (location) {
-      filter.location = { $regex: location, $options: "i" };
-    }
-    if (salary_min !== undefined || salary_max !== undefined) {
-      filter.salary = {};
-      if (salary_min !== undefined) filter.salary.$gte = salary_min;
-      if (salary_max !== undefined) filter.salary.$lte = salary_max;
-    }
-    if (job_type && job_type.length > 0) {
-      filter.job_type = { $in: job_type };
-    }
-    if (experience !== undefined) {
-      filter.experience = { $gte: experience };
-    }
+    if (search) filter.title = { $regex: search, $options: "i" };
+    if (location) filter.location = { $regex: location, $options: "i" };
+    if (salary_min !== undefined && salary_max !== undefined) {
+      if (salary_min > salary_max) throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+      filter.salary = { $gte: salary_min, $lte: salary_max };
+    } else if (salary_min !== undefined) filter.salary = { $gte: salary_min };
+    else if (salary_max !== undefined) filter.salary = { $lte: salary_max };
+
+    if (job_type && job_type.length > 0) filter.job_type = { $in: job_type };
+    if (experience !== undefined) filter.experience = { $gte: experience };
 
     const projects = await project_model.find_all_projects_pagination(page, limit, filter);
 
@@ -134,15 +127,13 @@ const apply_project = async (user_id, project_id) => {
     const project = await validate_project(project_id, false);
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
 
-    console.log(project);
-
     if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
-
     if (project.applicants.includes(user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
 
     project.applicants.push({
       _id: user._id,
       applied_at: new Date().now,
+      expired_at: project.expired_at,
       status: "pending",
     });
     project.updated_at = new Date();
