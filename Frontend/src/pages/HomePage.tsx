@@ -4,35 +4,35 @@ import { Job } from '@/interfaces'
 import { useState } from 'react'
 
 const Home = () => {
-    const [jobs] = useState<Job[]>([
-        {
-            id: '1',
-            title: 'Senior React Developer',
-            company: 'TechCorp',
-            location: 'New York, NY',
-            salary: '$100,000 - $120,000',
-            type: 'Full Time',
-            posted: '2 days ago',
-        },
-        {
-            id: '2',
-            title: 'UX/UI Designer',
-            company: 'DesignHub',
-            location: 'San Francisco, CA',
-            salary: '$80,000 - $90,000',
-            type: 'Remote',
-            posted: '1 week ago',
-        },
-        {
-            id: '3',
-            title: 'Software Engineer',
-            company: 'SoftPeak',
-            location: 'Austin, TX',
-            salary: '$90,000 - $110,000',
-            type: 'Contract',
-            posted: '3 days ago',
-        },
-    ])
+    // const [jobs] = useState<Job[]>([
+    //     {
+    //         id: '1',
+    //         title: 'Senior React Developer',
+    //         company: 'TechCorp',
+    //         location: 'New York, NY',
+    //         salary: '$100,000 - $120,000',
+    //         type: 'Full Time',
+    //         posted: '2 days ago',
+    //     },
+    //     {
+    //         id: '2',
+    //         title: 'UX/UI Designer',
+    //         company: 'DesignHub',
+    //         location: 'San Francisco, CA',
+    //         salary: '$80,000 - $90,000',
+    //         type: 'Remote',
+    //         posted: '1 week ago',
+    //     },
+    //     {
+    //         id: '3',
+    //         title: 'Software Engineer',
+    //         company: 'SoftPeak',
+    //         location: 'Austin, TX',
+    //         salary: '$90,000 - $110,000',
+    //         type: 'Contract',
+    //         posted: '3 days ago',
+    //     },
+    // ])
     return (
         <>
             <section className="hero-area">
@@ -383,7 +383,7 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="single-head">
-                        <div className="row">
+                        {/* <div className="row">
                             {jobs
                                 .filter((job) => job) // Thay thế điều kiện lọc phù hợp, ví dụ: job.active === true
                                 .map((job) => (
@@ -394,7 +394,7 @@ const Home = () => {
                                         <SingleJobCard job={job} />
                                     </div>
                                 ))}
-                        </div>
+                        </div> */}
 
                         {/* <!-- Pagination --> */}
                         <div className="row">
