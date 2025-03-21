@@ -87,17 +87,22 @@ const get_all_projects_pagination = async (query) => {
 
     if (search) filter.title = { $regex: search, $options: "i" };
     if (location) filter.location = { $regex: location, $options: "i" };
-    if (salary_min !== undefined && salary_max !== undefined) {
-      if (salary_min > salary_max) throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
-      filter.salary = { $gte: salary_min, $lte: salary_max };
-    } else if (salary_min !== undefined) filter.salary = { $gte: salary_min };
-    else if (salary_max !== undefined) filter.salary = { $lte: salary_max };
-
-    if (job_type && job_type.length > 0) filter.job_type = { $in: job_type };
+    if (salary_min !== undefined || salary_max !== undefined) {
+      if (salary_min !== undefined) filter["salary.max"] = { $gte: Number(salary_min) };
+      if (salary_max !== undefined) filter["salary.min"] = { $lte: Number(salary_max) };
+      if (salary_min !== undefined && salary_max !== undefined && salary_min > salary_max) {
+        throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+      }
+    }
+    if (job_type) {
+      const jobTypeArray = Array.isArray(job_type) ? job_type : [job_type];
+      if (jobTypeArray.length > 0) {
+        filter.job_type = { $in: jobTypeArray };
+      }
+    }
     if (experience !== undefined) filter.experience = { $gte: experience };
 
     const projects = await project_model.find_all_projects_pagination(page, limit, filter);
-
     return projects;
   } catch (error) {
     throw error;

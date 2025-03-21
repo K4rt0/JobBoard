@@ -26,7 +26,7 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
   experience: Joi.number().min(0).required(),
   gender: Joi.string().valid("Male", "Female", "Any").default("Male"),
 
-  job_type: Joi.string().valid("full-time", "part-time", "remote", "internship").default("full-time"),
+  job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
   status: Joi.string().valid("opening", "closed").default("opening"),
   slug: Joi.string().trim().strict().default(null),
 

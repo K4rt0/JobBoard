@@ -50,7 +50,7 @@ const get_all_projects_pagination = async (req, res, next) => {
       location: Joi.string().max(50),
       salary_min: Joi.number().min(0),
       salary_max: Joi.number().min(0),
-      job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
+      job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
       experience: Joi.number().min(0),
     });
 

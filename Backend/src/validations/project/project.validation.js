@@ -32,7 +32,7 @@ const create_project = async (req, res, next) => {
       phone_number: Joi.string().min(10).max(15).required(),
     }).required(),
 
-    job_type: Joi.string().valid("full-time", "part-time", "remote", "internship").default("full-time"),
+    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")).default(["full-time"]),
     status: Joi.string().valid("opening", "closed").default("opening"),
   });
 
@@ -75,7 +75,7 @@ const update_project = async (req, res, next) => {
       phone_number: Joi.string().min(10).max(15),
     }),
 
-    job_type: Joi.string().valid("full-time", "part-time", "remote", "internship"),
+    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
     status: Joi.string().valid("opening", "closed"),
   });
 
@@ -95,7 +95,7 @@ const get_all_projects_pagination = async (req, res, next) => {
     location: Joi.string().max(50),
     salary_min: Joi.number().min(0),
     salary_max: Joi.number().min(0),
-    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
+    job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
     experience: Joi.number().min(0),
   });
 
