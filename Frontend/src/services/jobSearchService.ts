@@ -1,5 +1,6 @@
 import axios from 'axios'
 import {
+    ApiResponse,
     Job,
     JobApiResponse,
     JobFilters,
@@ -11,9 +12,9 @@ import { getSkillById } from './skillService'
 const BASE_URL = `${process.env.REACT_APP_BASE_API_URL}`
 
 // Get all jobs with filters
-export async function getJobs(
+export async function getJobsPagination(
     page = 1,
-    limit = 10,
+    limit = 6,
     filters: JobFilters = {},
 ): Promise<JobsResponse> {
     try {
@@ -52,7 +53,17 @@ export async function getJobs(
         throw error
     }
 }
-
+export async function getJobs(): Promise<ApiResponse<Job[]>> {
+    try {
+        const response = await axios.get<ApiResponse<Job[]>>(
+            `${BASE_URL}/project/get-all`,
+        )
+        return response.data
+    } catch (error) {
+        console.error('Error fetching jobs:', error)
+        throw error
+    }
+}
 // Get a job by project ID
 export async function getJobByProjectId(projectId: string): Promise<Job> {
     try {

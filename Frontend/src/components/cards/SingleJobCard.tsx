@@ -122,7 +122,7 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                                     )}
                                 </div>
                             </div>
-                            <div className="mt-auto text-end">
+                            <div className="mt-auto text-end mb-4">
                                 {job.created_at && (
                                     <span className="d-block text-muted small">
                                         <i className="lni lni-calendar text-primary me-1"></i>

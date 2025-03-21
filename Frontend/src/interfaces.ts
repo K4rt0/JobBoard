@@ -61,6 +61,7 @@ export interface UserAuth {
     email?: string
     role?: string
     avatar?: string
+    access_token_admin?: string
     access_token: string
     refresh_token: string
 }

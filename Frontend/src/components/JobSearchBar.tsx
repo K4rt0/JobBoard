@@ -25,49 +25,46 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
     }
 
     return (
-        <div className="card mb-5 shadow-lg border-0 rounded-3 mt-3">
-            <div className="card-body p-4">
+        <div
+            className="job-search-wrap-two mt-50 wow fadeInUp card mb-5 shadow-lg border-0 rounded-3 mt-3"
+            data-wow-delay=".7s"
+        >
+            <div className="job-search-form">
                 <form onSubmit={handleSubmit}>
-                    <div className="row g-3 align-items-center">
-                        <div className="col-md-7">
-                            <div className="input-group">
-                                <span className="input-group-text bg-white border-end-0">
-                                    <i className="bi bi-briefcase"></i>
-                                </span>
-                                <input
-                                    type="text"
-                                    name="position"
-                                    value={formValues.position}
-                                    onChange={handleSearchChange}
-                                    className="form-control border-start-0"
-                                    placeholder="Job Position (e.g., Software Engineer)"
-                                />
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="input-group">
-                                <span className="input-group-text bg-white border-end-0">
-                                    <i className="bi bi-geo-alt"></i>
-                                </span>
-                                <input
-                                    type="text"
-                                    name="location"
-                                    value={formValues.location}
-                                    onChange={handleSearchChange}
-                                    className="form-control border-start-0"
-                                    placeholder="Location (e.g., New York, NY)"
-                                />
-                            </div>
-                        </div>
-                        <div className="col-md-2">
-                            <button
-                                type="submit"
-                                className="btn btn-primary w-100 rounded-pill"
-                            >
-                                <i className="bi bi-search me-2"></i>
-                                Search
-                            </button>
-                        </div>
+                    {/* Single Field Item Start - What/Position */}
+                    <div className="single-field-item keyword">
+                        <label htmlFor="keyword">What</label>
+                        <input
+                            id="keyword"
+                            placeholder="What jobs you want?"
+                            name="position"
+                            type="text"
+                            value={formValues.position}
+                            onChange={handleSearchChange}
+                        />
+                    </div>
+                    {/* Single Field Item End */}
+
+                    {/* Single Field Item Start - Where/Location */}
+                    <div className="single-field-item location">
+                        <label htmlFor="location">Where</label>
+                        <input
+                            id="location"
+                            className="input-field input-field-location"
+                            placeholder="Location"
+                            name="location"
+                            type="text"
+                            value={formValues.location}
+                            onChange={handleSearchChange}
+                        />
+                    </div>
+                    {/* Single Field Item End */}
+
+                    {/* Submit Button */}
+                    <div className="submit-btn">
+                        <button className="btn" type="submit">
+                            Search
+                        </button>
                     </div>
                 </form>
             </div>
