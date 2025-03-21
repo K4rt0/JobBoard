@@ -34,6 +34,7 @@ const USER_COLLECTION_SCHEMA = Joi.object({
       Joi.object({
         _id: Joi.string().hex().length(24).required(),
         applied_at: Joi.date().timestamp("javascript").default(Date.now),
+        expired_at: Joi.date().timestamp("javascript").default(null),
         status: Joi.string().valid("pending", "accepted", "rejected").default("pending"),
       })
     )

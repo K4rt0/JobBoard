@@ -16,7 +16,7 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
     }),
   location: Joi.string().max(50).required(),
   description: Joi.string().required().max(1000).trim().strict(),
-  expiry_date: Joi.date().timestamp("javascript").required(),
+  expired_at: Joi.date().timestamp("javascript").required(),
 
   category_id: Joi.string().hex().length(24).required(),
   employer_id: Joi.string().hex().length(24).required(),

@@ -14,7 +14,7 @@ const create_project = async (req, res, next) => {
       }),
     location: Joi.string().max(50).required(),
     description: Joi.string().max(1000).trim().strict().required(),
-    expiry_date: Joi.date().timestamp("javascript").required(),
+    expired_at: Joi.date().timestamp("javascript").required(),
 
     category_id: Joi.string().hex().length(24).required(),
 
@@ -58,7 +58,7 @@ const update_project = async (req, res, next) => {
       }),
     location: Joi.string().max(50),
     description: Joi.string().max(1000).trim().strict().required(),
-    expiry_date: Joi.date().timestamp("javascript").required(),
+    expired_at: Joi.date().timestamp("javascript").required(),
 
     employer_id: Joi.string().hex().length(24).required(),
     category_id: Joi.string().hex().length(24).required(),
