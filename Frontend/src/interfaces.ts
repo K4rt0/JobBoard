@@ -1,28 +1,103 @@
-/** ========== USER INTERFACES ========== **/
-export interface UserPasswordRequestDTO {
-    old_password: string
-    new_password: string
-    retype_new_password: string
+/** ========== BASE INTERFACES ========== **/
+// Common response format
+export interface ApiResponse<T> {
+    message: string
+    data: T
 }
-export interface UserRequestDTO {
-    full_name: string
-    email: string
-    password: string
+
+// Pagination interface
+export interface PaginationInfo {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
 }
-export interface UserAuth {
+
+// Paginated response
+export interface PaginatedApiResponse<T> {
+    message: string
+    data: {
+        data: T[]
+        pagination: PaginationInfo
+    }
+}
+
+/** ========== USER RELATED INTERFACES ========== **/
+// Basic user information shared across user types
+export interface BaseUserInfo {
     id: string
-    full_name?: string
-    avatar?: string
-    email?: string
-    role?: string
-    access_token: string
-    refresh_token: string
+    fullName: string
+    email: string
+    phoneNumber: string
+    role: string
+    status: string
+    location?: string
+    website?: string
+    birthDate?: string | null
+    bio?: string | null
+    avatar?: string | null // URL only
+    createdAt: string
+    updatedAt?: string | null
+    socials?: SocialLink[]
 }
+
+// Avatar representation
 export interface Avatar {
     url: string
     delete_hash: string
 }
 
+// Social media link
+export interface SocialLink {
+    name: string
+    icon: string
+    url: string
+}
+
+// User authentication data
+export interface UserAuth {
+    id: string
+    full_name?: string
+    email?: string
+    role?: string
+    avatar?: string
+    access_token: string
+    refresh_token: string
+}
+
+// Skill object
+export interface Skill {
+    _id: string
+    name: string
+    description: string
+    slug: string
+    createdAt: string
+    updatedAt: string
+    is_disabled?: boolean
+}
+
+// User types
+export interface Freelancer extends BaseUserInfo {
+    education?: string | null
+    experience: number
+    cvUrl?: string | null
+    skills: Skill[]
+    hourlyRate?: number
+    currency?: string
+    rating?: number
+    level?: number
+    reviews?: number
+}
+
+export interface Employer extends BaseUserInfo {
+    companyName?: string | null
+    companyDescription?: string | null
+    hourlyRate?: number
+    currency?: string
+    rating?: number
+}
+
+// API format of user response
 export interface ApiUserResponse {
     _id: string
     full_name: string
@@ -33,7 +108,7 @@ export interface ApiUserResponse {
     avatar?: Avatar | null
     bio?: string | null
     education?: string | null
-    experience?: string | null // API trả về string, cần chuyển sang number khi sử dụng
+    experience?: string | null // API returns string, convert to number when used
     cv_url?: string | null
     skills?: Skill[]
     company_name?: string | null
@@ -46,43 +121,7 @@ export interface ApiUserResponse {
     socials?: SocialLink[]
 }
 
-export interface UserInfo {
-    id: string
-    fullName: string
-    email: string
-    phoneNumber: string
-    birthDate?: string | null
-    role: string
-    bio?: string | null
-    avatar?: string | null // Chỉ lưu URL
-    status: string
-    createdAt: string
-    updatedAt?: string | null
-    location?: string
-    website?: string
-    socials?: SocialLink[]
-}
-
-export interface Freelancer extends UserInfo {
-    education?: string | null
-    experience: number
-    cvUrl?: string | null
-    skills: Skill[]
-    hourlyRate?: number
-    currency?: string
-    rating?: number
-    level?: number
-    reviews?: number
-}
-
-export interface Employer extends UserInfo {
-    companyName?: string | null
-    companyDescription?: string | null
-    hourlyRate?: number
-    currency?: string
-    rating?: number
-}
-
+// Form data for profile updates
 export interface ProfileFormData {
     fullName?: string | null
     email?: string | null
@@ -95,6 +134,8 @@ export interface ProfileFormData {
     location?: string | null
     website?: string | null
     socials?: SocialLink[] | null
+
+    // Freelancer specific fields
     education?: string | null
     experience?: number | null
     cvUrl?: string | null
@@ -104,17 +145,94 @@ export interface ProfileFormData {
     rating?: number | null
     level?: number | null
     reviews?: number | null
+
+    // Employer specific fields
     companyName?: string | null
     companyDescription?: string | null
 }
 
-export interface SocialLink {
-    name: string
-    icon: string
-    url: string
+// DTOs for user operations
+export interface UserPasswordRequestDTO {
+    old_password: string
+    new_password: string
+    retype_new_password: string
 }
 
-/** ========== JOB INTERFACES ========== **/
+export interface UserRequestDTO {
+    full_name: string
+    email: string
+    password: string
+}
+
+/** ========== JOB RELATED INTERFACES ========== **/
+// Salary range
+export interface Salary {
+    min: number
+    max: string
+}
+
+// Contact information
+export interface Contact {
+    full_name: string
+    email: string
+    phone_number: string
+}
+
+// Job type as returned from API
+export interface Job {
+    _id: string
+    title: string
+    salary: Salary
+    quantity: number
+    location: string
+    description: string
+    category_id: string
+    expiry_date: string
+    skills: Skill[]
+    requirements: string[]
+    benefits: string[]
+    contact: Contact
+    experience: number
+    employer_id: string
+    slug: string
+    gender: string
+    job_type: string
+    status: string
+    created_at: number
+    updated_at: number
+}
+export interface JobApiResponse {
+    _id: string
+    title: string
+    salary: {
+        min: number
+        max: string
+    }
+    quantity: number
+    location: string
+    description: string
+    category_id: string
+    expiry_date: string
+    skills: string[]
+    requirements: string[]
+    benefits: string[]
+    contact: {
+        full_name: string
+        email: string
+        phone_number: string
+    }
+    experience: number
+    employer_id: string
+    slug: string
+    gender: string
+    job_type: string
+    status: string
+    applicants: string[]
+    created_at: number
+    updated_at: number
+}
+
+// Job form data
 export interface JobFormData {
     title: string
     category: string
@@ -131,38 +249,25 @@ export interface JobFormData {
     termsAgreed: boolean
 }
 
-export interface Job {
-    id: string
-    title: string
-    company: string
+// Search and filtering
+export interface SearchQuery {
+    position: string
     location: string
-    salary: string
-    type: string
-    posted: string
-    description?: string
-    companyWebsite?: string
-    companyLogo?: string
 }
 
-/** ========== SKILL INTERFACES ========== **/
-export interface Skill {
-    _id: string
-    name: string
-    description: string
-    slug: string
-    createdAt: string
-    updatedAt: string
-    is_disabled?: boolean
+export interface JobFilters {
+    search?: string
+    location?: string
+    job_type?: string
+    experience?: string | number
+    salary_min?: string | number
+    salary_max?: string | number
+    page?: number
+    limit?: number
 }
 
-/** ========== API RESPONSE FORMATS ========== **/
-export interface ApiResponse<T> {
-    message: string
-    data: T
-}
-
-/** ========== SKILL API RESPONSE ========== **/
+// Type aliases for API responses
 export type SkillResponse = ApiResponse<Skill>
-
-/** ========== USER API RESPONSE ========== **/
-export type UserResponse = ApiResponse<UserInfo>
+export type UserResponse = ApiResponse<BaseUserInfo>
+export type JobResponse = ApiResponse<Job>
+export type JobsResponse = PaginatedApiResponse<Job>

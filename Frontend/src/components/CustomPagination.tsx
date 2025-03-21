@@ -1,9 +1,9 @@
 import React from 'react'
-import { Pagination, Container, Row, Col } from 'react-bootstrap'
+import { Container, Row, Col } from 'react-bootstrap'
 
 interface PaginationProps {
     currentPage: number
-    setCurrentPage: React.Dispatch<React.SetStateAction<number>>
+    setCurrentPage: (page: number) => void // Updated to match the function signature in JobSearchPage
     totalResults: number
     resultsPerPage: number
 }
@@ -17,48 +17,69 @@ const CustomPagination: React.FC<PaginationProps> = ({
     const totalPages = Math.ceil(totalResults / resultsPerPage)
     const maxPagesToShow = 5 // Maximum number of page buttons to show at once
 
+    // Return null if there's only one page or no results
+    if (totalPages <= 1) return null
+
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages) return
+        setCurrentPage(page)
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
     // Function to generate the pagination items dynamically
     const getPaginationItems = () => {
         const items: React.ReactNode[] = []
-        const halfMaxPages = Math.floor(maxPagesToShow / 2)
-        let startPage = Math.max(1, currentPage - halfMaxPages)
-        const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
 
-        // Adjust startPage if near the end
-        if (endPage === totalPages) {
-            startPage = Math.max(1, endPage - maxPagesToShow + 1)
-        }
+        // Always show first page
+        items.push(
+            <li key="first" className={currentPage === 1 ? 'active' : ''}>
+                <a
+                    href="#"
+                    onClick={(e) => {
+                        e.preventDefault()
+                        handlePageChange(1)
+                    }}
+                >
+                    1
+                </a>
+            </li>,
+        )
 
-        // Always show the first page
-        if (startPage > 1) {
+        // Calculate range of visible pages
+        const startPage = Math.max(
+            2,
+            currentPage - Math.floor(maxPagesToShow / 2),
+        )
+        const endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 3)
+
+        // Add ellipsis if needed
+        if (startPage > 2) {
             items.push(
-                <li key={1} className={currentPage === 1 ? 'active' : ''}>
-                    <a href="#" onClick={() => setCurrentPage(1)}>
-                        1
-                    </a>
-                </li>,
-            )
-            if (startPage > 2) {
-                items.push(
-                    <li key="ellipsis-start">
-                        <span>...</span>
-                    </li>,
-                )
-            }
-        }
-
-        // Add pages in the calculated range
-        for (let page = startPage; page <= endPage; page++) {
-            items.push(
-                <li key={page} className={currentPage === page ? 'active' : ''}>
-                    <a href="#" onClick={() => setCurrentPage(page)}>
-                        {page}
-                    </a>
+                <li key="ellipsis-start">
+                    <span>...</span>
                 </li>,
             )
         }
 
-        // Add ellipsis if there's a gap before the last page
+        // Add middle pages
+        for (let i = startPage; i <= endPage; i++) {
+            items.push(
+                <li key={i} className={currentPage === i ? 'active' : ''}>
+                    <a
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault()
+                            handlePageChange(i)
+                        }}
+                    >
+                        {i}
+                    </a>
+                </li>,
+            )
+        }
+
+        // Add ellipsis before last page if needed
         if (endPage < totalPages - 1) {
             items.push(
                 <li key="ellipsis-end">
@@ -67,14 +88,20 @@ const CustomPagination: React.FC<PaginationProps> = ({
             )
         }
 
-        // Always show the last page if not already included
-        if (endPage < totalPages) {
+        // Always show last page if total pages > 1
+        if (totalPages > 1) {
             items.push(
                 <li
-                    key={totalPages}
+                    key="last"
                     className={currentPage === totalPages ? 'active' : ''}
                 >
-                    <a href="#" onClick={() => setCurrentPage(totalPages)}>
+                    <a
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault()
+                            handlePageChange(totalPages)
+                        }}
+                    >
                         {totalPages}
                     </a>
                 </li>,
@@ -85,7 +112,8 @@ const CustomPagination: React.FC<PaginationProps> = ({
     }
 
     // Calculate the range of results being shown
-    const startResult = (currentPage - 1) * resultsPerPage + 1
+    const startResult =
+        totalResults === 0 ? 0 : (currentPage - 1) * resultsPerPage + 1
     const endResult = Math.min(currentPage * resultsPerPage, totalResults)
 
     return (
@@ -96,28 +124,30 @@ const CustomPagination: React.FC<PaginationProps> = ({
                         <li>
                             <a
                                 href="#"
-                                onClick={() =>
-                                    setCurrentPage((prev) =>
-                                        Math.max(1, prev - 1),
-                                    )
-                                }
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    handlePageChange(currentPage - 1)
+                                }}
                                 className={currentPage === 1 ? 'disabled' : ''}
+                                aria-label="Previous"
                             >
                                 <i className="lni lni-arrow-left"></i>
                             </a>
                         </li>
+
                         {getPaginationItems()}
+
                         <li>
                             <a
                                 href="#"
-                                onClick={() =>
-                                    setCurrentPage((prev) =>
-                                        Math.min(totalPages, prev + 1),
-                                    )
-                                }
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    handlePageChange(currentPage + 1)
+                                }}
                                 className={
                                     currentPage === totalPages ? 'disabled' : ''
                                 }
+                                aria-label="Next"
                             >
                                 <i className="lni lni-arrow-right"></i>
                             </a>
@@ -129,8 +159,14 @@ const CustomPagination: React.FC<PaginationProps> = ({
             {/* Results Summary */}
             <Row className="justify-content-center mt-2">
                 <Col xs="auto" className="text-muted small">
-                    Showing {startResult} - {endResult} of {totalResults}{' '}
-                    results
+                    {totalResults > 0 ? (
+                        <>
+                            Showing {startResult} - {endResult} of{' '}
+                            {totalResults} results
+                        </>
+                    ) : (
+                        <>No results found</>
+                    )}
                 </Col>
             </Row>
         </Container>
