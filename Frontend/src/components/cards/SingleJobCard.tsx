@@ -63,7 +63,7 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                     <div className="col-8">
                         <h4 className="pb-0">
                             <Link
-                                to={`/jobs/${job.slug || job._id}`}
+                                to={`/jobs/${job._id}`}
                                 className="text-dark text-decoration-none"
                             >
                                 {job.title}
@@ -104,9 +104,23 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                                 >
                                     Apply
                                 </Link>
-                                <span className="badge bg-light text-dark px-3 py-2 mb-3">
-                                    {job.job_type?.toLowerCase() || 'Full-time'}
-                                </span>
+                                <div>
+                                    {Array.isArray(job.job_type) &&
+                                    job.job_type.length > 0 ? (
+                                        job.job_type.map((type, index) => (
+                                            <span
+                                                key={index}
+                                                className="badge bg-light text-dark px-3 py-2 mb-3 ms-1"
+                                            >
+                                                {type || 'Full-time'}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="badge bg-light text-dark px-3 py-2 mb-3">
+                                            Full-time
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="mt-auto text-end">
                                 {job.created_at && (

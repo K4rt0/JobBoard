@@ -25,8 +25,12 @@ export async function getJobs(
         // Add filter parameters if provided
         if (filters.search) params.append('search', filters.search)
         if (filters.location) params.append('location', filters.location)
-        if (filters.job_type) {
-            // Wrap the single job_type string in an array
+        if (filters.job_type && Array.isArray(filters.job_type)) {
+            filters.job_type.forEach((jobType) => {
+                params.append('job_type[]', jobType)
+            })
+        } else if (filters.job_type) {
+            // If it's a single string (not an array)
             params.append('job_type[]', filters.job_type)
         }
         if (filters.experience)

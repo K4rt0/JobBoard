@@ -11,7 +11,7 @@ const JobSearchPage: React.FC = () => {
     const [filters, setFilters] = useState<JobFilters>({
         search: '',
         location: '',
-        job_type: '',
+        job_type: [],
         experience: '',
         salary_min: '',
         salary_max: '',

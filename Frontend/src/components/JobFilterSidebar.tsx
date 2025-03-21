@@ -21,19 +21,35 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     ) => {
         const { name, value, type } = e.target
-        let updatedFilters = { ...filters }
 
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked
-            updatedFilters = {
-                ...updatedFilters,
-                [name]: checked ? value : '',
-            }
-        } else {
-            updatedFilters = { ...updatedFilters, [name]: value }
-        }
+            // Get the current job_type array, or initialize as empty array if undefined
+            const currentJobTypes = filters.job_type || []
 
-        onChange(updatedFilters)
+            let updatedJobTypes: string[]
+            if (checked) {
+                // Add the value to the array if checked
+                updatedJobTypes = [...currentJobTypes, value]
+            } else {
+                // Remove the value from the array if unchecked
+                updatedJobTypes = currentJobTypes.filter(
+                    (type) => type !== value,
+                )
+            }
+
+            const updatedFilters = {
+                ...filters,
+                [name]: updatedJobTypes,
+            }
+            onChange(updatedFilters)
+        } else {
+            const updatedFilters = {
+                ...filters,
+                [name]: value,
+            }
+            onChange(updatedFilters)
+        }
     }
 
     const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +64,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
     return (
         <div className="card shadow-sm border-0 rounded-3">
             <div className="card-header bg-primary text-white rounded-top-3">
-                <h5 className="mb-0 fw-bold">Refine Your Search</h5>
+                <h5 className="mb-0 fw-bold">Filter Search</h5>
             </div>
             <div className="card-body p-4">
                 <div className="mb-4">
@@ -56,12 +72,15 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
                     {JOB_TYPES.map((type) => (
                         <div className="form-check mb-2" key={type.value}>
                             <input
-                                type="radio"
+                                type="checkbox" // Changed from radio to checkbox
                                 className="form-check-input"
                                 id={type.value}
                                 name="job_type"
                                 value={type.value}
-                                checked={filters.job_type === type.value} // Updated to job_type
+                                checked={
+                                    filters.job_type?.includes(type.value) ||
+                                    false
+                                } // Check if the value is in the job_type array
                                 onChange={handleFilterChange}
                             />
                             <label
@@ -96,7 +115,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
                             <input
                                 type="number"
                                 name="salary_min"
-                                value={filters.salary_min || ''} // Updated to salary_min
+                                value={filters.salary_min || ''}
                                 onChange={handleSalaryChange}
                                 className="form-control rounded-pill"
                                 placeholder="Min Salary"
@@ -107,7 +126,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
                             <input
                                 type="number"
                                 name="salary_max"
-                                value={filters.salary_max || ''} // Updated to salary_max
+                                value={filters.salary_max || ''}
                                 onChange={handleSalaryChange}
                                 className="form-control rounded-pill"
                                 placeholder="Max Salary"
