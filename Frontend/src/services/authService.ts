@@ -20,6 +20,19 @@ export const loginApi = async (email: string, password: string) => {
     }
 }
 
+export const loginAdminApi = async (username: string, password: string) => {
+    try {
+        const response = await axiosInstance.post(`${API_URL}/admin/login`, {
+            username,
+            password,
+        })
+
+        return response.data
+    } catch (error) {
+        handleApiError(error, 'Login failed')
+    }
+}
+
 // ✅ API đăng ký
 export const registerApi = async (userData: UserRequestDTO) => {
     try {

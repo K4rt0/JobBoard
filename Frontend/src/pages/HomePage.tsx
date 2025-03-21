@@ -1,38 +1,39 @@
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
-import { Job } from '@/interfaces'
-import { useState } from 'react'
+import { Job, JobFilters, PaginationInfo } from '@/interfaces'
+import { getJobs, getJobsPagination } from '@/services/jobSearchService'
+import { useEffect, useState } from 'react'
+import { Button } from 'react-bootstrap'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Home = () => {
-    // const [jobs] = useState<Job[]>([
-    //     {
-    //         id: '1',
-    //         title: 'Senior React Developer',
-    //         company: 'TechCorp',
-    //         location: 'New York, NY',
-    //         salary: '$100,000 - $120,000',
-    //         type: 'Full Time',
-    //         posted: '2 days ago',
-    //     },
-    //     {
-    //         id: '2',
-    //         title: 'UX/UI Designer',
-    //         company: 'DesignHub',
-    //         location: 'San Francisco, CA',
-    //         salary: '$80,000 - $90,000',
-    //         type: 'Remote',
-    //         posted: '1 week ago',
-    //     },
-    //     {
-    //         id: '3',
-    //         title: 'Software Engineer',
-    //         company: 'SoftPeak',
-    //         location: 'Austin, TX',
-    //         salary: '$90,000 - $110,000',
-    //         type: 'Contract',
-    //         posted: '3 days ago',
-    //     },
-    // ])
+    const [jobs, setJobs] = useState<Job[]>([])
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [error, setError] = useState<string | null>(null)
+    const navigate = useNavigate()
+    // Fetch jobs when filters change
+    useEffect(() => {
+        const fetchJobs = async () => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                const response = await getJobs()
+                const jobs = response.data.slice(0, 6)
+                setJobs(jobs) // Directly assign the array of jobs to state
+            } catch (err) {
+                setError('Failed to fetch jobs. Please try again later.')
+                console.error(err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchJobs()
+    }, [])
+
+    const handleToJobSearch = () => {
+        navigate('/jobs')
+    }
     return (
         <>
             <section className="hero-area">
@@ -383,51 +384,28 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="single-head">
-                        {/* <div className="row">
+                        <div className="row">
                             {jobs
                                 .filter((job) => job) // Thay thế điều kiện lọc phù hợp, ví dụ: job.active === true
                                 .map((job) => (
                                     <div
                                         className="col-lg-6 col-12"
-                                        key={job.id}
+                                        key={job._id}
                                     >
                                         <SingleJobCard job={job} />
                                     </div>
                                 ))}
-                        </div> */}
+                        </div>
 
                         {/* <!-- Pagination --> */}
-                        <div className="row">
-                            <div className="col-12">
-                                <div
-                                    className="pagination center wow fadeInUp"
-                                    data-wow-delay=".3s"
+                        <div className="d-flex justify-content-center py-4">
+                            <div className="button">
+                                <Button
+                                    onClick={handleToJobSearch}
+                                    className="btn-sm"
                                 >
-                                    <ul className="pagination-list">
-                                        <li>
-                                            <a href="index.html#">
-                                                <i className="lni lni-arrow-left"></i>
-                                            </a>
-                                        </li>
-                                        <li className="active">
-                                            <a href="index.html#">1</a>
-                                        </li>
-                                        <li>
-                                            <a href="index.html#">2</a>
-                                        </li>
-                                        <li>
-                                            <a href="index.html#">3</a>
-                                        </li>
-                                        <li>
-                                            <a href="index.html#">4</a>
-                                        </li>
-                                        <li>
-                                            <a href="index.html#">
-                                                <i className="lni lni-arrow-right"></i>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
+                                    Show more
+                                </Button>
                             </div>
                         </div>
                         {/* <!--/ End Pagination --> */}

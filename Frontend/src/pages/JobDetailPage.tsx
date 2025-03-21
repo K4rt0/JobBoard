@@ -69,18 +69,26 @@ const JobDetailPage = () => {
                                     <span className="salary-range">
                                         ${job.salary.min} - ${job.salary.max}
                                     </span>
-                                    <span className="badge badge-success">
-                                        {job.job_type
-                                            .split('-')
-                                            .map(
-                                                (word) =>
-                                                    word
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                    word.slice(1),
-                                            )
-                                            .join(' ')}
-                                    </span>
+                                    <div>
+                                        {job.job_type &&
+                                            job.job_type.map((type, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="badge badge-success me-2 mb-2"
+                                                >
+                                                    {type
+                                                        .split('-')
+                                                        .map(
+                                                            (word) =>
+                                                                word
+                                                                    .charAt(0)
+                                                                    .toUpperCase() +
+                                                                word.slice(1),
+                                                        )
+                                                        .join(' ')}
+                                                </span>
+                                            ))}
+                                    </div>
                                 </div>
                                 <div className="content col">
                                     <h5 className="title">{job.title}</h5>
@@ -174,15 +182,25 @@ const JobDetailPage = () => {
                                         <li>
                                             <strong>Employment Status:</strong>{' '}
                                             {job.job_type
-                                                .split('-')
-                                                .map(
-                                                    (word) =>
-                                                        word
-                                                            .charAt(0)
-                                                            .toUpperCase() +
-                                                        word.slice(1),
-                                                )
-                                                .join(' ')}
+                                                ? job.job_type
+                                                      .map((type) =>
+                                                          type
+                                                              .split('-')
+                                                              .map(
+                                                                  (word) =>
+                                                                      word
+                                                                          .charAt(
+                                                                              0,
+                                                                          )
+                                                                          .toUpperCase() +
+                                                                      word.slice(
+                                                                          1,
+                                                                      ),
+                                                              )
+                                                              .join(' '),
+                                                      )
+                                                      .join(' / ') // Joining multiple job types with a separator (e.g., 'full-time / internship')
+                                                : 'Full-time'}
                                         </li>
                                         <li>
                                             <strong>Experience:</strong>{' '}

@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store/authStore'
 import React, { useState, ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
@@ -239,38 +240,22 @@ const AdminLoginPage: React.FC = () => {
     const [rememberMe, setRememberMe] = useState(false)
     const [error, setError] = useState('')
     const navigate = useNavigate()
+    const { loginAdmin } = useAuthStore()
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError('')
 
         try {
-            const response = await fetch(
-                'http://localhost:3000/api/v1/admin/login',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username,
-                        password,
-                    }),
-                },
-            )
+            const response = await loginAdmin(username, password)
 
-            const data = await response.json()
-
-            if (response.ok) {
-                localStorage.setItem('access-token', data.data.access_token)
+            if (response) {
                 navigate('/admin/dashboard')
             } else {
-                setError(
-                    data.message || 'Đăng nhập thất bại. Vui lòng thử lại!',
-                )
+                setError('Invalid email or password')
             }
         } catch (error) {
-            setError('Có lỗi xảy ra. Vui lòng kiểm tra kết nối!')
+            setError('An unexpected error occurred')
         }
     }
 

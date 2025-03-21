@@ -61,6 +61,7 @@ export interface UserAuth {
     email?: string
     role?: string
     avatar?: string
+    access_token_admin?: string
     access_token: string
     refresh_token: string
 }
@@ -196,7 +197,7 @@ export interface Job {
     employer_id: string
     slug: string
     gender: string
-    job_type: string
+    job_type: string[]
     status: string
     created_at: number
     updated_at: number
@@ -225,7 +226,7 @@ export interface JobApiResponse {
     employer_id: string
     slug: string
     gender: string
-    job_type: string
+    job_type: string[]
     status: string
     applicants: string[]
     created_at: number
@@ -258,7 +259,7 @@ export interface SearchQuery {
 export interface JobFilters {
     search?: string
     location?: string
-    job_type?: string
+    job_type?: string[]
     experience?: string | number
     salary_min?: string | number
     salary_max?: string | number
