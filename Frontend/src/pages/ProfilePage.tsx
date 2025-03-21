@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '@/hooks/useAuth'
 import {
     Skill,
-    UserInfo,
+    BaseUserInfo,
     Freelancer,
     Employer,
     ProfileFormData,
@@ -103,7 +103,7 @@ const SIDEBAR_MENU_ITEMS = [
 ]
 
 // Initial user data
-const initialUserData: UserInfo = {
+const initialUserData: BaseUserInfo = {
     id: '',
     fullName: '',
     email: '',
@@ -131,9 +131,9 @@ const SOCIAL_PLATFORMS = {
 type SocialPlatformKeys = keyof typeof SOCIAL_PLATFORMS
 
 const ProfilePage: React.FC = () => {
-    const [userData, setUserData] = useState<UserInfo | Freelancer | Employer>(
-        initialUserData,
-    )
+    const [userData, setUserData] = useState<
+        BaseUserInfo | Freelancer | Employer
+    >(initialUserData)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
     const [showModal, setShowModal] = useState<ModalType>(null)
@@ -284,7 +284,7 @@ const ProfilePage: React.FC = () => {
 
     const handleSubmit = async (): Promise<void> => {
         try {
-            let updatedData: UserInfo | Freelancer | Employer
+            let updatedData: BaseUserInfo | Freelancer | Employer
             if (showModal === 'skills' && formData.skills) {
                 const skillIds = formData.skills.map((skill) => skill._id)
                 updatedData = await addUserSkills(skillIds)
@@ -910,31 +910,31 @@ const ProfilePage: React.FC = () => {
                     )}
                     {showModal === 'contact' && (
                         <ContactFormFields
-                            formData={formData as UserInfo}
+                            formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
                     )}
                     {showModal === 'bio' && (
                         <BioFormFields
-                            formData={formData as UserInfo}
+                            formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
                     )}
                     {showModal === 'experience' && (
                         <ExperienceFormFields
-                            formData={formData as UserInfo}
+                            formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
                     )}
                     {showModal === 'education' && (
                         <EducationFormFields
-                            formData={formData as UserInfo}
+                            formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
                     )}
                     {showModal === 'company' && (
                         <ContactFormFields
-                            formData={formData as UserInfo}
+                            formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
                     )}

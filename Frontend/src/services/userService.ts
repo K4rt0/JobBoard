@@ -6,7 +6,7 @@ import {
     Freelancer,
     ProfileFormData,
     SocialLink,
-    UserInfo,
+    BaseUserInfo,
     UserPasswordRequestDTO,
 } from '@/interfaces'
 import { getSkillById } from './skillService'
@@ -20,14 +20,13 @@ export const getAllUsers = async (): Promise<any[]> => {
 }
 
 export const getCurrentUser = async (): Promise<
-    UserInfo | Freelancer | Employer
+    BaseUserInfo | Freelancer | Employer
 > => {
     const response = await axiosInstance.get('/user/profile', {})
     const apiData = response.data.data as ApiUserResponse
-    console.log(apiData)
 
     // Ánh xạ dữ liệu từ API sang interface
-    const baseUserData: UserInfo = {
+    const baseUserData: BaseUserInfo = {
         id: apiData._id,
         fullName: apiData.full_name,
         email: apiData.email,
@@ -45,6 +44,7 @@ export const getCurrentUser = async (): Promise<
         website: apiData.website || '',
         socials: apiData.socials,
     }
+    console.log(apiData.skills)
 
     if (apiData.role === 'Freelancer') {
         // Lấy danh sách kỹ năng từ _id
@@ -81,7 +81,7 @@ export const getCurrentUser = async (): Promise<
 }
 
 export const updateUserProfile = async <
-    T extends Partial<UserInfo | Freelancer | Employer>,
+    T extends Partial<BaseUserInfo | Freelancer | Employer>,
 >(
     userData: ProfileFormData,
 ): Promise<T> => {
@@ -138,7 +138,7 @@ export const updateUserProfile = async <
         const apiData = response.data.data as ApiUserResponse
 
         // Ánh xạ dữ liệu từ API sang interface
-        const mappedData: Partial<UserInfo | Freelancer | Employer> = {
+        const mappedData: Partial<BaseUserInfo | Freelancer | Employer> = {
             id: apiData._id,
             fullName: apiData.full_name,
             email: apiData.email,
