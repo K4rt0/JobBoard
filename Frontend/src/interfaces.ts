@@ -59,7 +59,7 @@ export interface UserAuth {
     id: string
     full_name?: string
     email?: string
-    role?: string
+    role: string
     avatar?: string
     access_token_admin?: string
     access_token: string
@@ -103,7 +103,7 @@ export interface ApiUserResponse {
     _id: string
     full_name: string
     email: string
-    phone_number: string
+    phone_number?: string
     birth_date?: string | null
     role: string
     avatar?: Avatar | null
@@ -117,7 +117,7 @@ export interface ApiUserResponse {
     location?: string
     website?: string
     status: string
-    created_at: number // Timestamp
+    created_at?: number // Timestamp
     updated_at?: number | null
     socials?: SocialLink[]
 }
@@ -277,6 +277,15 @@ export interface JobType {
     label: string
     value: string
 }
+
+export interface Applicant {
+    _id: string
+    applied_at: number | null
+    expired_at: string | null
+    status: string
+    user: ApiUserResponse
+}
+
 // Type aliases for API responses
 export type SkillResponse = ApiResponse<Skill>
 export type UserResponse = ApiResponse<BaseUserInfo>

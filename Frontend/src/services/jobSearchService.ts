@@ -83,7 +83,6 @@ export async function getJobByProjectId(projectId: string): Promise<Job> {
             data: JobApiResponse
         }>(`${BASE_URL}/project/${projectId}`)
         const apiProject = response.data.data as JobApiResponse
-        console.log('apiProject: ' + JSON.stringify(apiProject))
 
         // Fetch skill details for each skill ID
         const skills = apiProject.skills

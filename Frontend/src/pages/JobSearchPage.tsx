@@ -5,10 +5,13 @@ import JobSearchBar from '@/components/JobSearchBar'
 import JobFilterSidebar from '@/components/sidebars/JobFilterSidebar'
 import JobList from '@/components/JobList'
 import { getJobsPagination } from '@/services/jobSearchService'
+import { useLocation } from 'react-router-dom'
 
 const JobSearchPage: React.FC = () => {
-    // Initialize filters with all possible fields
-    const [filters, setFilters] = useState<JobFilters>({
+    const location = useLocation()
+
+    // Khởi tạo filters, kiểm tra nếu có state từ Home thì sử dụng
+    const initialFilters: JobFilters = location.state?.filters || {
         search: '',
         location: '',
         job_type: [],
@@ -18,8 +21,9 @@ const JobSearchPage: React.FC = () => {
         salary_max: '',
         page: 1,
         limit: 8,
-    })
+    }
 
+    const [filters, setFilters] = useState<JobFilters>(initialFilters)
     const [jobs, setJobs] = useState<Job[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
@@ -30,13 +34,12 @@ const JobSearchPage: React.FC = () => {
         totalPages: 0,
     })
 
-    // Fetch jobs when filters change
     useEffect(() => {
         const fetchJobs = async () => {
             setIsLoading(true)
             setError(null)
             try {
-                console.log('Received newFilters:', filters)
+                console.log('Received filters:', filters)
                 const response = await getJobsPagination(
                     filters.page || 1,
                     filters.limit || 10,
@@ -55,7 +58,6 @@ const JobSearchPage: React.FC = () => {
         fetchJobs()
     }, [filters])
 
-    // Handle search bar updates
     const handleSearch = (searchQuery: {
         position: string
         location: string
@@ -64,26 +66,25 @@ const JobSearchPage: React.FC = () => {
             ...filters,
             search: searchQuery.position,
             location: searchQuery.location,
-            page: 1, // Reset to first page when searching
+            page: 1,
         })
     }
 
-    // Handle filter sidebar updates
     const handleFilterChange = (newFilters: JobFilters) => {
         setFilters({
             ...filters,
             ...newFilters,
-            page: 1, // Reset to first page when filters change
+            page: 1,
         })
     }
 
-    // Handle page change
     const handlePageChange = (page: number) => {
         setFilters({
             ...filters,
             page,
         })
     }
+
     return (
         <section className="job-search py-5 bg-light pt-5">
             <div className="container pt-5">

@@ -1,10 +1,12 @@
 import DashboardSidebar from '@/components/sidebars/DashboardSidebar'
+import { useAuth } from '@/hooks/useAuth'
 import React from 'react'
 
 const ManageApplicationPage = () => {
+    const { user } = useAuth()
     const menuItems = [
         {
-            label: 'My Resume',
+            label: 'My Profile',
             link: '/profile',
             icon: 'lni lni-clipboard',
             active: true,
@@ -37,7 +39,7 @@ const ManageApplicationPage = () => {
                     <div className="row">
                         {/* <!-- Start Main Content --> */}
                         <div className="col-lg-4 col-12">
-                            <DashboardSidebar menuItems={menuItems} />
+                            <DashboardSidebar role={user?.role} />
                         </div>
                         {/* <!-- End Main Content --> */}
                         <div className="col-lg-8 col-12">

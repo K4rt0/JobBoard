@@ -27,7 +27,7 @@ import {
     EducationFormFields,
     SocialFormFields,
 } from '@/components/forms/ProfileFormFields'
-import ErrorPage from './ErrorPage'
+import ErrorPage from '../ErrorPage'
 
 // Modal types và config giữ nguyên
 type ModalType =
@@ -81,7 +81,7 @@ const MODAL_CONFIG = {
 // Sidebar menu items giữ nguyên
 const SIDEBAR_MENU_ITEMS = [
     {
-        label: 'My Resume',
+        label: 'My Profile',
         link: '/profile',
         icon: 'lni lni-clipboard',
         active: true,
@@ -329,15 +329,13 @@ const ProfilePage: React.FC = () => {
     if (error) return <ErrorPage />
 
     const currentModal = showModal ? MODAL_CONFIG[showModal] : null
-    console.log(userData)
-
     return (
         <div className="resume section">
             <div className="container">
                 <div className="resume-inner">
                     <div className="row">
                         <div className="col-lg-4 col-12">
-                            <DashboardSidebar menuItems={SIDEBAR_MENU_ITEMS} />
+                            <DashboardSidebar role={user?.role} />
                         </div>
 
                         <div className="col-lg-8 col-12">

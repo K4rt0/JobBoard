@@ -7,6 +7,7 @@ import { Button, Form } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import { changePassword } from '@/services/userService'
 import { changePasswordSchema } from '@/schemas/userSchema'
+import { useAuth } from '@/hooks/useAuth'
 
 // Thêm CSS tùy chỉnh để khớp với giao diện
 const customStyles = `
@@ -83,7 +84,7 @@ const ChangePasswordPage = () => {
     const [showOldPassword, setShowOldPassword] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
+    const { user } = useAuth()
     const {
         register,
         handleSubmit,
@@ -127,7 +128,7 @@ const ChangePasswordPage = () => {
 
     const menuItems = [
         {
-            label: 'My Resume',
+            label: 'My Profile',
             link: '/profile',
             icon: 'lni lni-clipboard',
             active: true,
@@ -166,7 +167,7 @@ const ChangePasswordPage = () => {
                         <div className="row">
                             {/* Sidebar */}
                             <div className="col-lg-4 col-12">
-                                <DashboardSidebar menuItems={menuItems} />
+                                <DashboardSidebar role={user?.role} />
                             </div>
 
                             {/* Main Content */}

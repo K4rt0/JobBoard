@@ -1,5 +1,6 @@
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
+import JobSearchBar from '@/components/JobSearchBar'
 import { Job, JobFilters, PaginationInfo } from '@/interfaces'
 import { getJobs, getJobsPagination } from '@/services/jobSearchService'
 import { useEffect, useState } from 'react'
@@ -11,7 +12,19 @@ const Home = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
-    // Fetch jobs when filters change
+
+    const [filters, setFilters] = useState<JobFilters>({
+        search: '',
+        location: '',
+        job_type: [],
+        category_id: '',
+        experience: '',
+        salary_min: '',
+        salary_max: '',
+        page: 1,
+        limit: 8,
+    })
+
     useEffect(() => {
         const fetchJobs = async () => {
             setIsLoading(true)
@@ -19,7 +32,7 @@ const Home = () => {
             try {
                 const response = await getJobs()
                 const jobs = response.data.slice(0, 6)
-                setJobs(jobs) // Directly assign the array of jobs to state
+                setJobs(jobs)
             } catch (err) {
                 setError('Failed to fetch jobs. Please try again later.')
                 console.error(err)
@@ -31,9 +44,27 @@ const Home = () => {
         fetchJobs()
     }, [])
 
+    // Xử lý khi người dùng nhấn nút tìm kiếm
+    const handleSearch = (searchQuery: {
+        position: string
+        location: string
+    }) => {
+        // Cập nhật filters với dữ liệu tìm kiếm
+        const newFilters = {
+            ...filters,
+            search: searchQuery.position,
+            location: searchQuery.location,
+            page: 1, // Reset về trang đầu tiên
+        }
+
+        // Chuyển hướng sang JobSearchPage với filters qua state
+        navigate('/jobs', { state: { filters: newFilters } })
+    }
+
     const handleToJobSearch = () => {
         navigate('/jobs')
     }
+
     return (
         <>
             <section className="hero-area">
@@ -65,45 +96,14 @@ const Home = () => {
                                         className="job-search-wrap-two mt-50 wow fadeInUp"
                                         data-wow-delay=".7s"
                                     >
-                                        <div className="job-search-form">
-                                            <form action="index.html#">
-                                                {/* <!-- Single Field Item Start  --> */}
-                                                <div className="single-field-item keyword">
-                                                    <label htmlFor="keyword">
-                                                        What
-                                                    </label>
-                                                    <input
-                                                        id="keyword"
-                                                        placeholder="What jobs you want?"
-                                                        name="keyword"
-                                                        type="text"
-                                                    />
-                                                </div>
-                                                {/* <!-- Single Field Item End  --> */}
-                                                {/* <!-- Single Field Item Start  --> */}
-                                                <div className="single-field-item location">
-                                                    <label htmlFor="location">
-                                                        Where
-                                                    </label>
-                                                    <input
-                                                        id="location"
-                                                        className="input-field input-field-location"
-                                                        placeholder="Location"
-                                                        name="location"
-                                                        type="text"
-                                                    />
-                                                </div>
-                                                {/* <!-- Single Field Item End  --> */}
-                                                <div className="submit-btn">
-                                                    <button
-                                                        className="btn"
-                                                        type="submit"
-                                                    >
-                                                        Search
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                        <JobSearchBar
+                                            searchQuery={{
+                                                position: filters.search || '',
+                                                location:
+                                                    filters.location || '',
+                                            }}
+                                            onSearch={handleSearch}
+                                        />
                                         <div className="trending-keywords mt-30">
                                             <div className="keywords style-two">
                                                 <span className="title">

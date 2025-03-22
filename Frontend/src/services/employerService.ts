@@ -1,12 +1,12 @@
 import { handleApiError } from '@/utils/apiHandlerError'
 import axiosInstance from './axiosInstance'
-import axios from 'axios'
-import { Skill } from '@/interfaces'
 
-export const applyJob = async (jobId: string): Promise<any> => {
+export const getApplicantByProjectId = async (
+    projectId: string,
+): Promise<any> => {
     try {
-        const response = await axiosInstance.post(
-            `${process.env.REACT_APP_BASE_API_URL}/project/apply/${jobId}`,
+        const response = await axiosInstance.get(
+            `${process.env.REACT_APP_BASE_API_URL}/project/get-all-applicants/${projectId}`,
         )
         console.log(response.data.data)
 

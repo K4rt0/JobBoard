@@ -4,9 +4,9 @@ import AdminLayout from '@/layouts/AdminLayout'
 import HomePage from '@/pages/HomePage'
 import JobDetailPage from '@/pages/JobDetailPage'
 import ErrorPage from '@/pages/ErrorPage'
-import ProfilePage from '@/pages/ProfilePage'
-import ChangePasswordPage from '@/pages/ChangePasswordPage'
-import ManageApplicationPage from '@/pages/ManageApplicationPage'
+import ProfilePage from '@/pages/user/ProfilePage'
+import ChangePasswordPage from '@/pages/user/ChangePasswordPage'
+import ManageApplicationPage from '@/pages/user/ManageApplicationPage'
 import FreelancerMarketplacePage from '@/pages/FreelancerMarketplacePage'
 import LoginPage from '@/pages/admin-pages/LoginPage'
 
@@ -15,10 +15,12 @@ import DashboardPage from '@/pages/admin-pages/DashboardPage'
 import AddJobPage from '@/pages/admin-pages/AddJobPage'
 import AddSkillPage from '@/pages/admin-pages/AddSkillPage'
 import UserManagement from '@/pages/admin-pages/ManagerUserPage'
-import PostJobPage from '@/pages/PostJobPage'
+import PostJobPage from '@/pages/employer/PostJobPage'
 import JobSearchPage from '@/pages/JobSearchPage'
 import CategoryPage from '@/pages/admin-pages/CategoryPage' // Thêm CategoryPage
 import ProtectedRoute from '@/components/protected/ProtectedRoute' // Import ProtectedRoute
+import ApplicationManagementEmployerPage from '@/pages/employer/ApplicationManagementEmployerPage'
+import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
 
 const AppRoutes = () => {
     return (
@@ -31,21 +33,30 @@ const AppRoutes = () => {
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/jobs/:jobId" element={<JobDetailPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/post-job" element={<PostJobPage />} />
                     <Route path="/jobs" element={<JobSearchPage />} />
                     <Route
                         path="/freelancer-marketplace"
                         element={<FreelancerMarketplacePage />}
                     />
-                    <Route
-                        path="/profile/change-password"
-                        element={<ChangePasswordPage />}
-                    />
-                    <Route
-                        path="/profile/manage-applications"
-                        element={<ManageApplicationPage />}
-                    />
+
+                    <Route element={<ProtectedUserRoute />}>
+                        <Route path="/profile" element={<ProfilePage />} />
+
+                        <Route path="/post-job" element={<PostJobPage />} />
+
+                        <Route
+                            path="/profile/change-password"
+                            element={<ChangePasswordPage />}
+                        />
+                        <Route
+                            path="/profile/manage-applications"
+                            element={<ManageApplicationPage />}
+                        />
+                        <Route
+                            path="/manage/applications"
+                            element={<ApplicationManagementEmployerPage />}
+                        />
+                    </Route>
                 </Route>
                 {/* Admin routes with AdminLayout and ProtectedRoute */}
                 <Route element={<AdminLayout />}>

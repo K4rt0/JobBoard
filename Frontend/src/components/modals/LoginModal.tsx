@@ -5,6 +5,7 @@ import * as yup from 'yup'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { loginSchema } from '@/schemas/authSchema'
 
 // Định nghĩa interface cho Bootstrap Modal (có thể không cần)
 declare global {
@@ -14,17 +15,6 @@ declare global {
         bootstrap: any
     }
 }
-
-const schema = yup.object().shape({
-    email: yup
-        .string()
-        .email('Invalid email format')
-        .required('Email is required'),
-    password: yup
-        .string()
-        .min(6, 'Password must be at least 6 characters')
-        .required('Password is required'),
-})
 
 type FormData = {
     email: string
@@ -39,7 +29,7 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
         handleSubmit,
         formState: { errors },
     } = useForm<FormData>({
-        resolver: yupResolver(schema),
+        resolver: yupResolver(loginSchema),
     })
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
