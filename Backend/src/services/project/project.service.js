@@ -81,7 +81,7 @@ const get_all_projects = async () => {
 
 const get_all_projects_pagination = async (query) => {
   try {
-    const { page, limit, search, location, salary_min, salary_max, job_type, experience } = query;
+    const { page, limit, search, location, salary_min, salary_max, job_type, experience, category_id } = query;
 
     const filter = {};
 
@@ -94,10 +94,11 @@ const get_all_projects_pagination = async (query) => {
         throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
       }
     }
+    if (category_id) filter.category_id = category_id;
     if (job_type) {
-      const jobTypeArray = Array.isArray(job_type) ? job_type : [job_type];
-      if (jobTypeArray.length > 0) {
-        filter.job_type = { $in: jobTypeArray };
+      const job_type_array = Array.isArray(job_type) ? job_type : [job_type];
+      if (job_type_array.length > 0) {
+        filter.job_type = { $in: job_type_array };
       }
     }
     if (experience !== undefined) filter.experience = { $lte: experience };
@@ -149,6 +150,34 @@ const apply_project = async (user_id, project_id) => {
   }
 };
 
+const get_all_applicants = async (project_id) => {
+  try {
+    const project = await validate_project(project_id, false);
+    const applicants = project.applicants;
+
+    const all_applicants = await Promise.all(
+      applicants.map(async (applicant) => {
+        const user = await user_model.find_user({ _id: new ObjectId(applicant._id) });
+        return { ...applicant, user };
+      })
+    );
+
+    return all_applicants;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_all_applicants_pagination = async (page, limit, filtered) => {
+  try {
+    const projects = await project_model.find_all_projects_pagination(page, limit, filtered);
+
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const project_service = {
   create_project,
   update_project,
@@ -157,4 +186,6 @@ export const project_service = {
   update_project_status,
   get_project,
   apply_project,
+  get_all_applicants,
+  get_all_applicants_pagination,
 };
