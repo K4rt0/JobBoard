@@ -43,6 +43,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
         }
         fetchCategories()
     }, [])
+
     const handleFilterChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     ): void => {
@@ -84,7 +85,6 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
             category_id: value === '' ? undefined : value,
             page: 1,
         }
-
         onChange(updatedFilters)
     }
 
@@ -100,12 +100,16 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
     }
 
     const clearAllFilters = (): void => {
-        const { search, location, page, limit } = filters
         onChange({
-            search,
-            location,
-            page,
-            limit,
+            search: filters.search,
+            location: filters.location,
+            page: filters.page,
+            limit: filters.limit,
+            job_type: [],
+            category_id: undefined,
+            experience: undefined,
+            salary_min: undefined,
+            salary_max: undefined,
         })
     }
 
@@ -223,19 +227,6 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
                             />
                         </div>
                     </div>
-                </div>
-
-                <div className="d-grid gap-2">
-                    <button
-                        type="button"
-                        className="btn btn-primary rounded-pill"
-                        onClick={() => {
-                            onChange({ ...filters, page: 1 })
-                        }}
-                    >
-                        <i className="bi bi-search me-2"></i>
-                        Apply Filters
-                    </button>
                 </div>
             </div>
         </div>

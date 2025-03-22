@@ -39,11 +39,11 @@ const AppRoutes = () => {
                         element={<FreelancerMarketplacePage />}
                     />
                     <Route
-                        path="/change-password"
+                        path="/profile/change-password"
                         element={<ChangePasswordPage />}
                     />
                     <Route
-                        path="/manage-applications"
+                        path="/profile/manage-applications"
                         element={<ManageApplicationPage />}
                     />
                 </Route>

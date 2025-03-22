@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import CustomPagination from '@/components/CustomPagination'
-import FilterSidebar from '@/components/sidebars/FilterSidebar'
+import FilterFreelancerSidebar from '@/components/sidebars/FilterFreelancerSidebar'
 import { Freelancer } from '@/interfaces'
 import { Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap'
 
@@ -137,7 +137,7 @@ const FreelancerMarketplacePage: React.FC = () => {
             <Row>
                 {/* Left Sidebar */}
                 <Col md={4}>
-                    <FilterSidebar />
+                    <FilterFreelancerSidebar />
                 </Col>
 
                 {/* Main Content */}

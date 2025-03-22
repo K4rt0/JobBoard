@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import CustomPagination from '@/components/CustomPagination'
 import { Job, JobFilters, PaginationInfo } from '@/interfaces'
 import JobSearchBar from '@/components/JobSearchBar'
-import JobFilterSidebar from '@/components/JobFilterSidebar'
+import JobFilterSidebar from '@/components/sidebars/JobFilterSidebar'
 import JobList from '@/components/JobList'
 import { getJobsPagination } from '@/services/jobSearchService'
 

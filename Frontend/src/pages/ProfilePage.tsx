@@ -82,24 +82,30 @@ const MODAL_CONFIG = {
 const SIDEBAR_MENU_ITEMS = [
     {
         label: 'My Resume',
-        link: 'profile',
+        link: '/profile',
         icon: 'lni lni-clipboard',
         active: true,
     },
-    { label: 'Bookmarked Jobs', link: 'bookmarked', icon: 'lni lni-bookmark' },
     {
-        label: 'Notifications',
-        link: 'notifications',
-        icon: 'lni lni-alarm',
-        notification: 5,
+        label: 'Bookmarked Jobs',
+        link: '/profile/bookmarked',
+        icon: 'lni lni-bookmark',
     },
     {
         label: 'Manage Applications',
-        link: 'manage-applications',
+        link: '/profile/manage-applications',
         icon: 'lni lni-envelope',
     },
-    { label: 'Manage Resumes', link: 'manage-resumes', icon: 'lni lni-files' },
-    { label: 'Change Password', link: 'change-password', icon: 'lni lni-lock' },
+    {
+        label: 'Manage Resumes',
+        link: '/profile/manage-resumes',
+        icon: 'lni lni-files',
+    },
+    {
+        label: 'Change Password',
+        link: '/profile/change-password',
+        icon: 'lni lni-lock',
+    },
 ]
 
 // Initial user data

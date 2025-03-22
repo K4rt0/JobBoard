@@ -128,37 +128,30 @@ const ChangePasswordPage = () => {
     const menuItems = [
         {
             label: 'My Resume',
-            link: 'profile',
+            link: '/profile',
             icon: 'lni lni-clipboard',
             active: true,
         },
         {
             label: 'Bookmarked Jobs',
-            link: 'bookmarked',
+            link: '/profile/bookmarked',
             icon: 'lni lni-bookmark',
         },
         {
-            label: 'Notifications',
-            link: 'notifications',
-            icon: 'lni lni-alarm',
-            notification: 5,
-        },
-        {
             label: 'Manage Applications',
-            link: 'manage-applications',
+            link: '/profile/manage-applications',
             icon: 'lni lni-envelope',
         },
         {
             label: 'Manage Resumes',
-            link: 'manage-resumes',
+            link: '/profile/manage-resumes',
             icon: 'lni lni-files',
         },
         {
             label: 'Change Password',
-            link: 'change-password',
+            link: '/profile/change-password',
             icon: 'lni lni-lock',
         },
-        { label: 'Sign Out', link: 'index.html', icon: 'lni lni-upload' },
     ]
 
     return (
