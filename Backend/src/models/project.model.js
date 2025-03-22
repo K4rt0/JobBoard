@@ -44,7 +44,7 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
       Joi.object({
         _id: Joi.string().hex().length(24).required(),
         applied_at: Joi.date().timestamp("javascript").default(Date.now),
-        status: Joi.string().valid("pending", "accepted", "rejected").default("pending"),
+        status: Joi.string().valid("pending", "accepted", "rejected", "finished").default("pending"),
       })
     )
     .default([]),
@@ -115,7 +115,7 @@ const find_all_projects_pagination = async (page = 1, limit = 10, filtered = {})
       .collection(PROJECT_COLLECTION_NAME)
       .countDocuments({ ...final_query, ...query });
     const projection = { password: 0, refresh_token: 0 };
-    const users = await GET_DB()
+    const projects = await GET_DB()
       .collection(PROJECT_COLLECTION_NAME)
       .find({ ...final_query, ...query }, { projection })
       .sort(sort)
@@ -126,7 +126,7 @@ const find_all_projects_pagination = async (page = 1, limit = 10, filtered = {})
     const total_page = Math.ceil(total / limit);
 
     return {
-      data: users,
+      projects: projects,
       pagination: {
         total,
         current_page: page,

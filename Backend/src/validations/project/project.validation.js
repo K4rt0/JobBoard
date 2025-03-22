@@ -162,15 +162,31 @@ const get_all_applicants = async (req, res, next) => {
 
 const get_all_applicants_pagination = async (req, res, next) => {
   const schema = Joi.object({
+    project_id: Joi.string().hex().length(24).required(),
     page: Joi.number().min(1).default(1),
     limit: Joi.number().min(1).default(10),
     sort: Joi.string().valid("all", "oldest", "newest"),
     search: Joi.string().default(""),
-    status: Joi.string().valid("all", "pending", "accepted", "rejected"),
+    status: Joi.string().valid("all", "pending", "accepted", "rejected", "finished"),
   });
 
   try {
     await schema.validateAsync(req.params, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update_applicant_status = async (req, res, next) => {
+  const schema = Joi.object({
+    project_id: Joi.string().hex().length(24).required(),
+    applicant_id: Joi.string().hex().length(24).required(),
+    status: Joi.string().valid("pending", "accepted", "rejected", "finished").required(),
+  });
+
+  try {
+    await schema.validateAsync({ ...req.params, ...req.body }, { abortEarly: false });
     next();
   } catch (error) {
     next(error);
@@ -186,4 +202,5 @@ export const project_validation = {
   apply_project,
   get_all_applicants,
   get_all_applicants_pagination,
+  update_applicant_status,
 };
