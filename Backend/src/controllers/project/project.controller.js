@@ -127,14 +127,27 @@ const get_all_applicants_pagination = async (req, res, next) => {
 
     const { status, sort, search } = req.query;
     const filtered = {};
-    if (status && ["all", "active", "deleted", "blocked"].includes(status)) filtered.status = status;
+    if (status && ["all", "pending", "accepted", "rejected", "finished"].includes(status)) filtered.status = status;
     if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
     if (search) filtered.search = search;
 
-    const result = await project_service.get_all_applicants_pagination(page, limit, filtered);
+    const result = await project_service.get_all_applicants_pagination(req.params.project_id, page, limit, filtered);
 
     res.status(StatusCodes.OK).json({
       message: "Lấy danh sách ứng viên thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const update_applicant_status = async (req, res, next) => {
+  try {
+    const result = await project_service.update_applicant_status(req.params.project_id, req.params.applicant_id, req.body.status);
+
+    res.status(StatusCodes.OK).json({
+      message: "Cập nhật trạng thái ứng viên thành công !",
       data: result,
     });
   } catch (error) {
@@ -152,4 +165,5 @@ export const project_controller = {
   apply_project,
   get_all_applicants,
   get_all_applicants_pagination,
+  update_applicant_status,
 };
