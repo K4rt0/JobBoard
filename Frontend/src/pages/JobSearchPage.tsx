@@ -12,6 +12,7 @@ const JobSearchPage: React.FC = () => {
         search: '',
         location: '',
         job_type: [],
+        category_id: '',
         experience: '',
         salary_min: '',
         salary_max: '',
@@ -35,6 +36,7 @@ const JobSearchPage: React.FC = () => {
             setIsLoading(true)
             setError(null)
             try {
+                console.log('Received newFilters:', filters)
                 const response = await getJobsPagination(
                     filters.page || 1,
                     filters.limit || 10,
@@ -82,7 +84,6 @@ const JobSearchPage: React.FC = () => {
             page,
         })
     }
-
     return (
         <section className="job-search py-5 bg-light pt-5">
             <div className="container pt-5">

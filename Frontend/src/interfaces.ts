@@ -260,6 +260,7 @@ export interface JobFilters {
     search?: string
     location?: string
     job_type?: string[]
+    category_id?: string
     experience?: string | number
     salary_min?: string | number
     salary_max?: string | number
@@ -267,6 +268,15 @@ export interface JobFilters {
     limit?: number
 }
 
+export interface Category {
+    _id: string
+    name: string
+}
+
+export interface JobType {
+    label: string
+    value: string
+}
 // Type aliases for API responses
 export type SkillResponse = ApiResponse<Skill>
 export type UserResponse = ApiResponse<BaseUserInfo>
