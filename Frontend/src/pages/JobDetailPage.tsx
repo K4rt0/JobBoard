@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Button, Form, InputGroup } from 'react-bootstrap'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiResponse, Job, Skill } from '@/interfaces'
 import { getJobByProjectId } from '@/services/jobSearchService'
+import { applyJob } from '@/services/jobService'
 
 const JobDetailPage = () => {
     const [job, setJob] = useState<Job | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
-
+    const navigate = useNavigate()
     const { jobId } = useParams<{ jobId: string }>()
     useEffect(() => {
         const fetchJob = async () => {
@@ -41,8 +42,22 @@ const JobDetailPage = () => {
         return <div>{error || 'No job data available.'}</div>
     }
 
-    console.log('skills: ' + JSON.stringify(job.skills))
+    const handleApplyJob = async () => {
+        try {
+            if (!jobId) {
+                throw new Error('Job ID is not provided')
+            }
 
+            const applySuccess = await applyJob(jobId)
+            if (applySuccess) {
+                navigate('/profile')
+            }
+        } catch (err) {
+            setError('Failed to apply job. Please try again later.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
     return (
         <div className="job-details section">
             <div className="container">
@@ -153,12 +168,12 @@ const JobDetailPage = () => {
                                             </a>
                                         </div>
                                         <div className="col-xl-auto col-lg-12 col-sm-auto col-12 p-2">
-                                            <a
-                                                href="job-details.html"
+                                            <button
+                                                onClick={handleApplyJob}
                                                 className="d-block btn btn-alt"
                                             >
                                                 Apply Now
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

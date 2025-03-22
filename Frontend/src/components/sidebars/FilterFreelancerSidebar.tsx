@@ -9,7 +9,7 @@ import {
     Badge,
 } from 'react-bootstrap'
 
-const FilterSidebar: React.FC = () => {
+const FilterFreelancerSidebar: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [hourlyRate, setHourlyRate] = useState<[number, number]>([10, 100])
     const [selectedFilters, setSelectedFilters] = useState<string[]>([
@@ -360,74 +360,9 @@ const FilterSidebar: React.FC = () => {
                         </div>
                     </Card.Body>
                 </Card>
-
-                {/* Certifications Section */}
-                <Card className="border-0 mb-2">
-                    <Card.Header
-                        className="bg-gradient rounded-top py-2"
-                        style={{
-                            background:
-                                'linear-gradient(90deg, #A3BFFA, #E2E8F0)',
-                            transition: 'background 0.3s ease',
-                        }}
-                        onMouseEnter={(e) =>
-                            (e.currentTarget.style.background =
-                                'linear-gradient(90deg, #7F9CF5, #CBD5E0)')
-                        }
-                        onMouseLeave={(e) =>
-                            (e.currentTarget.style.background =
-                                'linear-gradient(90deg, #A3BFFA, #E2E8F0)')
-                        }
-                    >
-                        <i className="bi bi-trophy-fill me-2 text-dark"></i>
-                        <span className="fw-semibold text-dark">
-                            Certifications
-                        </span>
-                    </Card.Header>
-                    <Card.Body className="p-2 bg-light rounded-bottom">
-                        <InputGroup className="mb-2 shadow-sm">
-                            <InputGroup.Text className="bg-white border-end-0">
-                                <i className="bi bi-search text-muted"></i>
-                            </InputGroup.Text>
-                            <Form.Control
-                                type="text"
-                                placeholder="Search certs..."
-                                className="border-start-0"
-                                size="sm"
-                            />
-                        </InputGroup>
-                        <div className="mb-2">
-                            {[
-                                'Adobe Certified Expert',
-                                'Photoshop Proficiency',
-                                'Design Fundamentals',
-                            ].map((cert, index) => (
-                                <Form.Check
-                                    key={index}
-                                    type="checkbox"
-                                    id={`cert${index}`}
-                                    label={cert}
-                                    className="mb-1"
-                                />
-                            ))}
-                        </div>
-                    </Card.Body>
-                </Card>
-
-                {/* Apply Filters Button */}
-                <div className="d-grid gap-2 mt-3">
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        className="shadow-sm"
-                        onClick={() => alert('Filters applied!')}
-                    >
-                        Apply Filters
-                    </Button>
-                </div>
             </Card.Body>
         </Card>
     )
 }
 
-export default FilterSidebar
+export default FilterFreelancerSidebar

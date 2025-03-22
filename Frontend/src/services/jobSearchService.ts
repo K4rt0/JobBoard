@@ -34,12 +34,22 @@ export async function getJobsPagination(
             // If it's a single string (not an array)
             params.append('job_type[]', filters.job_type)
         }
-        if (filters.experience)
+        if (filters.experience) {
             params.append('experience', filters.experience.toString())
-        if (filters.salary_min)
+        }
+        if (filters.salary_min) {
             params.append('salary_min', filters.salary_min.toString())
-        if (filters.salary_max)
+        }
+        if (filters.salary_max) {
             params.append('salary_max', filters.salary_max.toString())
+        }
+        // Add category_id if provided
+        if (filters.category_id) {
+            params.append('category_id', filters.category_id)
+        }
+
+        // Debug: Log query parameters to verify
+        console.log('Query parameters:', params.toString())
 
         const response = await axios.get<JobsResponse>(
             `${BASE_URL}/project/get-all-pagination`,
@@ -53,6 +63,7 @@ export async function getJobsPagination(
         throw error
     }
 }
+
 export async function getJobs(): Promise<ApiResponse<Job[]>> {
     try {
         const response = await axios.get<ApiResponse<Job[]>>(
@@ -72,7 +83,6 @@ export async function getJobByProjectId(projectId: string): Promise<Job> {
             data: JobApiResponse
         }>(`${BASE_URL}/project/${projectId}`)
         const apiProject = response.data.data as JobApiResponse
-        console.log('apiProject: ' + JSON.stringify(apiProject))
 
         // Fetch skill details for each skill ID
         const skills = apiProject.skills

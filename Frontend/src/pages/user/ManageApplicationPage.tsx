@@ -1,40 +1,36 @@
+import DashboardSidebar from '@/components/sidebars/DashboardSidebar'
+import { useAuth } from '@/hooks/useAuth'
 import React from 'react'
 
 const ManageApplicationPage = () => {
+    const { user } = useAuth()
     const menuItems = [
         {
-            label: 'My Resume',
-            link: 'profile',
+            label: 'My Profile',
+            link: '/profile',
             icon: 'lni lni-clipboard',
             active: true,
         },
         {
             label: 'Bookmarked Jobs',
-            link: 'bookmarked',
+            link: '/profile/bookmarked',
             icon: 'lni lni-bookmark',
         },
         {
-            label: 'Notifications',
-            link: 'notifications',
-            icon: 'lni lni-alarm',
-            notification: 5,
-        },
-        {
             label: 'Manage Applications',
-            link: 'manage-applications',
+            link: '/profile/manage-applications',
             icon: 'lni lni-envelope',
         },
         {
             label: 'Manage Resumes',
-            link: 'manage-resumes',
+            link: '/profile/manage-resumes',
             icon: 'lni lni-files',
         },
         {
             label: 'Change Password',
-            link: 'change-password',
+            link: '/profile/change-password',
             icon: 'lni lni-lock',
         },
-        { label: 'Sign Out', link: 'index.html', icon: 'lni lni-upload' },
     ]
     return (
         <div className="manage-applications section">
@@ -43,57 +39,7 @@ const ManageApplicationPage = () => {
                     <div className="row">
                         {/* <!-- Start Main Content --> */}
                         <div className="col-lg-4 col-12">
-                            <div className="dashbord-sidebar">
-                                <ul>
-                                    <li className="heading">Manage Account</li>
-                                    <li>
-                                        <a href="resume.html">
-                                            <i className="lni lni-clipboard"></i>{' '}
-                                            My Resume
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="bookmarked.html">
-                                            <i className="lni lni-bookmark"></i>{' '}
-                                            Bookmarked Jobs
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="notifications.html">
-                                            <i className="lni lni-alarm"></i>{' '}
-                                            Notifications{' '}
-                                            <span className="notifi">5</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            className="active"
-                                            href="manage-applications.html"
-                                        >
-                                            <i className="lni lni-envelope"></i>
-                                            Manage Applications
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="manage-jobs.html">
-                                            <i className="lni lni-briefcase"></i>{' '}
-                                            Manage Jobs
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="change-password.html">
-                                            <i className="lni lni-lock"></i>{' '}
-                                            Change Password
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="index.html">
-                                            <i className="lni lni-upload"></i>{' '}
-                                            Sign Out
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            <DashboardSidebar role={user?.role} />
                         </div>
                         {/* <!-- End Main Content --> */}
                         <div className="col-lg-8 col-12">

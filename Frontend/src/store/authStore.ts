@@ -54,6 +54,7 @@ export const useAuthStore = create<AuthState>()(
                         id: response.data.id,
                         access_token: response.data.access_token,
                         refresh_token: response.data.refresh_token,
+                        role: response.data.role,
                     }
 
                     set({ user: userData })
@@ -79,6 +80,7 @@ export const useAuthStore = create<AuthState>()(
                     const response = await loginAdminApi(username, password)
                     const userData: UserAuth = {
                         id: response.data.id,
+                        role: response.data.role,
                         access_token: response.data.access_token,
                         access_token_admin: response.data.access_token,
                         refresh_token: response.data.refresh_token,
@@ -144,6 +146,7 @@ export const useAuthStore = create<AuthState>()(
                     )
                     const userData: UserAuth = {
                         id: response.data.id,
+                        role: response.data.role,
                         access_token: response.data.access_token,
                         refresh_token: response.data.refresh_token,
                     }
