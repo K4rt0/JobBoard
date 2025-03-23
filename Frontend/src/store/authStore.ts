@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { loginApi, loginGoogleApi, registerApi } from '@/services/authService'
+import {
+    loginAdminApi,
+    loginApi,
+    loginGoogleApi,
+    registerApi,
+} from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
 import { UserAuth } from '@/interfaces'
@@ -12,6 +17,7 @@ import 'react-toastify/dist/ReactToastify.css'
 interface AuthState {
     user: UserAuth | null
     login: (email: string, password: string) => Promise<boolean>
+    loginAdmin: (username: string, password: string) => Promise<boolean>
     register: (
         full_name: string,
         email: string,
@@ -68,7 +74,33 @@ export const useAuthStore = create<AuthState>()(
                     return false
                 }
             },
+            loginAdmin: async (username, password) => {
+                try {
+                    const response = await loginAdminApi(username, password)
+                    const userData: UserAuth = {
+                        id: response.data.id,
+                        access_token: response.data.access_token,
+                        access_token_admin: response.data.access_token,
+                        refresh_token: response.data.refresh_token,
+                    }
 
+                    set({ user: userData })
+                    setAuthHeader(userData.access_token)
+
+                    return true // Đăng nhập thành công
+                } catch (error) {
+                    if (axios.isAxiosError(error)) {
+                        console.log(error)
+
+                        const errorMessage =
+                            error.response?.data?.message ||
+                            'Invalid email or password!'
+                        toast.error(errorMessage)
+                        return false
+                    }
+                    return false
+                }
+            },
             /**
              * Đăng ký tài khoản mới
              */

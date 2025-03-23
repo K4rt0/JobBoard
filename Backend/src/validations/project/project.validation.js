@@ -32,7 +32,7 @@ const create_project = async (req, res, next) => {
       phone_number: Joi.string().min(10).max(15).required(),
     }).required(),
 
-    job_type: Joi.string().valid("full-time", "part-time", "remote", "internship").default("full-time"),
+    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")).default(["full-time"]),
     status: Joi.string().valid("opening", "closed").default("opening"),
   });
 
@@ -75,7 +75,7 @@ const update_project = async (req, res, next) => {
       phone_number: Joi.string().min(10).max(15),
     }),
 
-    job_type: Joi.string().valid("full-time", "part-time", "remote", "internship"),
+    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
     status: Joi.string().valid("opening", "closed"),
   });
 
@@ -95,7 +95,8 @@ const get_all_projects_pagination = async (req, res, next) => {
     location: Joi.string().max(50),
     salary_min: Joi.number().min(0),
     salary_max: Joi.number().min(0),
-    job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
+    category_id: Joi.string().hex().length(24),
+    job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
     experience: Joi.number().min(0),
   });
 
@@ -146,6 +147,36 @@ const apply_project = async (req, res, next) => {
   }
 };
 
+const get_all_applicants = async (req, res, next) => {
+  const schema = Joi.object({
+    project_id: Joi.string().hex().length(24).required(),
+  });
+
+  try {
+    await schema.validateAsync(req.params, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_applicants_pagination = async (req, res, next) => {
+  const schema = Joi.object({
+    page: Joi.number().min(1).default(1),
+    limit: Joi.number().min(1).default(10),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    search: Joi.string().default(""),
+    status: Joi.string().valid("all", "pending", "accepted", "rejected"),
+  });
+
+  try {
+    await schema.validateAsync(req.params, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_validation = {
   create_project,
   update_project,
@@ -153,4 +184,6 @@ export const project_validation = {
   get_project,
   update_project_status,
   apply_project,
+  get_all_applicants,
+  get_all_applicants_pagination,
 };

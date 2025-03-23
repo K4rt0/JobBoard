@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import CustomPagination from '@/components/CustomPagination'
 import { Job, JobFilters, PaginationInfo } from '@/interfaces'
-import { getJobs } from '@/services/jobSearchService'
 import JobSearchBar from '@/components/JobSearchBar'
 import JobFilterSidebar from '@/components/JobFilterSidebar'
 import JobList from '@/components/JobList'
+import { getJobsPagination } from '@/services/jobSearchService'
 
 const JobSearchPage: React.FC = () => {
     // Initialize filters with all possible fields
     const [filters, setFilters] = useState<JobFilters>({
         search: '',
         location: '',
-        job_type: '',
+        job_type: [],
         experience: '',
         salary_min: '',
         salary_max: '',
         page: 1,
-        limit: 10,
+        limit: 8,
     })
 
     const [jobs, setJobs] = useState<Job[]>([])
@@ -35,7 +35,7 @@ const JobSearchPage: React.FC = () => {
             setIsLoading(true)
             setError(null)
             try {
-                const response = await getJobs(
+                const response = await getJobsPagination(
                     filters.page || 1,
                     filters.limit || 10,
                     filters,
@@ -119,7 +119,7 @@ const JobSearchPage: React.FC = () => {
 
                         <JobList jobs={jobs} isLoading={isLoading} />
 
-                        <div className="d-flex justify-content-center mt-4">
+                        <div className="d-flex justify-content-center align-items-center mt-4">
                             <CustomPagination
                                 currentPage={filters.page || 1}
                                 setCurrentPage={handlePageChange}

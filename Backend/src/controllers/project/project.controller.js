@@ -50,7 +50,8 @@ const get_all_projects_pagination = async (req, res, next) => {
       location: Joi.string().max(50),
       salary_min: Joi.number().min(0),
       salary_max: Joi.number().min(0),
-      job_type: Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship")),
+      category_id: Joi.string().hex().length(24),
+      job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
       experience: Joi.number().min(0),
     });
 
@@ -106,6 +107,41 @@ const apply_project = async (req, res, next) => {
   }
 };
 
+const get_all_applicants = async (req, res, next) => {
+  try {
+    const result = await project_service.get_all_applicants(req.params.project_id);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách ứng viên thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_applicants_pagination = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const { status, sort, search } = req.query;
+    const filtered = {};
+    if (status && ["all", "active", "deleted", "blocked"].includes(status)) filtered.status = status;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await project_service.get_all_applicants_pagination(page, limit, filtered);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách ứng viên thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_controller = {
   create_project,
   update_project,
@@ -114,4 +150,6 @@ export const project_controller = {
   get_project,
   update_project_status,
   apply_project,
+  get_all_applicants,
+  get_all_applicants_pagination,
 };

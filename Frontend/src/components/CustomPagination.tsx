@@ -111,16 +111,11 @@ const CustomPagination: React.FC<PaginationProps> = ({
         return items
     }
 
-    // Calculate the range of results being shown
-    const startResult =
-        totalResults === 0 ? 0 : (currentPage - 1) * resultsPerPage + 1
-    const endResult = Math.min(currentPage * resultsPerPage, totalResults)
-
     return (
-        <Container className="pagination center">
+        <Container className="pagination center justify-content-center">
             <Row>
                 <Col xs={12}>
-                    <ul className="pagination-list">
+                    <ul className="pagination-list ">
                         <li>
                             <a
                                 href="#"
@@ -153,20 +148,6 @@ const CustomPagination: React.FC<PaginationProps> = ({
                             </a>
                         </li>
                     </ul>
-                </Col>
-            </Row>
-
-            {/* Results Summary */}
-            <Row className="justify-content-center mt-2">
-                <Col xs="auto" className="text-muted small">
-                    {totalResults > 0 ? (
-                        <>
-                            Showing {startResult} - {endResult} of{' '}
-                            {totalResults} results
-                        </>
-                    ) : (
-                        <>No results found</>
-                    )}
                 </Col>
             </Row>
         </Container>
