@@ -11,7 +11,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 const Home = () => {
     const [jobs, setJobs] = useState<Job[]>([])
-    const [categories, setCategories] = useState<Category[]>([]) // Thêm state cho categories
+    const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
@@ -28,7 +28,6 @@ const Home = () => {
         limit: 8,
     })
 
-    // Fetch jobs
     useEffect(() => {
         const fetchJobs = async () => {
             setIsLoading(true)
@@ -45,11 +44,10 @@ const Home = () => {
             }
         }
 
-        // Fetch categories
         const fetchCategories = async () => {
             try {
-                const response = await getCategories() // Điều chỉnh URL API theo cấu hình của bạn
-                setCategories(response.slice(0, 8)) // Lấy tối đa 8 categories
+                const response = await getCategories()
+                setCategories(response.slice(0, 8))
             } catch (err) {
                 console.error('Failed to fetch categories:', err)
             }
@@ -76,7 +74,6 @@ const Home = () => {
         navigate('/jobs')
     }
 
-    // Xử lý khi click vào category
     const handleCategoryClick = (categoryId: string) => {
         const newFilters = {
             ...filters,
@@ -86,10 +83,19 @@ const Home = () => {
         navigate('/jobs', { state: { filters: newFilters } })
     }
 
+    // Xử lý khi click vào keyword
+    const handleKeywordClick = (keyword: string) => {
+        const newFilters = {
+            ...filters,
+            search: keyword,
+            page: 1,
+        }
+        navigate('/jobs', { state: { filters: newFilters } })
+    }
+
     return (
         <>
             <section className="hero-area">
-                {/* <!-- Single Slider --> */}
                 <div className="hero-inner">
                     <div className="container">
                         <div className="row ">
@@ -130,24 +136,56 @@ const Home = () => {
                                                 <span className="title">
                                                     Popular Keywords:
                                                 </span>
-                                                <ul>
+                                                <ul className="mb-0">
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'Administrative',
+                                                                )
+                                                            }}
+                                                        >
                                                             Administrative
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'Android',
+                                                                )
+                                                            }}
+                                                        >
                                                             Android
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'app',
+                                                                )
+                                                            }}
+                                                        >
                                                             app
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'ASP.NET',
+                                                                )
+                                                            }}
+                                                        >
                                                             ASP.NET
                                                         </a>
                                                     </li>
@@ -157,6 +195,7 @@ const Home = () => {
                                     </div>
                                 </div>
                             </div>
+                            {/* Rest of hero section remains the same */}
                             <div className="col-lg-6 co-12">
                                 <div
                                     className="hero-video-head wow fadeInRight"
@@ -173,7 +212,6 @@ const Home = () => {
                                         >
                                             <i className="lni lni-play"></i>
                                         </a>
-                                        {/* <!-- Video Animation --> */}
                                         <div className="promo-video">
                                             <div className="waves-block">
                                                 <div className="waves wave-1"></div>
@@ -181,14 +219,12 @@ const Home = () => {
                                                 <div className="waves wave-3"></div>
                                             </div>
                                         </div>
-                                        {/* <!--/ End Video Animation --> */}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {/* <!--/ End Single Slider --> */}
             </section>
             <section className="apply-process section">
                 <div className="container">
