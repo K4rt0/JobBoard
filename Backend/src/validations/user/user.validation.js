@@ -1,5 +1,18 @@
 import Joi from "joi";
 
+const get_user = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string().hex().length(24).required(),
+  });
+
+  try {
+    await schema.validateAsync(req.params);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 const create_user = async (req, res, next) => {
   const schema = Joi.object({
     full_name: Joi.string().required().min(3).max(50).trim().strict(),
@@ -219,6 +232,7 @@ const get_all_projects_pagination = async (req, res, next) => {
 };
 
 export const user_validation = {
+  get_user,
   create_user,
   get_all_users_pagination,
   update_user_status,
