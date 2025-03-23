@@ -4,6 +4,7 @@ import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { debounce } from 'lodash'
+import axiosInstance from '@/services/axiosInstance'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -768,22 +769,13 @@ const CategoryPage: React.FC = () => {
     ) => {
         try {
             setIsLoading(true)
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error(
-                    'Authentication token not found. Please log in again.',
-                )
-                setTimeout(() => (window.location.href = '/login'), 2000)
-                return
-            }
 
             let url = `${API_BASE_URL}/category/get-all-pagination?page=${page}&limit=${limit}`
             if (sort !== 'all') url += `&sort=${sort}`
             if (search.trim())
                 url += `&search=${encodeURIComponent(search.trim())}`
 
-            const response = await axios.get(url, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await axiosInstance.get(url, {
                 timeout: 10000,
             })
 
@@ -885,28 +877,19 @@ const CategoryPage: React.FC = () => {
             return
         }
 
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to create a category.')
-            setTimeout(() => (window.location.href = '/login'), 2000)
-            return
-        }
-
         try {
             if (editingId) {
-                await axios.patch(
+                await axiosInstance.patch(
                     `${API_BASE_URL}/category/update/${editingId}`,
                     { name: categoryNames[0] },
-                    { headers: { Authorization: `Bearer ${token}` } },
                 )
                 toast.success('Category updated successfully!')
             } else {
-                await axios.post(
+                await axiosInstance.post(
                     `${API_BASE_URL}/category/create`,
                     categoryNames.length === 1
                         ? { name: categoryNames[0] }
                         : categoryNames.map((name: string) => ({ name })),
-                    { headers: { Authorization: `Bearer ${token}` } },
                 )
                 toast.success('Category created successfully!')
             }
@@ -935,19 +918,9 @@ const CategoryPage: React.FC = () => {
     const handleDeleteCategory = async () => {
         if (!categoryToDelete) return
 
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to delete a category.')
-            setTimeout(() => (window.location.href = '/login'), 2000)
-            return
-        }
-
         try {
-            await axios.delete(
+            await axiosInstance.delete(
                 `${API_BASE_URL}/category/delete/${categoryToDelete._id}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                },
             )
             toast.success('Category deleted successfully!')
             handleCloseDeleteModal()

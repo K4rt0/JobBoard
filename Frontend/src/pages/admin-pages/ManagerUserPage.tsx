@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import axiosInstance from '@/services/axiosInstance'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -374,15 +375,8 @@ const UserManagement: React.FC = () => {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error('Please log in to fetch users.')
-                window.location.href = '/login'
-                return
-            }
-            const response = await axios.get<{ data: User[] }>(
+            const response = await axiosInstance.get<{ data: User[] }>(
                 `${API_BASE_URL}/user/get-all`,
-                { headers: { Authorization: `Bearer ${token}` } },
             )
             setUsers(response.data.data || [])
             setRetryCount(0) // Reset retry count on success
@@ -414,19 +408,12 @@ const UserManagement: React.FC = () => {
 
     const handleToggleStatus = async (user: User) => {
         const newStatus = user.status === 'Active' ? 'Blocked' : 'Active'
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to update user status.')
-            window.location.href = '/login'
-            return
-        }
 
         try {
             const userData = { status: newStatus }
-            await axios.patch(
+            await axiosInstance.patch(
                 `${API_BASE_URL}/user/${user._id}/status`,
                 userData,
-                { headers: { Authorization: `Bearer ${token}` } },
             )
             setUsers(
                 users.map((u) =>
