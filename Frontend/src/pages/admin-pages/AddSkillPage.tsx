@@ -4,6 +4,7 @@ import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { debounce } from 'lodash'
+import axiosInstance from '@/services/axiosInstance'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -847,23 +848,16 @@ const SkillsPage: React.FC = () => {
         async (page = 1, limit = 10, search = '', sort = 'all') => {
             try {
                 setIsLoading(true)
-                const token = localStorage.getItem('access-token')
-                if (!token) {
-                    toast.error('Please log in to fetch skills.')
-                    window.location.href = '/login'
-                    return
-                }
+
                 let url = `${API_BASE_URL}/skill/get-all-pagination?page=${page}&limit=${limit}`
                 if (search.trim())
                     url += `&search=${encodeURIComponent(search.trim())}`
                 if (sort !== 'all') url += `&sort=${sort}`
 
-                const response = await axios.get<{
+                const response = await axiosInstance.get<{
                     data: Skill[]
                     pagination: Pagination
-                }>(url, {
-                    headers: { Authorization: `Bearer ${token}` },
-                })
+                }>(url, {})
                 setSkills(response.data.data || [])
                 setPagination(
                     response.data.pagination || {
@@ -965,29 +959,21 @@ const SkillsPage: React.FC = () => {
             return
         }
 
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to save a skill.')
-            window.location.href = '/login'
-            return
-        }
-
         setIsSaving(true)
         try {
             const skillData = { name: newSkill.trim(), is_disabled: isDisabled }
             if (editingId) {
-                await axios.patch(
+                await axiosInstance.patch(
                     `${API_BASE_URL}/skill/update/${editingId}`,
                     skillData,
-                    {
-                        headers: { Authorization: `Bearer ${token}` },
-                    },
                 )
                 toast.success('Skill updated successfully!')
             } else {
-                await axios.post(`${API_BASE_URL}/skill/create`, skillData, {
-                    headers: { Authorization: `Bearer ${token}` },
-                })
+                await axiosInstance.post(
+                    `${API_BASE_URL}/skill/create`,
+                    skillData,
+                    {},
+                )
                 toast.success('Skill created successfully!')
             }
             fetchSkills(currentPage, itemsPerPage, searchQuery, sortType)
@@ -1031,11 +1017,8 @@ const SkillsPage: React.FC = () => {
 
         setIsDeleting(true)
         try {
-            await axios.delete(
+            await axiosInstance.delete(
                 `${API_BASE_URL}/skill/delete/${skillToDelete._id}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                },
             )
             toast.success('Skill deleted successfully!')
             const isLastItemOnPage =

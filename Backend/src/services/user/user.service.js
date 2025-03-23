@@ -145,6 +145,30 @@ const update_socials = async (user_id, socials) => {
   }
 };
 
+const get_all_projects = async (user_id) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Không tìm thấy người dùng này trong hệ thống !");
+
+    const projects = await user_model.find_all_projects(user_id);
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_all_projects_pagination = async (user_id, page, limit, filtered = {}) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Không tìm thấy người dùng này trong hệ thống !");
+
+    const projects = await user_model.find_all_projects_pagination(user_id, page, limit, filtered);
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const user_service = {
   create_user,
   get_user,
@@ -154,4 +178,6 @@ export const user_service = {
   update_user,
   update_skills,
   update_socials,
+  get_all_projects,
+  get_all_projects_pagination,
 };

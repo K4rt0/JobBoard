@@ -27,7 +27,7 @@ import {
     EducationFormFields,
     SocialFormFields,
 } from '@/components/forms/ProfileFormFields'
-import ErrorPage from './ErrorPage'
+import ErrorPage from '../ErrorPage'
 
 // Modal types và config giữ nguyên
 type ModalType =
@@ -81,25 +81,31 @@ const MODAL_CONFIG = {
 // Sidebar menu items giữ nguyên
 const SIDEBAR_MENU_ITEMS = [
     {
-        label: 'My Resume',
-        link: 'profile',
+        label: 'My Profile',
+        link: '/profile',
         icon: 'lni lni-clipboard',
         active: true,
     },
-    { label: 'Bookmarked Jobs', link: 'bookmarked', icon: 'lni lni-bookmark' },
     {
-        label: 'Notifications',
-        link: 'notifications',
-        icon: 'lni lni-alarm',
-        notification: 5,
+        label: 'Bookmarked Jobs',
+        link: '/profile/bookmarked',
+        icon: 'lni lni-bookmark',
     },
     {
         label: 'Manage Applications',
-        link: 'manage-applications',
+        link: '/profile/manage-applications',
         icon: 'lni lni-envelope',
     },
-    { label: 'Manage Resumes', link: 'manage-resumes', icon: 'lni lni-files' },
-    { label: 'Change Password', link: 'change-password', icon: 'lni lni-lock' },
+    {
+        label: 'Manage Resumes',
+        link: '/profile/manage-resumes',
+        icon: 'lni lni-files',
+    },
+    {
+        label: 'Change Password',
+        link: '/profile/change-password',
+        icon: 'lni lni-lock',
+    },
 ]
 
 // Initial user data
@@ -323,15 +329,13 @@ const ProfilePage: React.FC = () => {
     if (error) return <ErrorPage />
 
     const currentModal = showModal ? MODAL_CONFIG[showModal] : null
-    console.log(userData)
-
     return (
         <div className="resume section">
             <div className="container">
                 <div className="resume-inner">
                     <div className="row">
                         <div className="col-lg-4 col-12">
-                            <DashboardSidebar menuItems={SIDEBAR_MENU_ITEMS} />
+                            <DashboardSidebar role={user?.role} />
                         </div>
 
                         <div className="col-lg-8 col-12">

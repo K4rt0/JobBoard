@@ -30,13 +30,15 @@ export const getCurrentUser = async (): Promise<
         id: apiData._id,
         fullName: apiData.full_name,
         email: apiData.email,
-        phoneNumber: apiData.phone_number,
+        phoneNumber: apiData.phone_number || '',
         birthDate: apiData.birth_date || null,
         role: apiData.role,
         bio: apiData.bio || null,
         avatar: apiData.avatar?.url || null,
         status: apiData.status,
-        createdAt: new Date(apiData.created_at).toLocaleDateString(),
+        createdAt: apiData.created_at
+            ? new Date(apiData.created_at).toLocaleDateString()
+            : '',
         updatedAt: apiData.updated_at
             ? new Date(apiData.updated_at).toLocaleDateString()
             : null,
@@ -44,7 +46,6 @@ export const getCurrentUser = async (): Promise<
         website: apiData.website || '',
         socials: apiData.socials,
     }
-    console.log(apiData.skills)
 
     if (apiData.role === 'Freelancer') {
         // Lấy danh sách kỹ năng từ _id
@@ -148,10 +149,12 @@ export const updateUserProfile = async <
             bio: apiData.bio || null,
             avatar: apiData.avatar?.url || null,
             status: apiData.status,
-            createdAt: new Date(apiData.created_at).toLocaleDateString(),
+            createdAt: apiData.updated_at
+                ? new Date(apiData.updated_at).toLocaleDateString()
+                : '',
             updatedAt: apiData.updated_at
                 ? new Date(apiData.updated_at).toLocaleDateString()
-                : null,
+                : '',
             location: apiData.location || '',
             website: apiData.website || '',
         }

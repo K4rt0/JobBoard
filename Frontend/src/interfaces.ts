@@ -59,7 +59,7 @@ export interface UserAuth {
     id: string
     full_name?: string
     email?: string
-    role?: string
+    role: string
     avatar?: string
     access_token_admin?: string
     access_token: string
@@ -103,7 +103,7 @@ export interface ApiUserResponse {
     _id: string
     full_name: string
     email: string
-    phone_number: string
+    phone_number?: string
     birth_date?: string | null
     role: string
     avatar?: Avatar | null
@@ -117,7 +117,7 @@ export interface ApiUserResponse {
     location?: string
     website?: string
     status: string
-    created_at: number // Timestamp
+    created_at?: number // Timestamp
     updated_at?: number | null
     socials?: SocialLink[]
 }
@@ -261,11 +261,38 @@ export interface JobFilters {
     search?: string
     location?: string
     job_type?: string[]
+    category_id?: string
     experience?: string | number
     salary_min?: string | number
     salary_max?: string | number
     page?: number
     limit?: number
+}
+
+export interface Category {
+    _id: string
+    name: string
+}
+
+export interface JobType {
+    label: string
+    value: string
+}
+
+export interface Applicant {
+    _id: string
+    applied_at: number | null
+    expired_at: string | null
+    status: string
+    user: ApiUserResponse
+}
+
+export interface ProjectApiResponse {
+    message: string
+    data: {
+        projects: Job[] // Dữ liệu công việc nằm trong 'projects'
+        pagination: PaginationInfo // Pagination giữ nguyên
+    }
 }
 
 // Type aliases for API responses

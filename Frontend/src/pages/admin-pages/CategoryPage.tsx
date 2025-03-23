@@ -1,4 +1,3 @@
-// src/pages/admin-pages/CategoryPage.tsx
 import React, { useState, useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import { ToastContainer, toast } from 'react-toastify'
@@ -9,7 +8,8 @@ import {
     createCategory,
     updateCategory,
     deleteCategory,
-} from '../../services/categoryService' // Sửa đường dẫn import
+} from '../../services/categoryService'
+import { useAuthStore } from '@/store/authStore'
 
 interface Category {
     _id: string
@@ -34,7 +34,6 @@ interface ModalOverlayProps {
     isOpen: boolean
 }
 
-// Styled Components
 const PageContainer = styled.div`
     margin-left: 280px;
     padding: 30px;
@@ -557,7 +556,6 @@ const DeleteButton = styled.button`
     }
 `
 
-// Icons
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -736,8 +734,8 @@ const ChevronRightIcon = () => (
     </svg>
 )
 
-// Main Component
 const CategoryPage: React.FC = () => {
+    const { user } = useAuthStore()
     const [categories, setCategories] = useState<Category[]>([])
     const [pagination, setPagination] = useState<Pagination>({
         total: 0,
@@ -766,22 +764,7 @@ const CategoryPage: React.FC = () => {
     ) => {
         try {
             setIsLoading(true)
-            const token = localStorage.getItem('access-token')
-            if (!token) {
-                toast.error(
-                    'Authentication token not found. Please log in again.',
-                )
-                setTimeout(() => (window.location.href = '/login'), 2000)
-                return
-            }
-
-            const response = await fetchCategories(
-                page,
-                limit,
-                sort,
-                search,
-                token,
-            )
+            const response = await fetchCategories(page, limit, sort, search)
             if (response && response.data) {
                 setCategories(response.data)
                 setPagination(
@@ -815,12 +798,7 @@ const CategoryPage: React.FC = () => {
     }
 
     const debouncedFetchCategories = useMemo(
-        () =>
-            debounce(
-                (page: number, limit: number, sort: string, query: string) =>
-                    fetchCategoriesData(page, limit, sort, query),
-                500,
-            ),
+        () => debounce(fetchCategoriesData, 500),
         [],
     )
 
@@ -832,12 +810,18 @@ const CategoryPage: React.FC = () => {
             searchQuery,
         )
         return () => debouncedFetchCategories.cancel()
-    }, [currentPage, itemsPerPage, sortType, searchQuery])
+    }, [
+        currentPage,
+        itemsPerPage,
+        sortType,
+        searchQuery,
+        debouncedFetchCategories,
+    ])
 
     const getInitials = (name: string): string => {
         return name
             .split(' ')
-            .map((word: string) => word[0])
+            .map((word) => word[0])
             .join('')
             .toUpperCase()
     }
@@ -864,9 +848,8 @@ const CategoryPage: React.FC = () => {
     const handleSaveCategory = async () => {
         const categoryNames = newCategories
             .split('\n')
-            .map((name: string) => name.trim())
-            .filter((name: string) => name !== '')
-
+            .map((name) => name.trim())
+            .filter((name) => name !== '')
         if (categoryNames.length === 0) {
             toast.warn('Please enter at least one category name.')
             return
@@ -876,27 +859,15 @@ const CategoryPage: React.FC = () => {
             return
         }
 
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to create a category.')
-            setTimeout(() => (window.location.href = '/login'), 2000)
-            return
-        }
-
         try {
             if (editingId) {
-                await updateCategory(
-                    editingId,
-                    { name: categoryNames[0] },
-                    token,
-                )
+                await updateCategory(editingId, { name: categoryNames[0] })
                 toast.success('Category updated successfully!')
             } else {
                 await createCategory(
                     categoryNames.length === 1
                         ? { name: categoryNames[0] }
-                        : categoryNames.map((name: string) => ({ name })),
-                    token,
+                        : categoryNames.map((name) => ({ name })),
                 )
                 toast.success('Category created successfully!')
             }
@@ -919,26 +890,15 @@ const CategoryPage: React.FC = () => {
 
     const handleCloseDeleteModal = () => {
         setIsDeleteModalOpen(false)
-        setTimeout(() => {
-            setCategoryToDelete(null)
-        }, 300)
+        setTimeout(() => setCategoryToDelete(null), 300)
     }
 
     const handleDeleteCategory = async () => {
         if (!categoryToDelete) return
-
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to delete a category.')
-            setTimeout(() => (window.location.href = '/login'), 2000)
-            return
-        }
-
         try {
-            await deleteCategory(categoryToDelete._id, token)
+            await deleteCategory(categoryToDelete._id)
             toast.success('Category deleted successfully!')
             handleCloseDeleteModal()
-
             const isLastItemOnPage =
                 categories.length === 1 && pagination.current_page > 1
             if (isLastItemOnPage) {
@@ -987,21 +947,17 @@ const CategoryPage: React.FC = () => {
         const numbers = []
         const maxPages = 5
         const halfMaxPages = Math.floor(maxPages / 2)
-
         let startPage = Math.max(1, pagination.current_page - halfMaxPages)
         const endPage = Math.min(
             pagination.total_pages,
             startPage + maxPages - 1,
         )
-
         if (endPage - startPage + 1 < maxPages) {
             startPage = Math.max(1, endPage - maxPages + 1)
         }
-
         for (let i = startPage; i <= endPage; i++) {
             numbers.push(i)
         }
-
         return numbers
     }, [pagination.current_page, pagination.total_pages])
 
@@ -1015,7 +971,6 @@ const CategoryPage: React.FC = () => {
                     Add Category
                 </AddButton>
             </Header>
-
             <SearchFilterContainer>
                 <SearchContainer>
                     <SearchIcon>
@@ -1044,7 +999,6 @@ const CategoryPage: React.FC = () => {
                     </SortIcon>
                 </SortContainer>
             </SearchFilterContainer>
-
             <SearchStats>
                 <span>
                     {pagination.total} categories found
@@ -1057,7 +1011,6 @@ const CategoryPage: React.FC = () => {
                     <option value={100}>100 per page</option>
                 </LimitSelect>
             </SearchStats>
-
             {isLoading ? (
                 <NoCategories>Loading categories...</NoCategories>
             ) : categories.length > 0 ? (
@@ -1098,12 +1051,10 @@ const CategoryPage: React.FC = () => {
                             : "No categories found. Let's create one!"}
                     </EmptyText>
                     <AddButton onClick={() => handleOpenModal()}>
-                        <PlusIcon />
-                        Add Category
+                        <PlusIcon /> Add Category
                     </AddButton>
                 </NoCategories>
             )}
-
             {pagination.total_pages > 1 && (
                 <PaginationContainer>
                     <PageButton
@@ -1141,7 +1092,6 @@ const CategoryPage: React.FC = () => {
                     </PageButton>
                 </PaginationContainer>
             )}
-
             <ModalOverlay isOpen={isModalOpen}>
                 <Modal>
                     <ModalHeader>
@@ -1180,7 +1130,6 @@ const CategoryPage: React.FC = () => {
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
-
             <ModalOverlay isOpen={isDeleteModalOpen}>
                 <Modal>
                     <WarningIcon>

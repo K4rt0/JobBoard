@@ -133,17 +133,27 @@ const apply_project = async (user_id, project_id) => {
     const project = await validate_project(project_id, false);
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
 
+    if (user.cv_url === null) throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
     if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
-    if (project.applicants.includes(user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
+    if (project.applicants.some((applicant) => applicant._id.toString() === user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
+
+    const date = Date.now();
 
     project.applicants.push({
       _id: user._id,
-      applied_at: new Date().now,
-      expired_at: project.expired_at,
+      applied_at: date,
       status: "pending",
     });
-    project.updated_at = new Date();
+    project.updated_at = date;
 
+    user.projects_applied.push({
+      _id: project._id,
+      applied_at: date,
+      expired_at: null,
+      status: "pending",
+    });
+
+    await user_model.update_user(user_id, { projects_applied: user.projects_applied });
     return await project_model.update_project(project_id, project);
   } catch (error) {
     throw error;
@@ -158,7 +168,7 @@ const get_all_applicants = async (project_id) => {
     const all_applicants = await Promise.all(
       applicants.map(async (applicant) => {
         const user = await user_model.find_user({ _id: new ObjectId(applicant._id) });
-        return { ...applicant, user };
+        return { applicant, user };
       })
     );
 
@@ -168,11 +178,80 @@ const get_all_applicants = async (project_id) => {
   }
 };
 
-const get_all_applicants_pagination = async (page, limit, filtered) => {
+const get_all_applicants_pagination = async (project_id, page, limit, filtered) => {
   try {
-    const projects = await project_model.find_all_projects_pagination(page, limit, filtered);
+    const project = await validate_project(project_id, false);
+    let applicants = project.applicants || [];
 
-    return projects;
+    applicants = await Promise.all(
+      applicants.map(async (applicant) => {
+        const user = await user_model.find_user({ _id: new ObjectId(applicant._id) });
+        return { ...applicant, user };
+      })
+    );
+    if (filtered.status && filtered.status !== "all") applicants = applicants.filter((app) => app.status === filtered.status);
+
+    if (filtered.search) {
+      const search_term = filtered.search.toLowerCase();
+      applicants = applicants.filter((app) => app.user && ((app.user.full_name && app.user.full_name.toLowerCase().includes(search_term)) || (app.user.email && app.user.email.toLowerCase().includes(search_term)) || (app.user.phone_number && app.user.phone_number.includes(search_term))));
+    }
+
+    switch (filtered.sort?.toLowerCase()) {
+      case "newest":
+        applicants.sort((a, b) => b.applied_at - a.applied_at);
+        break;
+      case "oldest":
+        applicants.sort((a, b) => a.applied_at - b.applied_at);
+        break;
+      default:
+        break;
+    }
+
+    const total = applicants.length;
+    const skip = (page - 1) * limit;
+    const paginatedApplicants = applicants.slice(skip, skip + limit);
+
+    return {
+      applicants: paginatedApplicants,
+      pagination: {
+        total,
+        current_page: page,
+        total_page: Math.ceil(total / limit),
+        limit,
+      },
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const update_applicant_status = async (project_id, applicant_id, status) => {
+  try {
+    const project = await validate_project(project_id, false);
+    const applicant = project.applicants.find((app) => app._id.toString() === applicant_id);
+    if (!applicant) throw new Error("Người ứng tuyển không tồn tại !");
+
+    const user = await user_model.find_user({ _id: new ObjectId(applicant_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const date = Date.now();
+    applicant.status = status;
+    applicant.updated_at = date;
+    project.updated_at = date;
+
+    if (status === "finished") {
+      const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id);
+      if (applied_project) {
+        applied_project.status = "finished";
+        applied_project.finished_at = date;
+      }
+    }
+
+    await user_model.update_user(applicant_id, {
+      projects_applied: user.projects_applied,
+    });
+
+    return await project_model.update_project(project_id, project);
   } catch (error) {
     throw error;
   }
@@ -188,4 +267,5 @@ export const project_service = {
   apply_project,
   get_all_applicants,
   get_all_applicants_pagination,
+  update_applicant_status,
 };

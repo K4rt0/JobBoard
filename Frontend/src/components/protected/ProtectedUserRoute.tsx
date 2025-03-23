@@ -24,20 +24,20 @@ const isTokenExpired = (token: string): boolean => {
     }
 }
 
-const ProtectedRoute = () => {
+const ProtectedUserRoute = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
     const { user } = useAuthStore()
 
     useEffect(() => {
         const checkAuth = () => {
             // If user is null or there’s no access token, user is not authenticated
-            if (!user || !user.access_token_admin) {
+            if (!user || !user.access_token) {
                 setIsAuthenticated(false)
                 return
             }
 
             // Check if the token is expired
-            const isExpired = isTokenExpired(user.access_token_admin)
+            const isExpired = isTokenExpired(user.access_token)
             if (isExpired) {
                 localStorage.removeItem('auth-storage') // Remove expired token
                 setIsAuthenticated(false)
@@ -56,11 +56,11 @@ const ProtectedRoute = () => {
 
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
-        return <Navigate to="/admin/login" replace />
+        return <Navigate to="/profile" replace />
     }
 
     // Render child routes if authenticated
     return <Outlet />
 }
 
-export default ProtectedRoute
+export default ProtectedUserRoute

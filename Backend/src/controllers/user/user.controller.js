@@ -139,12 +139,50 @@ const update_socials = async (req, res, next) => {
   }
 };
 
+const get_all_projects = async (req, res, next) => {
+  try {
+    const result = await user_service.get_all_projects(req._id);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách dự án thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_projects_pagination = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const { status, sort, search } = req.query;
+    const filtered = {};
+    if (status && ["all", "pending", "accepted", "rejected", "finished"].includes(status)) filtered.status = status;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await user_service.get_all_projects_pagination(req._id, page, limit, filtered);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách dự án thành công !",
+      data: result,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_controller = {
   // Admin
   get_user,
   update_user_status,
   get_all_users_pagination,
   get_all_users,
+  get_all_projects,
+  get_all_projects_pagination,
 
   // User
   create_user,

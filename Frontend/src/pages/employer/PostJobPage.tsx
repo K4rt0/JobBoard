@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import axiosInstance, { proactiveTokenRefresh } from '@/services/axiosInstance'
-import { fetchCategories } from '@/services/categoryService'
+import { fetchCategories } from '@/services/categoryService' // Đã có sẵn trong code
 import { getSkillsList } from '@/services/skillService'
 import { useAuthStore } from '@/store/authStore'
 import { useNavigate } from 'react-router-dom'
@@ -13,7 +13,6 @@ import axios, { AxiosError } from 'axios'
 import { Helmet } from 'react-helmet'
 import sanitizeHtml from 'sanitize-html'
 
-// Định nghĩa kiểu dữ liệu
 interface Province {
     name: string
     code: number
@@ -30,12 +29,15 @@ interface Province {
     }> | null
 }
 
-// Interface cho response.data từ server
+interface Category {
+    _id: string
+    name: string
+}
+
 interface ErrorResponse {
     message?: string
 }
 
-// Schema validation
 const jobFormSchema = yup.object().shape({
     title: yup.string().min(3).max(100).required('Job title is required'),
     category: yup.string().required('Category is required'),
@@ -87,11 +89,8 @@ const jobFormSchema = yup.object().shape({
 
 type JobFormData = yup.InferType<typeof jobFormSchema>
 
-// Custom hook
 const useJobFormData = (authToken: string | null) => {
-    const [categories, setCategories] = useState<
-        { _id: string; name: string }[]
-    >([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [skills, setSkills] = useState<{ _id: string; name: string }[]>([])
     const [provinces, setProvinces] = useState<Province[]>([])
     const [loading, setLoading] = useState({
@@ -117,8 +116,8 @@ const useJobFormData = (authToken: string | null) => {
         try {
             const [categoryData, skillData, provinceResponse] =
                 await Promise.all([
-                    fetchCategories(1, 100, 'all', '', authToken || '').finally(
-                        () => setLoading((l) => ({ ...l, categories: false })),
+                    fetchCategories(1, 100, 'all', '').finally(() =>
+                        setLoading((l) => ({ ...l, categories: false })),
                     ),
                     getSkillsList().finally(() =>
                         setLoading((l) => ({ ...l, skills: false })),
@@ -129,7 +128,7 @@ const useJobFormData = (authToken: string | null) => {
                             setLoading((l) => ({ ...l, provinces: false })),
                         ),
                 ])
-            const newCategories = categoryData.data || []
+            const newCategories = categoryData.data || [] // Lấy mảng categories từ response
             const newSkills = skillData || []
             const newProvinces = provinceResponse.data || []
             setCategories(newCategories)
@@ -234,24 +233,35 @@ const PostJobPage = () => {
                 description: sanitizedData.description,
                 expired_at: new Date(sanitizedData.deadline).getTime(),
                 category_id: sanitizedData.category,
-                quantity: sanitizedData.quantity, // Sử dụng giá trị từ form
+                quantity: sanitizedData.quantity,
                 skills: sanitizedData.skills,
-                experience: sanitizedData.experience, // Sử dụng giá trị từ form
+                experience: sanitizedData.experience,
                 gender: sanitizedData.gender,
-                requirements: [sanitizedData.description],
+                requirements: sanitizedData.description
+                    .split('\n')
+                    .map((req: string) => req.trim())
+                    .filter((req: string) => req.length > 0),
                 benefits: benefitsArray,
                 contact: {
                     full_name: sanitizedData.recruiterName,
                     email: sanitizedData.recruiterEmail,
                     phone_number: sanitizedData.phoneNumber,
                 },
-                job_type: [sanitizedData.jobType.toLowerCase()],
-                status: 'opening', // Giữ mặc định
+                job_type: [sanitizedData.jobType.toLowerCase()], // Đảm bảo định dạng đúng
+                status: 'opening', // Xác nhận giá trị này có phù hợp không
             }
-
-            await axiosInstance.post('/project/create', payload, {
-                timeout: 15000,
-            })
+            console.log(
+                'Payload gửi lên server:',
+                JSON.stringify(payload, null, 2),
+            ) // Thêm log
+            const response = await axiosInstance.post(
+                '/project/create',
+                payload,
+                {
+                    timeout: 15000,
+                },
+            )
+            console.log('Response từ server:', response.data)
             toast.success('Job posted successfully!')
             navigate('/jobs')
         } catch (error) {
@@ -259,6 +269,7 @@ const PostJobPage = () => {
             const errorMessage =
                 axiosError.response?.data?.message ||
                 'Failed to post job. Please check your input or try again.'
+            console.error('Lỗi từ server:', axiosError.response?.data)
             toast.error(errorMessage)
         }
     }
@@ -561,7 +572,6 @@ const PostJobPage = () => {
                                                 )}
                                             </div>
 
-                                            {/* Thêm input cho quantity */}
                                             <div className="col-md-6">
                                                 <label
                                                     htmlFor="quantity"
@@ -588,7 +598,6 @@ const PostJobPage = () => {
                                                 )}
                                             </div>
 
-                                            {/* Thêm input cho experience */}
                                             <div className="col-md-6">
                                                 <label
                                                     htmlFor="experience"

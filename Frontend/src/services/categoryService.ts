@@ -14,17 +14,13 @@ export const fetchCategories = async (
     limit: number,
     sort: string,
     search: string,
-    token: string,
 ) => {
     try {
         let url = `${API_BASE_URL}/category/get-all-pagination?page=${page}&limit=${limit}`
         if (sort !== 'all') url += `&sort=${sort}`
         if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`
 
-        const response = await axios.get(url, {
-            headers: { Authorization: `Bearer ${token}` },
-            timeout: 10000,
-        })
+        const response = await axios.get(url, { timeout: 10000 })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ErrorResponse>
@@ -34,14 +30,11 @@ export const fetchCategories = async (
     }
 }
 
-export const createCategory = async (data: any, token: string) => {
+export const createCategory = async (data: any) => {
     try {
         const response = await axios.post(
             `${API_BASE_URL}/category/create`,
             data,
-            {
-                headers: { Authorization: `Bearer ${token}` },
-            },
         )
         return response.data
     } catch (error) {
@@ -52,14 +45,11 @@ export const createCategory = async (data: any, token: string) => {
     }
 }
 
-export const updateCategory = async (id: string, data: any, token: string) => {
+export const updateCategory = async (id: string, data: any) => {
     try {
         const response = await axios.patch(
             `${API_BASE_URL}/category/update/${id}`,
             data,
-            {
-                headers: { Authorization: `Bearer ${token}` },
-            },
         )
         return response.data
     } catch (error) {
@@ -70,13 +60,10 @@ export const updateCategory = async (id: string, data: any, token: string) => {
     }
 }
 
-export const deleteCategory = async (id: string, token: string) => {
+export const deleteCategory = async (id: string) => {
     try {
         const response = await axios.delete(
             `${API_BASE_URL}/category/delete/${id}`,
-            {
-                headers: { Authorization: `Bearer ${token}` },
-            },
         )
         return response.data
     } catch (error) {
