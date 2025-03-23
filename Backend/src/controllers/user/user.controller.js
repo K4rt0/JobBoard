@@ -6,7 +6,8 @@ const get_user = async (req, res, next) => {
   try {
     let user_id;
 
-    if (req.params.id) user_id = req.params.id;
+    if (req.params.user_id) user_id = req.params.user_id;
+    else if (req.params.id) user_id = req.params.id;
     else if (req._id) user_id = req._id;
     else
       return res.status(StatusCodes.NOT_FOUND).json({
