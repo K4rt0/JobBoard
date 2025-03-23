@@ -21,6 +21,7 @@ import CategoryPage from '@/pages/admin-pages/CategoryPage' // Thêm CategoryPag
 import ProtectedRoute from '@/components/protected/ProtectedRoute' // Import ProtectedRoute
 import ApplicationManagementEmployerPage from '@/pages/employer/ApplicationManagementEmployerPage'
 import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
+import UserProfilePage from '@/pages/user/UserProfilePage'
 
 const AppRoutes = () => {
     return (
@@ -40,6 +41,10 @@ const AppRoutes = () => {
                     />
 
                     <Route element={<ProtectedUserRoute />}>
+                        <Route
+                            path="/profile/:userId"
+                            element={<UserProfilePage />}
+                        />
                         <Route path="/profile" element={<ProfilePage />} />
 
                         <Route path="/post-job" element={<PostJobPage />} />

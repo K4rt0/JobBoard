@@ -195,9 +195,66 @@ export const updateUserProfile = async <
 /**
  * Lấy thông tin người dùng theo ID
  */
-export const getUserById = async (userId: string): Promise<any> => {
-    const response = await axiosInstance.get(`/users/${userId}`)
-    return response.data
+export const getUserById = async (
+    userId: string,
+): Promise<BaseUserInfo | Freelancer | Employer> => {
+    const response = await axiosInstance.get(`/user/${userId}`, {})
+    const apiData = response.data.data as ApiUserResponse
+
+    // Ánh xạ dữ liệu từ API sang interface
+    const baseUserData: BaseUserInfo = {
+        id: apiData._id,
+        fullName: apiData.full_name,
+        email: apiData.email,
+        phoneNumber: apiData.phone_number || '',
+        birthDate: apiData.birth_date || null,
+        role: apiData.role,
+        bio: apiData.bio || null,
+        avatar: apiData.avatar?.url || null,
+        status: apiData.status,
+        createdAt: apiData.created_at
+            ? new Date(apiData.created_at).toLocaleDateString()
+            : '',
+        updatedAt: apiData.updated_at
+            ? new Date(apiData.updated_at).toLocaleDateString()
+            : null,
+        location: apiData.location || '',
+        website: apiData.website || '',
+        socials: apiData.socials,
+    }
+
+    if (apiData.role === 'Freelancer') {
+        // Lấy danh sách kỹ năng từ _id
+        const skills = apiData.skills
+            ? await Promise.all(
+                  apiData.skills.map((skill: any) => getSkillById(skill._id)),
+              )
+            : []
+
+        return {
+            ...baseUserData,
+            education: apiData.education || null,
+            experience: apiData.experience ? parseInt(apiData.experience) : 0,
+            cvUrl: apiData.cv_url || null,
+            skills: skills || [], // Gán kỹ năng vào đây
+            hourlyRate: 0,
+            currency: 'USD',
+            rating: 0,
+            level: 0,
+            reviews: 0,
+        } as Freelancer
+    } else if (apiData.role === 'Employer') {
+        return {
+            ...baseUserData,
+            companyName: apiData.company_name || null,
+            companyDescription: apiData.company_description || null,
+            hourlyRate: 0,
+            currency: 'USD',
+            rating: 0,
+        } as Employer
+    }
+
+    return baseUserData
 }
 
 // ✅ API đăng ký
