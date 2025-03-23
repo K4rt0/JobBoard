@@ -14,7 +14,7 @@ const JobSearchPage: React.FC = () => {
     const initialFilters: JobFilters = location.state?.filters || {
         search: '',
         location: '',
-        job_type: [],
+        job_type: ['full-time', 'part-time', 'remote', 'internship'], // Bao gồm tất cả job_type có thể
         category_id: '',
         experience: '',
         salary_min: '',
@@ -24,7 +24,7 @@ const JobSearchPage: React.FC = () => {
     }
 
     const [filters, setFilters] = useState<JobFilters>(initialFilters)
-    const [jobs, setJobs] = useState<Job[]>([])
+    const [jobs, setJobs] = useState<Job[]>([]) // Khởi tạo mặc định là mảng rỗng
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [pagination, setPagination] = useState<PaginationInfo>({
@@ -45,11 +45,23 @@ const JobSearchPage: React.FC = () => {
                     filters.limit || 10,
                     filters,
                 )
-                setJobs(response.data.data)
-                setPagination(response.data.pagination)
+                const jobsData = Array.isArray(response.data)
+                    ? response.data
+                    : []
+                setJobs(jobsData)
+                console.log('Jobs sau khi cập nhật:', jobsData)
+                setPagination(
+                    response.pagination || {
+                        page: 1,
+                        limit: 10,
+                        total: 0,
+                        totalPages: 0,
+                    },
+                )
             } catch (err) {
                 setError('Failed to fetch jobs. Please try again later.')
                 console.error(err)
+                setJobs([])
             } finally {
                 setIsLoading(false)
             }
@@ -107,8 +119,8 @@ const JobSearchPage: React.FC = () => {
                     <div className="col-lg-9 col-md-8 find-job">
                         <div className="card shadow-sm p-3 mb-4 border-0 rounded-3">
                             <p className="text-muted mb-0">
-                                Showing {jobs.length} job
-                                {jobs.length !== 1 ? 's' : ''} found
+                                Showing {jobs ? jobs.length : 0} job
+                                {jobs && jobs.length !== 1 ? 's' : ''} found
                                 {isLoading && ' (Loading...)'}
                             </p>
                         </div>

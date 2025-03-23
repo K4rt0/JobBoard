@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import styled from 'styled-components'
-import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { debounce } from 'lodash'
-import axiosInstance from '@/services/axiosInstance'
-
-const API_BASE_URL = 'http://localhost:3000/api/v1'
+import {
+    fetchCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+} from '../../services/categoryService'
+import { useAuthStore } from '@/store/authStore'
 
 interface Category {
     _id: string
@@ -31,13 +34,6 @@ interface ModalOverlayProps {
     isOpen: boolean
 }
 
-interface ErrorResponse {
-    statusCode: number
-    message: string
-    stack?: string
-}
-
-// Styled Components (giữ nguyên như cũ)
 const PageContainer = styled.div`
     margin-left: 280px;
     padding: 30px;
@@ -560,7 +556,6 @@ const DeleteButton = styled.button`
     }
 `
 
-// Icons (giữ nguyên như cũ)
 const PlusIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -739,8 +734,8 @@ const ChevronRightIcon = () => (
     </svg>
 )
 
-// Main Component
 const CategoryPage: React.FC = () => {
+    const { user } = useAuthStore()
     const [categories, setCategories] = useState<Category[]>([])
     const [pagination, setPagination] = useState<Pagination>({
         total: 0,
@@ -761,7 +756,7 @@ const CategoryPage: React.FC = () => {
     const [itemsPerPage, setItemsPerPage] = useState<number>(10)
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
-    const fetchCategories = async (
+    const fetchCategoriesData = async (
         page = 1,
         limit = 10,
         sort = 'all',
@@ -769,20 +764,11 @@ const CategoryPage: React.FC = () => {
     ) => {
         try {
             setIsLoading(true)
-
-            let url = `${API_BASE_URL}/category/get-all-pagination?page=${page}&limit=${limit}`
-            if (sort !== 'all') url += `&sort=${sort}`
-            if (search.trim())
-                url += `&search=${encodeURIComponent(search.trim())}`
-
-            const response = await axiosInstance.get(url, {
-                timeout: 10000,
-            })
-
-            if (response.data && response.data.data) {
-                setCategories(response.data.data)
+            const response = await fetchCategories(page, limit, sort, search)
+            if (response && response.data) {
+                setCategories(response.data)
                 setPagination(
-                    response.data.pagination || {
+                    response.pagination || {
                         total: 0,
                         current_page: 1,
                         total_pages: 1,
@@ -792,16 +778,13 @@ const CategoryPage: React.FC = () => {
             } else {
                 toast.error('Invalid data format received from server')
             }
-        } catch (error) {
-            const axiosError = error as AxiosError<ErrorResponse>
-            if (axiosError.response?.status === 401) {
+        } catch (error: any) {
+            if (error.message.includes('401')) {
                 toast.error('Session expired. Please log in again.')
                 setTimeout(() => (window.location.href = '/login'), 2000)
                 return
             }
-            toast.error(
-                `Failed to fetch categories: ${axiosError.response?.data?.message || axiosError.message}`,
-            )
+            toast.error(`Failed to fetch categories: ${error.message}`)
             setCategories([])
             setPagination({
                 total: 0,
@@ -814,14 +797,8 @@ const CategoryPage: React.FC = () => {
         }
     }
 
-    // Debounce tìm kiếm real-time
     const debouncedFetchCategories = useMemo(
-        () =>
-            debounce(
-                (page: number, limit: number, sort: string, query: string) =>
-                    fetchCategories(page, limit, sort, query),
-                500,
-            ),
+        () => debounce(fetchCategoriesData, 500),
         [],
     )
 
@@ -833,12 +810,18 @@ const CategoryPage: React.FC = () => {
             searchQuery,
         )
         return () => debouncedFetchCategories.cancel()
-    }, [currentPage, itemsPerPage, sortType, searchQuery])
+    }, [
+        currentPage,
+        itemsPerPage,
+        sortType,
+        searchQuery,
+        debouncedFetchCategories,
+    ])
 
     const getInitials = (name: string): string => {
         return name
             .split(' ')
-            .map((word: string) => word[0])
+            .map((word) => word[0])
             .join('')
             .toUpperCase()
     }
@@ -865,9 +848,8 @@ const CategoryPage: React.FC = () => {
     const handleSaveCategory = async () => {
         const categoryNames = newCategories
             .split('\n')
-            .map((name: string) => name.trim())
-            .filter((name: string) => name !== '')
-
+            .map((name) => name.trim())
+            .filter((name) => name !== '')
         if (categoryNames.length === 0) {
             toast.warn('Please enter at least one category name.')
             return
@@ -879,27 +861,25 @@ const CategoryPage: React.FC = () => {
 
         try {
             if (editingId) {
-                await axiosInstance.patch(
-                    `${API_BASE_URL}/category/update/${editingId}`,
-                    { name: categoryNames[0] },
-                )
+                await updateCategory(editingId, { name: categoryNames[0] })
                 toast.success('Category updated successfully!')
             } else {
-                await axiosInstance.post(
-                    `${API_BASE_URL}/category/create`,
+                await createCategory(
                     categoryNames.length === 1
                         ? { name: categoryNames[0] }
-                        : categoryNames.map((name: string) => ({ name })),
+                        : categoryNames.map((name) => ({ name })),
                 )
                 toast.success('Category created successfully!')
             }
-            fetchCategories(currentPage, itemsPerPage, sortType, searchQuery)
-            handleCloseModal()
-        } catch (error) {
-            const axiosError = error as AxiosError<ErrorResponse>
-            toast.error(
-                `Failed to save category: ${axiosError.response?.data?.message || axiosError.message}`,
+            fetchCategoriesData(
+                currentPage,
+                itemsPerPage,
+                sortType,
+                searchQuery,
             )
+            handleCloseModal()
+        } catch (error: any) {
+            toast.error(`Failed to save category: ${error.message}`)
         }
     }
 
@@ -910,38 +890,29 @@ const CategoryPage: React.FC = () => {
 
     const handleCloseDeleteModal = () => {
         setIsDeleteModalOpen(false)
-        setTimeout(() => {
-            setCategoryToDelete(null)
-        }, 300)
+        setTimeout(() => setCategoryToDelete(null), 300)
     }
 
     const handleDeleteCategory = async () => {
         if (!categoryToDelete) return
-
         try {
-            await axiosInstance.delete(
-                `${API_BASE_URL}/category/delete/${categoryToDelete._id}`,
-            )
+            await deleteCategory(categoryToDelete._id)
             toast.success('Category deleted successfully!')
             handleCloseDeleteModal()
-
             const isLastItemOnPage =
                 categories.length === 1 && pagination.current_page > 1
             if (isLastItemOnPage) {
                 setCurrentPage((prev) => prev - 1)
             } else {
-                fetchCategories(
+                fetchCategoriesData(
                     currentPage,
                     itemsPerPage,
                     sortType,
                     searchQuery,
                 )
             }
-        } catch (error) {
-            const axiosError = error as AxiosError<ErrorResponse>
-            toast.error(
-                `Failed to delete category: ${axiosError.response?.data?.message || axiosError.message}`,
-            )
+        } catch (error: any) {
+            toast.error(`Failed to delete category: ${error.message}`)
         }
     }
 
@@ -955,7 +926,7 @@ const CategoryPage: React.FC = () => {
     const handleClearSearch = () => {
         setSearchQuery('')
         setCurrentPage(1)
-        fetchCategories(1, itemsPerPage, sortType, '')
+        fetchCategoriesData(1, itemsPerPage, sortType, '')
     }
 
     const handlePageChange = (page: number) => {
@@ -976,21 +947,17 @@ const CategoryPage: React.FC = () => {
         const numbers = []
         const maxPages = 5
         const halfMaxPages = Math.floor(maxPages / 2)
-
         let startPage = Math.max(1, pagination.current_page - halfMaxPages)
         const endPage = Math.min(
             pagination.total_pages,
             startPage + maxPages - 1,
         )
-
         if (endPage - startPage + 1 < maxPages) {
             startPage = Math.max(1, endPage - maxPages + 1)
         }
-
         for (let i = startPage; i <= endPage; i++) {
             numbers.push(i)
         }
-
         return numbers
     }, [pagination.current_page, pagination.total_pages])
 
@@ -1004,7 +971,6 @@ const CategoryPage: React.FC = () => {
                     Add Category
                 </AddButton>
             </Header>
-
             <SearchFilterContainer>
                 <SearchContainer>
                     <SearchIcon>
@@ -1033,7 +999,6 @@ const CategoryPage: React.FC = () => {
                     </SortIcon>
                 </SortContainer>
             </SearchFilterContainer>
-
             <SearchStats>
                 <span>
                     {pagination.total} categories found
@@ -1046,7 +1011,6 @@ const CategoryPage: React.FC = () => {
                     <option value={100}>100 per page</option>
                 </LimitSelect>
             </SearchStats>
-
             {isLoading ? (
                 <NoCategories>Loading categories...</NoCategories>
             ) : categories.length > 0 ? (
@@ -1087,12 +1051,10 @@ const CategoryPage: React.FC = () => {
                             : "No categories found. Let's create one!"}
                     </EmptyText>
                     <AddButton onClick={() => handleOpenModal()}>
-                        <PlusIcon />
-                        Add Category
+                        <PlusIcon /> Add Category
                     </AddButton>
                 </NoCategories>
             )}
-
             {pagination.total_pages > 1 && (
                 <PaginationContainer>
                     <PageButton
@@ -1130,8 +1092,6 @@ const CategoryPage: React.FC = () => {
                     </PageButton>
                 </PaginationContainer>
             )}
-
-            {/* Add/Edit Category Modal */}
             <ModalOverlay isOpen={isModalOpen}>
                 <Modal>
                     <ModalHeader>
@@ -1170,8 +1130,6 @@ const CategoryPage: React.FC = () => {
                     </ModalActions>
                 </Modal>
             </ModalOverlay>
-
-            {/* Delete Confirmation Modal */}
             <ModalOverlay isOpen={isDeleteModalOpen}>
                 <Modal>
                     <WarningIcon>

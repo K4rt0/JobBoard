@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Category, JobFilters, JobType } from '@/interfaces'
 import { Card } from 'react-bootstrap'
-import categoryService from '@/services/categoryService'
+import { fetchCategories } from '@/services/categoryService' // Sửa từ default import thành named import
 
 interface JobFilterSidebarProps {
     filters: JobFilters
@@ -24,12 +24,13 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        const fetchCategories = async (): Promise<void> => {
+        const getCategories = async (): Promise<void> => {
             try {
                 setLoading(true)
                 setError(null)
-                const data = await categoryService.getCategories()
-                setCategories(data)
+                const token = 'your-auth-token-here' // Thay bằng token thực tế từ hệ thống của bạn
+                const data = await fetchCategories(1, 10, 'all', '') // Gọi hàm fetchCategories với các tham số cần thiết
+                setCategories(data.data || []) // Giả định response.data.data chứa danh sách categories
             } catch (error) {
                 const errorMessage =
                     error instanceof Error
@@ -41,7 +42,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
                 setLoading(false)
             }
         }
-        fetchCategories()
+        getCategories()
     }, [])
 
     const handleFilterChange = (

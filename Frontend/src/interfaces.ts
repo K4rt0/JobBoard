@@ -169,7 +169,7 @@ export interface UserRequestDTO {
 // Salary range
 export interface Salary {
     min: number
-    max: string
+    max: string // Giữ nguyên string như trong file bạn cung cấp
 }
 
 // Contact information
@@ -188,7 +188,7 @@ export interface Job {
     location: string
     description: string
     category_id: string
-    expiry_date: string
+    expired_at: number // Sửa từ expiry_date thành expired_at, dùng number
     skills: Skill[]
     requirements: string[]
     benefits: string[]
@@ -202,6 +202,7 @@ export interface Job {
     created_at: number
     updated_at: number
 }
+
 export interface JobApiResponse {
     _id: string
     title: string
@@ -213,7 +214,7 @@ export interface JobApiResponse {
     location: string
     description: string
     category_id: string
-    expiry_date: string
+    expired_at: number // Sửa từ expiry_date thành expired_at, dùng number
     skills: string[]
     requirements: string[]
     benefits: string[]
@@ -284,6 +285,14 @@ export interface Applicant {
     expired_at: string | null
     status: string
     user: ApiUserResponse
+}
+
+export interface ProjectApiResponse {
+    message: string
+    data: {
+        projects: Job[] // Dữ liệu công việc nằm trong 'projects'
+        pagination: PaginationInfo // Pagination giữ nguyên
+    }
 }
 
 // Type aliases for API responses
