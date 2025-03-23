@@ -39,7 +39,7 @@ const ProtectedRoute = () => {
             // Check if the token is expired
             const isExpired = isTokenExpired(user.access_token_admin)
             if (isExpired) {
-                localStorage.removeItem('access-token') // Remove expired token
+                localStorage.removeItem('auth-storage') // Remove expired token
                 setIsAuthenticated(false)
             } else {
                 setIsAuthenticated(true)
