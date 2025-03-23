@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Category, JobFilters, JobType } from '@/interfaces'
 import { Card } from 'react-bootstrap'
-import categoryService from '@/services/categoryService'
+import { getCategories } from '@/services/categoryService'
 
 interface JobFilterSidebarProps {
     filters: JobFilters
@@ -28,7 +28,7 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
             try {
                 setLoading(true)
                 setError(null)
-                const data = await categoryService.getCategories()
+                const data = await getCategories()
                 setCategories(data)
             } catch (error) {
                 const errorMessage =

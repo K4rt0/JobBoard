@@ -1,7 +1,9 @@
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
 import JobSearchBar from '@/components/JobSearchBar'
-import { Job, JobFilters, PaginationInfo } from '@/interfaces'
+import { Category, Job, JobFilters, PaginationInfo } from '@/interfaces'
+import axiosInstance from '@/services/axiosInstance'
+import { getCategories } from '@/services/categoryService'
 import { getJobs, getJobsPagination } from '@/services/jobSearchService'
 import { useEffect, useState } from 'react'
 import { Button } from 'react-bootstrap'
@@ -9,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 const Home = () => {
     const [jobs, setJobs] = useState<Job[]>([])
+    const [categories, setCategories] = useState<Category[]>([]) // Thêm state cho categories
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
@@ -25,6 +28,7 @@ const Home = () => {
         limit: 8,
     })
 
+    // Fetch jobs
     useEffect(() => {
         const fetchJobs = async () => {
             setIsLoading(true)
@@ -41,28 +45,45 @@ const Home = () => {
             }
         }
 
+        // Fetch categories
+        const fetchCategories = async () => {
+            try {
+                const response = await getCategories() // Điều chỉnh URL API theo cấu hình của bạn
+                setCategories(response.slice(0, 8)) // Lấy tối đa 8 categories
+            } catch (err) {
+                console.error('Failed to fetch categories:', err)
+            }
+        }
+
         fetchJobs()
+        fetchCategories()
     }, [])
 
-    // Xử lý khi người dùng nhấn nút tìm kiếm
     const handleSearch = (searchQuery: {
         position: string
         location: string
     }) => {
-        // Cập nhật filters với dữ liệu tìm kiếm
         const newFilters = {
             ...filters,
             search: searchQuery.position,
             location: searchQuery.location,
-            page: 1, // Reset về trang đầu tiên
+            page: 1,
         }
-
-        // Chuyển hướng sang JobSearchPage với filters qua state
         navigate('/jobs', { state: { filters: newFilters } })
     }
 
     const handleToJobSearch = () => {
         navigate('/jobs')
+    }
+
+    // Xử lý khi click vào category
+    const handleCategoryClick = (categoryId: string) => {
+        const newFilters = {
+            ...filters,
+            category_id: categoryId,
+            page: 1,
+        }
+        navigate('/jobs', { state: { filters: newFilters } })
     }
 
     return (
@@ -235,122 +256,45 @@ const Home = () => {
                     </div>
                     <div className="cat-head">
                         <div className="row">
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".2s"
+                            {categories.map((category, index) => (
+                                <div
+                                    className="col-lg-3 col-md-6 col-12"
+                                    key={category._id}
                                 >
-                                    <div className="icon">
-                                        <i className="lni lni-cog"></i>
+                                    <div
+                                        className="single-cat wow fadeInUp"
+                                        data-wow-delay={`.${2 + index * 2}s`}
+                                        onClick={() =>
+                                            handleCategoryClick(category._id)
+                                        }
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className="icon">
+                                            <i className="lni lni-cog"></i>{' '}
+                                            {/* Có thể thay icon động theo category */}
+                                        </div>
+                                        <h3>
+                                            {category.name.split(' ').length >
+                                            1 ? (
+                                                <>
+                                                    {
+                                                        category.name.split(
+                                                            ' ',
+                                                        )[0]
+                                                    }{' '}
+                                                    <br />
+                                                    {category.name
+                                                        .split(' ')
+                                                        .slice(1)
+                                                        .join(' ')}
+                                                </>
+                                            ) : (
+                                                category.name
+                                            )}
+                                        </h3>
                                     </div>
-                                    <h3>
-                                        Technical
-                                        <br /> Support
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".4s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-layers"></i>
-                                    </div>
-                                    <h3>
-                                        Business
-                                        <br /> Development
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".6s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-home"></i>
-                                    </div>
-                                    <h3>
-                                        Real Estate
-                                        <br /> Business
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".8s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-search"></i>
-                                    </div>
-                                    <h3>
-                                        Share Maeket
-                                        <br /> Analysis
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".2s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-investment"></i>
-                                    </div>
-                                    <h3>
-                                        Finance & Banking <br /> Service
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".4s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-cloud-network"></i>
-                                    </div>
-                                    <h3>
-                                        IT & Networing <br /> Sevices
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".6s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-restaurant"></i>
-                                    </div>
-                                    <h3>
-                                        Restaurant <br /> Services
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".8s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-fireworks"></i>
-                                    </div>
-                                    <h3>
-                                        Defence & Fire <br /> Service
-                                    </h3>
-                                </a>
-                            </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

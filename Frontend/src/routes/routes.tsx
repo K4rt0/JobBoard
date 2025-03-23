@@ -22,10 +22,12 @@ import ProtectedRoute from '@/components/protected/ProtectedRoute' // Import Pro
 import ApplicationManagementEmployerPage from '@/pages/employer/ApplicationManagementEmployerPage'
 import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
 import UserProfilePage from '@/pages/user/UserProfilePage'
+import ScrollToTop from '@/components/ScrollToTop'
 
 const AppRoutes = () => {
     return (
         <Router>
+            <ScrollToTop />
             <Routes>
                 {/* Auth routes - without layout */}
                 <Route path="/login" element={<LoginPage />} />
