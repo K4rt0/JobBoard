@@ -23,6 +23,7 @@ import ApplicationManagementEmployerPage from '@/pages/employer/ApplicationManag
 import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
 import UserProfilePage from '@/pages/user/UserProfilePage'
 import ScrollToTop from '@/components/ScrollToTop'
+import FAQPage from '@/pages/FAQPage'
 
 const AppRoutes = () => {
     return (
@@ -37,6 +38,7 @@ const AppRoutes = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/jobs/:jobId" element={<JobDetailPage />} />
                     <Route path="/jobs" element={<JobSearchPage />} />
+                    <Route path="/faq" element={<FAQPage />} />
                     <Route
                         path="/freelancer-marketplace"
                         element={<FreelancerMarketplacePage />}
