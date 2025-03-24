@@ -4,7 +4,7 @@ import { handleApiError } from '@/utils/apiHandlerError'
 import axios, { AxiosError } from 'axios'
 import axiosInstance from './axiosInstance'
 
-const API_BASE_URL = 'http://localhost:3000/api/v1'
+const API_BASE_URL = process.env.REACT_APP_BASE_API_URL
 
 interface ErrorResponse {
     statusCode: number
