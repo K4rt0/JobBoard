@@ -20,9 +20,8 @@ const JobDetailPage = () => {
                 if (!jobId) {
                     throw new Error('Job ID is not provided')
                 }
-
-                // Fetch job data (skills are already fetched in getJobByProjectId)
-                const jobData = await getJobByProjectId(jobId)
+                const jobData = await getJobByProjectId(jobId) // Sửa thành getJobByProjectId
+                console.log('Job data:', jobData)
                 setJob(jobData)
             } catch (err) {
                 setError('Failed to fetch job details. Please try again later.')
@@ -31,7 +30,6 @@ const JobDetailPage = () => {
                 setIsLoading(false)
             }
         }
-
         fetchJob()
     }, [jobId])
 
@@ -83,7 +81,9 @@ const JobDetailPage = () => {
                                 </div>
                                 <div className="salary-type col-auto order-sm-3">
                                     <span className="salary-range">
-                                        ${job.salary.min} - ${job.salary.max}
+                                        ${job.salary.min} - $
+                                        {Number(job.salary.max)}{' '}
+                                        {/* Chuyển max thành số */}
                                     </span>
                                     <div>
                                         {job.job_type &&
@@ -141,7 +141,6 @@ const JobDetailPage = () => {
                                 </ul>
 
                                 <h6 className="mb-3 mt-4">Benefits</h6>
-
                                 <ul className="list-unstyled">
                                     {job.benefits.map((benefit, index) => (
                                         <li key={index}>{benefit}</li>
@@ -155,7 +154,6 @@ const JobDetailPage = () => {
                     {/* Job Sidebar Wrap Start */}
                     <div className="col-lg-4 col-12">
                         <div className="job-details-sidebar">
-                            {/* Sidebar (Apply Buttons) Start */}
                             <div className="sidebar-widget">
                                 <div className="inner">
                                     <div className="row m-n2 button">
@@ -179,8 +177,6 @@ const JobDetailPage = () => {
                                     </div>
                                 </div>
                             </div>
-                            {/* Sidebar (Apply Buttons) End */}
-                            {/* Sidebar (Job Overview) Start */}
                             <div className="sidebar-widget">
                                 <div className="inner">
                                     <h6 className="title">Job Overview</h6>
@@ -215,7 +211,7 @@ const JobDetailPage = () => {
                                                               )
                                                               .join(' '),
                                                       )
-                                                      .join(' / ') // Joining multiple job types with a separator (e.g., 'full-time / internship')
+                                                      .join(' / ')
                                                 : 'Full-time'}
                                         </li>
                                         <li>
@@ -228,7 +224,8 @@ const JobDetailPage = () => {
                                         </li>
                                         <li>
                                             <strong>Salary:</strong> $
-                                            {job.salary.min} - ${job.salary.max}
+                                            {job.salary.min} - $
+                                            {Number(job.salary.max)}
                                         </li>
                                         <li>
                                             <strong>Gender:</strong>{' '}
@@ -238,15 +235,15 @@ const JobDetailPage = () => {
                                             <strong>
                                                 Application Deadline:
                                             </strong>{' '}
-                                            {new Date(
-                                                parseInt(job.expiry_date),
-                                            ).toLocaleDateString()}
+                                            {job.expired_at
+                                                ? new Date(
+                                                      job.expired_at,
+                                                  ).toLocaleDateString()
+                                                : 'Not specified'}
                                         </li>
                                     </ul>
                                 </div>
                             </div>
-                            {/* Sidebar (Job Overview) End */}
-                            {/* Sidebar (Contact Information) Start */}
                             <div className="sidebar-widget">
                                 <div className="inner">
                                     <h6 className="title">
@@ -276,7 +273,6 @@ const JobDetailPage = () => {
                                     </ul>
                                 </div>
                             </div>
-                            {/* Sidebar (Contact Information) End */}
                         </div>
                     </div>
                     {/* Job Sidebar Wrap End */}

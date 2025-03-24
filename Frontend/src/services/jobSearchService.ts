@@ -6,6 +6,8 @@ import {
     JobFilters,
     JobsResponse,
     Skill,
+    ProjectApiResponse,
+    PaginationInfo,
 } from '@/interfaces'
 import { getSkillById } from './skillService'
 
@@ -16,14 +18,12 @@ export async function getJobsPagination(
     page = 1,
     limit = 6,
     filters: JobFilters = {},
-): Promise<JobsResponse> {
+): Promise<{ data: Job[]; pagination: PaginationInfo }> {
+    // Đổi kiểu trả về
     try {
-        // Build query parameters
         const params = new URLSearchParams()
         params.append('page', (filters.page || page).toString())
         params.append('limit', (filters.limit || limit).toString())
-
-        // Add filter parameters if provided
         if (filters.search) params.append('search', filters.search)
         if (filters.location) params.append('location', filters.location)
         if (filters.job_type && Array.isArray(filters.job_type)) {
@@ -31,7 +31,6 @@ export async function getJobsPagination(
                 params.append('job_type[]', jobType)
             })
         } else if (filters.job_type) {
-            // If it's a single string (not an array)
             params.append('job_type[]', filters.job_type)
         }
         if (filters.experience) {
@@ -43,21 +42,24 @@ export async function getJobsPagination(
         if (filters.salary_max) {
             params.append('salary_max', filters.salary_max.toString())
         }
-        // Add category_id if provided
         if (filters.category_id) {
             params.append('category_id', filters.category_id)
         }
+        console.log('Query parameters gửi lên server:', params.toString())
 
-        // Debug: Log query parameters to verify
-        console.log('Query parameters:', params.toString())
-
-        const response = await axios.get<JobsResponse>(
+        const response = await axios.get<ProjectApiResponse>(
             `${BASE_URL}/project/get-all-pagination`,
-            {
-                params,
-            },
+            { params },
         )
-        return response.data
+        console.log('Dữ liệu từ server:', response.data)
+
+        const jobsData = Array.isArray(response.data.data.projects)
+            ? response.data.data.projects
+            : []
+        return {
+            data: jobsData,
+            pagination: response.data.data.pagination,
+        }
     } catch (error) {
         console.error('Error fetching jobs:', error)
         throw error

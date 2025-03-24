@@ -129,10 +129,12 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                                         Posted {formatDate(job.created_at)}
                                     </span>
                                 )}
-                                {job.expiry_date && (
+                                {job.expired_at && (
                                     <span className="d-block text-muted small">
                                         <i className="lni lni-timer text-primary me-1"></i>
-                                        {formatDeadline(job.expiry_date)}
+                                        {formatDeadline(
+                                            job.expired_at.toString(),
+                                        )}
                                     </span>
                                 )}
                             </div>

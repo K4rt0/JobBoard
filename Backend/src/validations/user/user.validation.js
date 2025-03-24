@@ -1,5 +1,18 @@
 import Joi from "joi";
 
+const get_user = async (req, res, next) => {
+  const schema = Joi.object({
+    user_id: Joi.string().hex().length(24).required(),
+  });
+
+  try {
+    await schema.validateAsync(req.params);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 const create_user = async (req, res, next) => {
   const schema = Joi.object({
     full_name: Joi.string().required().min(3).max(50).trim().strict(),
@@ -7,9 +20,40 @@ const create_user = async (req, res, next) => {
     email: Joi.string().required().email().trim().strict(),
     phone_number: Joi.string().min(10).max(15).trim().strict().default(null),
     birth_date: Joi.date().default(null),
+    location: Joi.string().max(50).default(null),
     role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
 
+    avatar: Joi.object({
+      url: Joi.string().uri().default(null),
+      delete_hash: Joi.string().default(null),
+    }).default({
+      url: null,
+      delete_hash: null,
+    }),
+
+    socials: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().max(50).default(null),
+          icon: Joi.string().default(null),
+          url: Joi.string().uri().default(null),
+        })
+      )
+      .default([]),
+
+    projects_applied: Joi.array()
+      .items(
+        Joi.object({
+          _id: Joi.string().hex().length(24).required(),
+          applied_at: Joi.date().timestamp("javascript").default(Date.now),
+          expired_at: Joi.date().timestamp("javascript").default(null),
+          status: Joi.string().valid("pending", "accepted", "rejected", "finished").default("pending"),
+        })
+      )
+      .default([]),
+
     bio: Joi.string().max(500).default(null),
+    website: Joi.string().uri().default(null),
     education: Joi.string().max(100).default(null),
     experience: Joi.number().min(0).default(0),
     cv_url: Joi.string().uri().default(null),
@@ -117,6 +161,9 @@ const update_user = async (req, res, next) => {
     skills: Joi.array().items(Joi.string().hex().length(24)).default([]).messages({
       "array.items": "Mã kỹ năng phải là mảng chuỗi hex 24 ký tự !",
     }),
+    website: Joi.string().uri().default(null).messages({
+      "string.uri": "Website không hợp lệ !",
+    }),
 
     company_name: Joi.string().max(100).default(null).messages({
       "string.max": "Company name không được vượt quá {#limit} ký tự !",
@@ -168,7 +215,24 @@ const update_socials = async (req, res, next) => {
   }
 };
 
+const get_all_projects_pagination = async (req, res, next) => {
+  const schema = Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    status: Joi.string().valid("all", "pending", "accepted", "rejected", "finished"),
+    search: Joi.string().allow(""),
+  });
+  try {
+    await schema.validateAsync(req.query, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const user_validation = {
+  get_user,
   create_user,
   get_all_users_pagination,
   update_user_status,
@@ -176,4 +240,5 @@ export const user_validation = {
   update_user,
   update_skills,
   update_socials,
+  get_all_projects_pagination,
 };
