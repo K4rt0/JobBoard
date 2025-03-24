@@ -2,8 +2,7 @@ import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
 import JobSearchBar from '@/components/JobSearchBar'
 import { Category, Job, JobFilters, PaginationInfo } from '@/interfaces'
-import axiosInstance from '@/services/axiosInstance'
-import { getCategories } from '@/services/categoryService'
+import { fetchCategories, getAllCategories } from '@/services/categoryService'
 import { getJobs, getJobsPagination } from '@/services/jobSearchService'
 import { useEffect, useState } from 'react'
 import { Button } from 'react-bootstrap'
@@ -44,9 +43,9 @@ const Home = () => {
             }
         }
 
-        const fetchCategories = async () => {
+        const fetchDropdownCategories = async () => {
             try {
-                const response = await getCategories()
+                const response = await getAllCategories()
                 setCategories(response.slice(0, 8))
             } catch (err) {
                 console.error('Failed to fetch categories:', err)
@@ -54,7 +53,7 @@ const Home = () => {
         }
 
         fetchJobs()
-        fetchCategories()
+        fetchDropdownCategories()
     }, [])
 
     const handleSearch = (searchQuery: {
