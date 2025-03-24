@@ -162,7 +162,7 @@ const ProfilePage: React.FC = () => {
 
         try {
             setLoading(true)
-            const data = await getCurrentUser()
+            const data = await getCurrentUser(user.id)
             setUserData(data)
         } catch (err) {
             const errorMessage =

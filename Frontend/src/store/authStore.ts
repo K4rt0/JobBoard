@@ -193,7 +193,7 @@ export const useAuthStore = create<AuthState>()(
                         throw new Error('User not authenticated')
                     }
 
-                    const response = await getCurrentUser()
+                    const response = await getCurrentUser(user.id)
                     const profileData = response
 
                     set((state) => ({

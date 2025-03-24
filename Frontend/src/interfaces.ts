@@ -22,6 +22,13 @@ export interface PaginatedApiResponse<T> {
     }
 }
 
+export interface PaginatedApplyApiResponse<T> {
+    message: string
+    data: {
+        data: T[]
+        pagination: Pagination
+    }
+}
 /** ========== USER RELATED INTERFACES ========== **/
 // Basic user information shared across user types
 export interface BaseUserInfo {
@@ -203,6 +210,29 @@ export interface Job {
     updated_at: number
 }
 
+export interface ApplyJob {
+    _id: string
+    title: string
+    salary: Salary
+    quantity: number
+    location: string
+    description: string
+    category_id: string
+    expired_at: string
+    job_type: string[]
+    skills: string[]
+    requirements: string[]
+    benefits: string[]
+    contact: Contact
+    experience: number
+    employer_id: string
+    slug: string
+    gender: string
+    status: string // "pending", "accepted", "rejected", v.v.
+    created_at: number
+    updated_at: number
+    applied_at: number
+}
 export interface JobApiResponse {
     _id: string
     title: string
@@ -286,7 +316,12 @@ export interface Applicant {
     status: string
     user: ApiUserResponse
 }
-
+export interface Pagination {
+    total: number
+    current_page: number
+    total_page: number
+    limit: number
+}
 export interface ProjectApiResponse {
     message: string
     data: {
@@ -300,3 +335,4 @@ export type SkillResponse = ApiResponse<Skill>
 export type UserResponse = ApiResponse<BaseUserInfo>
 export type JobResponse = ApiResponse<Job>
 export type JobsResponse = PaginatedApiResponse<Job>
+export type ApplyJobsResponse = PaginatedApplyApiResponse<ApplyJob>

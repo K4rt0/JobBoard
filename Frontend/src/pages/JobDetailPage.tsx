@@ -49,7 +49,8 @@ const JobDetailPage = () => {
 
             const applySuccess = await applyJob(jobId)
             if (applySuccess) {
-                navigate('/profile')
+                navigate('/profile/manage-applications')
+                toast.success('Apply job successful!')
             }
         } catch (err) {
             toast.error('Failed to apply job. Please try again later.')

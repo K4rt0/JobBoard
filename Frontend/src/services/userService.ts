@@ -19,10 +19,10 @@ export const getAllUsers = async (): Promise<any[]> => {
     return response.data
 }
 
-export const getCurrentUser = async (): Promise<
-    BaseUserInfo | Freelancer | Employer
-> => {
-    const response = await axiosInstance.get('/user/profile', {})
+export const getCurrentUser = async (
+    userId: string,
+): Promise<BaseUserInfo | Freelancer | Employer> => {
+    const response = await axiosInstance.get(`/user/profile/${userId}`, {})
     const apiData = response.data.data as ApiUserResponse
 
     // Ánh xạ dữ liệu từ API sang interface

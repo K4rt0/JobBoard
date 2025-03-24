@@ -1,11 +1,7 @@
 // components/sidebars/JobListSidebar.tsx
-import React from 'react'
-
-interface Job {
-    _id: string
-    title: string
-    postedDate: string
-}
+import { Job } from '@/interfaces'
+import { fetchJobsByUser } from '@/services/jobService'
+import React, { useState, useEffect } from 'react'
 
 interface JobListSidebarProps {
     onJobSelect: (projectId: string) => void
@@ -16,23 +12,46 @@ const JobListSidebar: React.FC<JobListSidebarProps> = ({
     onJobSelect,
     selectedJobId,
 }) => {
-    const jobs: Job[] = [
-        {
-            _id: '67ddd3b4aca77a44f41d130e',
-            title: 'Frontend Developer',
-            postedDate: '15/03/2025',
-        },
-        {
-            _id: '67ddd3b4aca77a44f41d130f', // Đảm bảo _id khác nhau
-            title: 'Backend Developer',
-            postedDate: '14/03/2025',
-        },
-        {
-            _id: '67dd4a85e418388d747bfcaf',
-            title: 'UI/UX Designer',
-            postedDate: '13/03/2025',
-        },
-    ]
+    const [jobs, setJobs] = useState<Job[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        const getJobs = async () => {
+            try {
+                setLoading(true)
+                setError(null)
+                const jobData = await fetchJobsByUser()
+                setJobs(jobData)
+            } catch (err) {
+                const errorMessage =
+                    err instanceof Error ? err.message : 'Failed to load jobs'
+                setError(errorMessage)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        getJobs()
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="d-flex flex-column h-100 justify-content-center align-items-center">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="d-flex flex-column h-100 justify-content-center align-items-center">
+                <p className="text-danger">{error}</p>
+            </div>
+        )
+    }
 
     return (
         <div className="d-flex flex-column h-100">
@@ -55,7 +74,10 @@ const JobListSidebar: React.FC<JobListSidebarProps> = ({
                                     {job.title}
                                 </h6>
                                 <small className="text-muted">
-                                    Đăng ngày: {job.postedDate}
+                                    Đăng ngày:{' '}
+                                    {new Date(
+                                        job.created_at,
+                                    ).toLocaleDateString('vi-VN')}
                                 </small>
                             </div>
                         </div>
