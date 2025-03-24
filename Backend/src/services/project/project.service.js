@@ -257,10 +257,36 @@ const update_applicant_status = async (project_id, applicant_id, status) => {
   }
 };
 
+const get_all_my_projects = async (user_id) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const projects = await project_model.find_all_projects({ employer_id: user_id });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_all_my_projects_pagination = async (user_id, page, limit, filtered = {}) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const projects = await project_model.find_all_projects_pagination(page, limit, { employer_id: user_id, ...filtered });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const project_service = {
   create_project,
   update_project,
   get_all_projects,
+  get_all_my_projects,
+  get_all_my_projects_pagination,
   get_all_projects_pagination,
   update_project_status,
   get_project,
