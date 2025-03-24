@@ -76,10 +76,10 @@ const find_project = async (query, protect = true) => {
   }
 };
 
-const find_all_projects = async (protect = true) => {
+const find_all_projects = async (query = {}, protect = true) => {
   try {
     const projection = !protect ? { applicants: 0 } : {};
-    const projects = await GET_DB().collection(PROJECT_COLLECTION_NAME).find({}, { projection }).toArray();
+    const projects = await GET_DB().collection(PROJECT_COLLECTION_NAME).find(query, { projection }).toArray();
     return projects;
   } catch (error) {
     throw new Error(error);
