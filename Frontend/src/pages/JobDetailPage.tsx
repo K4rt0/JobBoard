@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ApiResponse, Job, Skill } from '@/interfaces'
 import { getJobByProjectId } from '@/services/jobSearchService'
 import { applyJob } from '@/services/jobService'
+import { toast } from 'react-toastify'
 
 const JobDetailPage = () => {
     const [job, setJob] = useState<Job | null>(null)
@@ -51,7 +52,7 @@ const JobDetailPage = () => {
                 navigate('/profile')
             }
         } catch (err) {
-            setError('Failed to apply job. Please try again later.')
+            toast.error('Failed to apply job. Please try again later.')
         } finally {
             setIsLoading(false)
         }

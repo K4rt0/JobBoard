@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Category, JobFilters, JobType } from '@/interfaces'
 import { Card } from 'react-bootstrap'
+
 import { fetchCategories } from '@/services/categoryService' // Sửa từ default import thành named import
 
 interface JobFilterSidebarProps {

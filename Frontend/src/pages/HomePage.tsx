@@ -1,7 +1,8 @@
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
 import JobSearchBar from '@/components/JobSearchBar'
-import { Job, JobFilters, PaginationInfo } from '@/interfaces'
+import { Category, Job, JobFilters, PaginationInfo } from '@/interfaces'
+import { fetchCategories, getAllCategories } from '@/services/categoryService'
 import { getJobs, getJobsPagination } from '@/services/jobSearchService'
 import { useEffect, useState } from 'react'
 import { Button } from 'react-bootstrap'
@@ -9,6 +10,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 const Home = () => {
     const [jobs, setJobs] = useState<Job[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
@@ -41,23 +43,29 @@ const Home = () => {
             }
         }
 
+        const fetchDropdownCategories = async () => {
+            try {
+                const response = await getAllCategories()
+                setCategories(response.slice(0, 8))
+            } catch (err) {
+                console.error('Failed to fetch categories:', err)
+            }
+        }
+
         fetchJobs()
+        fetchDropdownCategories()
     }, [])
 
-    // Xử lý khi người dùng nhấn nút tìm kiếm
     const handleSearch = (searchQuery: {
         position: string
         location: string
     }) => {
-        // Cập nhật filters với dữ liệu tìm kiếm
         const newFilters = {
             ...filters,
             search: searchQuery.position,
             location: searchQuery.location,
-            page: 1, // Reset về trang đầu tiên
+            page: 1,
         }
-
-        // Chuyển hướng sang JobSearchPage với filters qua state
         navigate('/jobs', { state: { filters: newFilters } })
     }
 
@@ -65,10 +73,28 @@ const Home = () => {
         navigate('/jobs')
     }
 
+    const handleCategoryClick = (categoryId: string) => {
+        const newFilters = {
+            ...filters,
+            category_id: categoryId,
+            page: 1,
+        }
+        navigate('/jobs', { state: { filters: newFilters } })
+    }
+
+    // Xử lý khi click vào keyword
+    const handleKeywordClick = (keyword: string) => {
+        const newFilters = {
+            ...filters,
+            search: keyword,
+            page: 1,
+        }
+        navigate('/jobs', { state: { filters: newFilters } })
+    }
+
     return (
         <>
             <section className="hero-area">
-                {/* <!-- Single Slider --> */}
                 <div className="hero-inner">
                     <div className="container">
                         <div className="row ">
@@ -109,24 +135,56 @@ const Home = () => {
                                                 <span className="title">
                                                     Popular Keywords:
                                                 </span>
-                                                <ul>
+                                                <ul className="mb-0">
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'Administrative',
+                                                                )
+                                                            }}
+                                                        >
                                                             Administrative
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'Android',
+                                                                )
+                                                            }}
+                                                        >
                                                             Android
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'app',
+                                                                )
+                                                            }}
+                                                        >
                                                             app
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="index.html#">
+                                                        <a
+                                                            href="#"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleKeywordClick(
+                                                                    'ASP.NET',
+                                                                )
+                                                            }}
+                                                        >
                                                             ASP.NET
                                                         </a>
                                                     </li>
@@ -136,6 +194,7 @@ const Home = () => {
                                     </div>
                                 </div>
                             </div>
+                            {/* Rest of hero section remains the same */}
                             <div className="col-lg-6 co-12">
                                 <div
                                     className="hero-video-head wow fadeInRight"
@@ -152,7 +211,6 @@ const Home = () => {
                                         >
                                             <i className="lni lni-play"></i>
                                         </a>
-                                        {/* <!-- Video Animation --> */}
                                         <div className="promo-video">
                                             <div className="waves-block">
                                                 <div className="waves wave-1"></div>
@@ -160,14 +218,12 @@ const Home = () => {
                                                 <div className="waves wave-3"></div>
                                             </div>
                                         </div>
-                                        {/* <!--/ End Video Animation --> */}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {/* <!--/ End Single Slider --> */}
             </section>
             <section className="apply-process section">
                 <div className="container">
@@ -235,122 +291,45 @@ const Home = () => {
                     </div>
                     <div className="cat-head">
                         <div className="row">
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".2s"
+                            {categories.map((category, index) => (
+                                <div
+                                    className="col-lg-3 col-md-6 col-12"
+                                    key={category._id}
                                 >
-                                    <div className="icon">
-                                        <i className="lni lni-cog"></i>
+                                    <div
+                                        className="single-cat wow fadeInUp"
+                                        data-wow-delay={`.${2 + index * 2}s`}
+                                        onClick={() =>
+                                            handleCategoryClick(category._id)
+                                        }
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className="icon">
+                                            <i className="lni lni-cog"></i>{' '}
+                                            {/* Có thể thay icon động theo category */}
+                                        </div>
+                                        <h3>
+                                            {category.name.split(' ').length >
+                                            1 ? (
+                                                <>
+                                                    {
+                                                        category.name.split(
+                                                            ' ',
+                                                        )[0]
+                                                    }{' '}
+                                                    <br />
+                                                    {category.name
+                                                        .split(' ')
+                                                        .slice(1)
+                                                        .join(' ')}
+                                                </>
+                                            ) : (
+                                                category.name
+                                            )}
+                                        </h3>
                                     </div>
-                                    <h3>
-                                        Technical
-                                        <br /> Support
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".4s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-layers"></i>
-                                    </div>
-                                    <h3>
-                                        Business
-                                        <br /> Development
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".6s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-home"></i>
-                                    </div>
-                                    <h3>
-                                        Real Estate
-                                        <br /> Business
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".8s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-search"></i>
-                                    </div>
-                                    <h3>
-                                        Share Maeket
-                                        <br /> Analysis
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".2s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-investment"></i>
-                                    </div>
-                                    <h3>
-                                        Finance & Banking <br /> Service
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".4s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-cloud-network"></i>
-                                    </div>
-                                    <h3>
-                                        IT & Networing <br /> Sevices
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".6s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-restaurant"></i>
-                                    </div>
-                                    <h3>
-                                        Restaurant <br /> Services
-                                    </h3>
-                                </a>
-                            </div>
-                            <div className="col-lg-3 col-md-6 col-12">
-                                <a
-                                    href="browse-jobs.html"
-                                    className="single-cat wow fadeInUp"
-                                    data-wow-delay=".8s"
-                                >
-                                    <div className="icon">
-                                        <i className="lni lni-fireworks"></i>
-                                    </div>
-                                    <h3>
-                                        Defence & Fire <br /> Service
-                                    </h3>
-                                </a>
-                            </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

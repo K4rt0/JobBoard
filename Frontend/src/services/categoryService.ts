@@ -1,5 +1,8 @@
 // src/services/categoryService.ts
+import { Category } from '@/interfaces'
+import { handleApiError } from '@/utils/apiHandlerError'
 import axios, { AxiosError } from 'axios'
+import axiosInstance from './axiosInstance'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -27,6 +30,15 @@ export const fetchCategories = async (
         throw new Error(
             axiosError.response?.data?.message || axiosError.message,
         )
+    }
+}
+export const getAllCategories = async (): Promise<Category[]> => {
+    try {
+        const response = await axiosInstance.get(`${API_BASE_URL}/category/get-all`)
+        return response.data.data
+    } catch (error) {
+        handleApiError(error, 'Failed to fetch categories')
+        throw error
     }
 }
 
