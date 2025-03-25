@@ -796,31 +796,6 @@ const ProfilePage: React.FC = () => {
                                                 </>
                                             )}
                                         </div>
-
-                                        <div className="single-section">
-                                            <h4>Rate & Rating</h4>
-                                            <p>
-                                                Hourly Rate:{' '}
-                                                {(userData as Freelancer)
-                                                    .hourlyRate || 0}{' '}
-                                                {(userData as Freelancer)
-                                                    .currency || 'USD'}
-                                            </p>
-                                            <p>
-                                                Rating:{' '}
-                                                {(userData as Freelancer)
-                                                    .rating || 0}{' '}
-                                                / 5 (
-                                                {(userData as Freelancer)
-                                                    .reviews || 0}{' '}
-                                                reviews)
-                                            </p>
-                                            <p>
-                                                Level:{' '}
-                                                {(userData as Freelancer)
-                                                    .level || 0}
-                                            </p>
-                                        </div>
                                     </>
                                 )}
 
@@ -862,23 +837,6 @@ const ProfilePage: React.FC = () => {
                                                 {(userData as Employer)
                                                     .companyDescription ||
                                                     'No description available'}
-                                            </p>
-                                        </div>
-
-                                        <div className="single-section">
-                                            <h4>Rate & Rating</h4>
-                                            <p>
-                                                Hourly Rate:{' '}
-                                                {(userData as Employer)
-                                                    .hourlyRate || 0}{' '}
-                                                {(userData as Employer)
-                                                    .currency || 'USD'}
-                                            </p>
-                                            <p>
-                                                Rating:{' '}
-                                                {(userData as Employer)
-                                                    .rating || 0}{' '}
-                                                / 5
                                             </p>
                                         </div>
                                     </>
