@@ -61,7 +61,7 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                 </div>
                 <div className="job-content row ps-4">
                     <div className="col-8">
-                        <h4 className="pb-0">
+                        <h4 className="pb-0 pe-0 text-bold">
                             <Link
                                 to={`/jobs/${job._id}`}
                                 className="text-dark text-decoration-none"
