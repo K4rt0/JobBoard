@@ -18,56 +18,7 @@ const create_user = async (req, res, next) => {
     full_name: Joi.string().required().min(3).max(50).trim().strict(),
     password: Joi.string().required().trim().strict(),
     email: Joi.string().required().email().trim().strict(),
-    phone_number: Joi.string().min(10).max(15).trim().strict().default(null),
-    birth_date: Joi.date().default(null),
-    location: Joi.string().max(50).default(null),
     role: Joi.string().valid("Freelancer", "Employer").default("Freelancer"),
-
-    avatar: Joi.object({
-      url: Joi.string().uri().default(null),
-      delete_hash: Joi.string().default(null),
-    }).default({
-      url: null,
-      delete_hash: null,
-    }),
-
-    socials: Joi.array()
-      .items(
-        Joi.object({
-          name: Joi.string().max(50).default(null),
-          icon: Joi.string().default(null),
-          url: Joi.string().uri().default(null),
-        })
-      )
-      .default([]),
-
-    projects_applied: Joi.array()
-      .items(
-        Joi.object({
-          _id: Joi.string().hex().length(24).required(),
-          applied_at: Joi.date().timestamp("javascript").default(Date.now),
-          expired_at: Joi.date().timestamp("javascript").default(null),
-          status: Joi.string().valid("pending", "accepted", "rejected", "finished").default("pending"),
-        })
-      )
-      .default([]),
-
-    bio: Joi.string().max(500).default(null),
-    website: Joi.string().uri().default(null),
-    education: Joi.string().max(100).default(null),
-    experience: Joi.number().min(0).default(0),
-    cv_url: Joi.string().uri().default(null),
-    skills: Joi.array().items(Joi.string().hex().length(24)).default([]),
-
-    company_name: Joi.string().max(100).default(null),
-    company_description: Joi.string().max(500).default(null),
-
-    status: Joi.string().valid("Active", "Deleted", "Blocked").default("Active"),
-
-    refresh_token: Joi.string().default(null),
-
-    created_at: Joi.date().timestamp("javascript").default(Date.now()),
-    updated_at: Joi.date().timestamp("javascript").default(null),
   });
 
   try {

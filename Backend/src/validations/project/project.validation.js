@@ -193,10 +193,28 @@ const update_applicant_status = async (req, res, next) => {
   }
 };
 
+const get_all_my_projects_pagination = async (req, res, next) => {
+  const schema = Joi.object({
+    page: Joi.number().min(1).default(1),
+    limit: Joi.number().min(1).default(10),
+    sort: Joi.string().valid("all", "oldest", "newest"),
+    status: Joi.string().valid("all", "opening", "closed"),
+    search: Joi.string().default(""),
+  });
+
+  try {
+    await schema.validateAsync(req.query, { abortEarly: false });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_validation = {
   create_project,
   update_project,
   get_all_projects_pagination,
+  get_all_my_projects_pagination,
   get_project,
   update_project_status,
   apply_project,
