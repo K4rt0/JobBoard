@@ -1,18 +1,24 @@
-// components/ApplicantList.tsx
-import { Applicant } from '@/interfaces'
 import React, { useState } from 'react'
+import { ApplicantResponse } from '@/interfaces'
+import { updateApplicantStatus } from '@/services/employerService'
 
 interface ApplicantListProps {
-    applicants?: Applicant[]
+    projectId: string
+    applicants?: ApplicantResponse[]
 }
 
-const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
-    const defaultApplicants: Applicant[] = [
+const ApplicantList: React.FC<ApplicantListProps> = ({
+    projectId,
+    applicants,
+}) => {
+    const defaultApplicants: ApplicantResponse[] = [
         {
-            _id: '67dc1b86f4505b8d9901dadb',
-            applied_at: 1742591071746,
-            status: 'pending',
-            expired_at: '',
+            applicant: {
+                _id: '67dc1b86f4505b8d9901dadb',
+                applied_at: 1742591071746,
+                status: 'pending',
+                expired_at: '',
+            },
             user: {
                 _id: '67dc1b86f4505b8d9901dadb',
                 full_name: 'Dương Khoa Nam',
@@ -20,10 +26,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
                 phone_number: '',
                 birth_date: null,
                 role: 'Freelancer',
-                avatar: {
-                    url: '',
-                    delete_hash: '',
-                },
+                avatar: { url: '', delete_hash: '' },
                 bio: null,
                 education: null,
                 experience: '0',
@@ -37,129 +40,235 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
         },
     ]
 
-    const [applicantData, setApplicantData] = useState<Applicant[]>(
-        applicants || defaultApplicants,
+    const [applicantData, setApplicantData] = useState<ApplicantResponse[]>(
+        applicants ? JSON.parse(JSON.stringify(applicants)) : defaultApplicants,
     )
 
-    // Hàm chuyển đổi timestamp sang định dạng ngày
     const formatDate = (timestamp: number | null): string => {
         if (!timestamp) return 'N/A'
-        return new Date(timestamp).toLocaleDateString('vi-VN')
+        return new Date(timestamp).toLocaleDateString('en-US')
     }
 
-    // Hàm xử lý duyệt applicant
-    const handleApprove = (applicantId: string) => {
-        // Cập nhật trạng thái trong state
-        const updatedApplicants = applicantData.map((applicant) =>
-            applicant._id === applicantId
-                ? { ...applicant, status: 'approved' }
-                : applicant,
+    const handleApprove = async (applicantId: string) => {
+        const updatedApplicant = await updateApplicantStatus(
+            projectId,
+            applicantId,
+            'accepted',
         )
-        setApplicantData(updatedApplicants)
-
-        // TODO: Gọi API để cập nhật trạng thái trên server
-        // Ví dụ:
-        // await updateApplicantStatus(applicantId, 'approved');
+        console.log('id', projectId + '-' + applicantId)
+        if (updatedApplicant) {
+            setApplicantData((prevData) =>
+                prevData.map((item) =>
+                    item.applicant._id === applicantId
+                        ? {
+                              ...item,
+                              applicant: {
+                                  ...item.applicant,
+                                  status: 'accepted',
+                              },
+                          }
+                        : item,
+                ),
+            )
+        }
     }
 
-    // Hàm xử lý từ chối applicant (tùy chọn)
-    const handleReject = (applicantId: string) => {
-        const updatedApplicants = applicantData.map((applicant) =>
-            applicant._id === applicantId
-                ? { ...applicant, status: 'rejected' }
-                : applicant,
+    const handleReject = async (applicantId: string) => {
+        const updatedApplicant = await updateApplicantStatus(
+            projectId,
+            applicantId,
+            'rejected',
         )
-        setApplicantData(updatedApplicants)
-
-        // TODO: Gọi API để cập nhật trạng thái trên server
-        // await updateApplicantStatus(applicantId, 'rejected');
+        console.log('id', projectId + '-' + applicantId)
+        if (updatedApplicant) {
+            setApplicantData((prevData) =>
+                prevData.map((item) =>
+                    item.applicant._id === applicantId
+                        ? {
+                              ...item,
+                              applicant: {
+                                  ...item.applicant,
+                                  status: 'rejected',
+                              },
+                          }
+                        : item,
+                ),
+            )
+        }
     }
 
     return (
-        <>
-            <h2 className="mb-4">Applicant list</h2>
-            <div className="table-responsive">
-                <table className="table table-striped table-hover">
-                    <thead className="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Full name</th>
-                            <th>Email</th>
-                            <th>Phone number</th>
-                            <th>Apply date</th>
-                            <th>Status</th>
-                            <th>CV</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {applicantData.map((applicant, index) => (
-                            <tr key={applicant._id + index}>
-                                <td>{index + 1}</td>
-                                <td>{applicant.user.full_name}</td>
-                                <td>{applicant.user.email}</td>
-                                <td>{applicant.user.phone_number || 'N/A'}</td>
-                                <td>{formatDate(applicant.applied_at)}</td>
-                                <td>
-                                    <span
-                                        className={`badge bg-${
-                                            applicant.status === 'pending'
-                                                ? 'warning'
-                                                : applicant.status ===
-                                                    'approved'
-                                                  ? 'success'
-                                                  : 'danger'
-                                        }`}
+        <div className="container-fluid py-4">
+            <h2 className="mb-4 fw-bold" style={{ color: '#2042e3' }}>
+                Applicant List
+            </h2>
+            <div className="card shadow-sm border-0">
+                <div className="card-body p-0">
+                    <div className="table-responsive">
+                        <table className="table table-bordered mb-0">
+                            <thead
+                                style={{
+                                    backgroundColor: '#000',
+                                    color: '#fff',
+                                }}
+                            >
+                                <tr>
+                                    <th scope="col" className="text-center">
+                                        #
+                                    </th>
+                                    <th scope="col">Full Name</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Phone Number</th>
+                                    <th scope="col" className="text-center">
+                                        Applied Date
+                                    </th>
+                                    <th scope="col" className="text-center">
+                                        Status
+                                    </th>
+                                    <th scope="col" className="text-center">
+                                        CV
+                                    </th>
+                                    <th scope="col" className="text-center">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {applicantData.map((item, index) => (
+                                    <tr
+                                        key={item.applicant._id + index}
+                                        className="align-middle"
                                     >
-                                        {applicant.status === 'pending'
-                                            ? 'In progress'
-                                            : applicant.status === 'approved'
-                                              ? 'Approved'
-                                              : 'Injected'}
-                                    </span>
-                                </td>
-                                <td>
-                                    {applicant.user.cv_url ? (
-                                        <a
-                                            href={applicant.user.cv_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn btn-sm btn-outline-primary"
-                                        >
-                                            Check CV
-                                        </a>
-                                    ) : (
-                                        'Không có'
-                                    )}
-                                </td>
-                                <td>
-                                    {applicant.status === 'pending' && (
-                                        <div className="btn-group" role="group">
-                                            <button
-                                                className="btn btn-sm btn-success"
-                                                onClick={() =>
-                                                    handleApprove(applicant._id)
-                                                }
+                                        <td className="text-center">
+                                            {index + 1}
+                                        </td>
+                                        <td>{item.user.full_name}</td>
+                                        <td>{item.user.email}</td>
+                                        <td>
+                                            {item.user.phone_number || 'N/A'}
+                                        </td>
+                                        <td className="text-center">
+                                            {formatDate(
+                                                item.applicant.applied_at,
+                                            )}
+                                        </td>
+                                        <td className="text-center">
+                                            <span
+                                                className={`badge px-2 py-1 ${
+                                                    item.applicant.status ===
+                                                    'pending'
+                                                        ? 'bg-warning text-dark'
+                                                        : item.applicant
+                                                                .status ===
+                                                            'accepted'
+                                                          ? 'bg-success text-white'
+                                                          : 'bg-danger text-white'
+                                                }`}
                                             >
-                                                Approve
-                                            </button>
-                                            <button
-                                                className="btn btn-sm btn-danger"
-                                                onClick={() =>
-                                                    handleReject(applicant._id)
-                                                }
-                                            >
-                                                Inject
-                                            </button>
-                                        </div>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                                {item.applicant.status ===
+                                                'pending'
+                                                    ? 'Pending'
+                                                    : item.applicant.status ===
+                                                        'accepted'
+                                                      ? 'Accepted'
+                                                      : 'Rejected'}
+                                            </span>
+                                        </td>
+                                        <td className="text-center">
+                                            {item.user.cv_url ? (
+                                                <a
+                                                    href={item.user.cv_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    style={{
+                                                        borderColor: '#2042e3',
+                                                        color: '#2042e3',
+                                                        borderRadius: '4px',
+                                                        padding: '2px 8px',
+                                                    }}
+                                                >
+                                                    View CV
+                                                </a>
+                                            ) : (
+                                                <span className="text-muted">
+                                                    N/A
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="text-center">
+                                            {item.applicant.status ===
+                                            'pending' ? (
+                                                <>
+                                                    <button
+                                                        className="btn btn-sm me-2"
+                                                        style={{
+                                                            backgroundColor:
+                                                                '#28a745',
+                                                            color: '#fff',
+                                                            border: 'none',
+                                                            borderRadius: '4px',
+                                                            padding: '2px 8px',
+                                                        }}
+                                                        onClick={() =>
+                                                            handleApprove(
+                                                                item.applicant
+                                                                    ._id,
+                                                            )
+                                                        }
+                                                        onMouseOver={(e) =>
+                                                            (e.currentTarget.style.backgroundColor =
+                                                                '#218838')
+                                                        }
+                                                        onMouseOut={(e) =>
+                                                            (e.currentTarget.style.backgroundColor =
+                                                                '#28a745')
+                                                        }
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-sm"
+                                                        style={{
+                                                            backgroundColor:
+                                                                '#dc3545',
+                                                            color: '#fff',
+                                                            border: 'none',
+                                                            borderRadius: '4px',
+                                                            padding: '2px 8px',
+                                                        }}
+                                                        onClick={() =>
+                                                            handleReject(
+                                                                item.applicant
+                                                                    ._id,
+                                                            )
+                                                        }
+                                                        onMouseOver={(e) =>
+                                                            (e.currentTarget.style.backgroundColor =
+                                                                '#c82333')
+                                                        }
+                                                        onMouseOut={(e) =>
+                                                            (e.currentTarget.style.backgroundColor =
+                                                                '#dc3545')
+                                                        }
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className="text-muted">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </>
+        </div>
     )
 }
 

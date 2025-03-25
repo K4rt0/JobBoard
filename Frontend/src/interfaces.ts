@@ -309,11 +309,15 @@ export interface JobType {
     value: string
 }
 
-export interface Applicant {
+export interface ApplicantInfo {
     _id: string
     applied_at: number | null
     expired_at: string | null
     status: string
+}
+
+export interface ApplicantResponse {
+    applicant: ApplicantInfo
     user: ApiUserResponse
 }
 export interface Pagination {

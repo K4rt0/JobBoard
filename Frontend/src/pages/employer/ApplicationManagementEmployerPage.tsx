@@ -4,10 +4,10 @@ import ApplicantList from '@/components/ApplicantList'
 import JobListSidebar from '@/components/sidebars/JobListSidebar'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { getApplicantByProjectId } from '@/services/employerService'
-import { Applicant } from '@/interfaces'
+import { ApplicantResponse, Job } from '@/interfaces'
 
 const ApplicationManagementEmployerPage: React.FC = () => {
-    const [applicants, setApplicants] = useState<Applicant[]>([])
+    const [applicants, setApplicants] = useState<ApplicantResponse[]>([])
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
@@ -23,7 +23,7 @@ const ApplicationManagementEmployerPage: React.FC = () => {
             const data = await getApplicantByProjectId(projectId)
             setApplicants(data)
         } catch (err) {
-            setError('Không thể tải danh sách ứng viên')
+            setError('Failed to load applicants')
         } finally {
             setLoading(false)
         }
@@ -39,19 +39,26 @@ const ApplicationManagementEmployerPage: React.FC = () => {
         setSelectedProjectId(projectId) // Cập nhật job được chọn
     }
 
+    const handleJobsLoaded = (jobs: Job[]) => {
+        if (jobs.length > 0 && !selectedProjectId) {
+            setSelectedProjectId(jobs[0]._id) // Chọn project đầu tiên nếu chưa có project nào được chọn
+        }
+    }
+
     return (
         <div
             className="container-fluid p-0"
             style={{ minHeight: '100vh', backgroundColor: '#f5f6fa' }}
         >
-            <div className="container pt-5">
+            <div className="container-fluid pt-5">
                 <div className="row m-0 h-100 pt-5 mt-3">
                     <div className="col-md-3 col-lg-2 p-0">
                         <div className="card h-100 border-0 shadow-sm">
                             <div className="card-body p-3">
                                 <JobListSidebar
                                     onJobSelect={handleJobSelect}
-                                    selectedJobId={selectedProjectId} // Truyền selectedProjectId
+                                    selectedJobId={selectedProjectId}
+                                    onJobsLoaded={handleJobsLoaded} // Truyền callback để nhận danh sách jobs
                                 />
                             </div>
                         </div>
@@ -69,7 +76,8 @@ const ApplicationManagementEmployerPage: React.FC = () => {
                                 {loading && (
                                     <div className="text-center py-5">
                                         <div
-                                            className="spinner-border text-primary"
+                                            className="spinner-border"
+                                            style={{ color: '#2042e3' }}
                                             role="status"
                                         >
                                             <span className="visually-hidden">
@@ -88,7 +96,10 @@ const ApplicationManagementEmployerPage: React.FC = () => {
                                     </div>
                                 )}
                                 {!loading && !error && selectedProjectId && (
-                                    <ApplicantList applicants={applicants} />
+                                    <ApplicantList
+                                        projectId={selectedProjectId}
+                                        applicants={applicants}
+                                    />
                                 )}
                             </div>
                         </div>
