@@ -135,23 +135,43 @@ const apply_project = async (user_id, project_id) => {
 
     if (user.cv_url === null) throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
     if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
-    if (project.applicants.some((applicant) => applicant._id.toString() === user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
+
+    const existing_application = project.applicants.find((applicant) => applicant._id.toString() === user_id);
 
     const date = Date.now();
 
-    project.applicants.push({
-      _id: user._id,
-      applied_at: date,
-      status: "pending",
-    });
+    if (existing_application) {
+      if (existing_application.status === "rejected") {
+        existing_application.applied_at = date;
+        existing_application.status = "pending";
+      } else {
+        throw new Error("Bạn đã ứng tuyển vào dự án này !");
+      }
+    } else {
+      project.applicants.push({
+        _id: user._id,
+        applied_at: date,
+        status: "pending",
+      });
+    }
+
     project.updated_at = date;
 
-    user.projects_applied.push({
-      _id: project._id,
-      applied_at: date,
-      expired_at: null,
-      status: "pending",
-    });
+    const user_application = user.projects_applied.find((p) => p._id.toString() === project_id);
+
+    if (user_application) {
+      if (user_application.status === "rejected") {
+        user_application.applied_at = date;
+        user_application.status = "pending";
+      }
+    } else {
+      user.projects_applied.push({
+        _id: project._id,
+        applied_at: date,
+        expired_at: null,
+        status: "pending",
+      });
+    }
 
     await user_model.update_user(user_id, { projects_applied: user.projects_applied });
     return await project_model.update_project(project_id, project);
@@ -239,12 +259,10 @@ const update_applicant_status = async (project_id, applicant_id, status) => {
     applicant.updated_at = date;
     project.updated_at = date;
 
-    if (status === "finished") {
-      const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id);
-      if (applied_project) {
-        applied_project.status = "finished";
-        applied_project.finished_at = date;
-      }
+    const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id);
+    if (applied_project) {
+      applied_project.status = status;
+      applied_project.finished_at = date;
     }
 
     await user_model.update_user(applicant_id, {

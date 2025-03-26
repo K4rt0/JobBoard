@@ -261,7 +261,6 @@ const PostJobPage = () => {
                     timeout: 15000,
                 },
             )
-            console.log('Response từ server:', response.data)
             toast.success('Job posted successfully!')
             navigate('/jobs')
         } catch (error) {
