@@ -2,6 +2,7 @@ import { application } from "express";
 import Joi from "joi";
 import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
+import { project_model } from "./project.model";
 
 const USER_COLLECTION_NAME = "users";
 const USER_COLLECTION_SCHEMA = Joi.object({
@@ -191,41 +192,69 @@ const find_all_projects = async (user_id) => {
 
 const find_all_projects_pagination = async (user_id, page = 1, limit = 10, filtered = {}) => {
   try {
+    if (!user_id || page < 1 || limit < 1) {
+      throw new Error("Invalid input parameters");
+    }
+
     const user = await GET_DB()
       .collection(USER_COLLECTION_NAME)
       .findOne({ _id: new ObjectId(user_id) }, { projection: { projects_applied: 1 } });
 
-    if (!user || !user.projects_applied) return { data: [], pagination: { total: 0, current_page: page, total_page: 0, limit } };
+    if (!user?.projects_applied?.length) {
+      return {
+        data: [],
+        pagination: { total: 0, current_page: page, total_page: 0, limit },
+      };
+    }
 
-    let applied_projects = user.projects_applied;
-    if (filtered.status && filtered.status !== "all") applied_projects = applied_projects.filter((proj) => proj.status === filtered.status);
+    let filtered_projects = [...user.projects_applied];
 
-    applied_projects.sort((a, b) => (filtered.sort === "oldest" ? a.applied_at - b.applied_at : b.applied_at - a.applied_at));
+    if (filtered.status && filtered.status !== "all") {
+      filtered_projects = filtered_projects.filter((project) => project.status === filtered.status);
+    }
 
-    const total = applied_projects.length;
-    const skip = (page - 1) * limit;
-    const paginated_projects = applied_projects.slice(skip, skip + limit);
+    if (filtered.search) {
+      const searchRegex = new RegExp(filtered.search, "i");
+      filtered_projects = filtered_projects.filter((project) => searchRegex.test(project.title) || searchRegex.test(project.location));
+    }
+
+    const total = filtered_projects.length;
     const total_page = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
 
-    const project_ids = paginated_projects.map((p) => new ObjectId(p._id));
-    const projects = await GET_DB()
-      .collection("projects")
-      .find({ _id: { $in: project_ids } }, { projection: { applicants: 0 } })
-      .toArray();
+    if (filtered.sort) {
+      const sortMap = {
+        newest: (a, b) => new Date(b.applied_at) - new Date(a.applied_at),
+        oldest: (a, b) => new Date(a.applied_at) - new Date(b.applied_at),
+      };
 
-    const project_map = paginated_projects.reduce((acc, p) => {
-      acc[p._id] = p;
-      return acc;
-    }, {});
+      const sortFn = sortMap[filtered.sort.toLowerCase()];
+      if (sortFn) {
+        filtered_projects.sort(sortFn);
+      }
+    }
 
-    const final_projects = projects.map((p) => ({
-      ...p,
-      applied_at: project_map[p._id.toString()].applied_at,
-      status: project_map[p._id.toString()].status,
-    }));
+    const paginated_projects = filtered_projects.slice(skip, skip + limit);
+    const projectPromises = paginated_projects.map(async (applied_project) => {
+      const project = await project_model.find_project({
+        _id: new ObjectId(applied_project._id.toString()),
+      });
+
+      return {
+        _id: project._id,
+        title: project.title,
+        status: applied_project.status,
+        location: project.location,
+        applied_at: applied_project.applied_at,
+        contact: project.contact,
+        job_type: project.job_type,
+      };
+    });
+
+    const all_projects = await Promise.all(projectPromises);
 
     return {
-      data: final_projects,
+      data: all_projects,
       pagination: {
         total,
         current_page: page,
