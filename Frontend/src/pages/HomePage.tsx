@@ -306,7 +306,7 @@ const Home = () => {
                     </div>
 
                     {/* Location Buttons */}
-                    <div className="d-flex flex-wrap justify-content-center gap-2 mb-5">
+                    <div className="d-flex flex-wrap justify-content-center gap-2 mb-5 ">
                         {locations.map((loc) => (
                             <button
                                 key={loc.value}

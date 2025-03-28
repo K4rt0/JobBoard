@@ -4,6 +4,7 @@ import LoginModal from './modals/LoginModal'
 import SignupModal from './modals/SignUpModal'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
+import { Link } from 'react-router-dom'
 
 // Styled-components
 const UserMenu = styled.div`
@@ -240,40 +241,32 @@ const Header = () => {
                                                     Home
                                                 </a>
                                             </li>
-                                            {user?.role === 'Employer' && (
-                                                <li
-                                                    className={`nav-item ${
-                                                        currentPath ===
-                                                            '/freelancer-marketplace' ||
-                                                        currentPath ===
-                                                            '/post-job'
-                                                            ? 'active'
-                                                            : ''
-                                                    }`}
-                                                >
-                                                    <a
-                                                        className={
+                                            {user &&
+                                                user.role === 'Employer' && (
+                                                    <li
+                                                        className={`nav-item ${
                                                             currentPath ===
                                                                 '/freelancer-marketplace' ||
                                                             currentPath ===
                                                                 '/post-job'
                                                                 ? 'active'
                                                                 : ''
-                                                        }
+                                                        }`}
                                                     >
-                                                        Hire Freelancers
-                                                    </a>
-                                                    <ul className="sub-menu">
-                                                        <li
+                                                        <a
                                                             className={
                                                                 currentPath ===
-                                                                '/freelancer-marketplace'
+                                                                    '/freelancer-marketplace' ||
+                                                                currentPath ===
+                                                                    '/post-job'
                                                                     ? 'active'
                                                                     : ''
                                                             }
                                                         >
-                                                            <a
-                                                                href="/freelancer-marketplace"
+                                                            Hire Freelancers
+                                                        </a>
+                                                        <ul className="sub-menu">
+                                                            <li
                                                                 className={
                                                                     currentPath ===
                                                                     '/freelancer-marketplace'
@@ -281,19 +274,20 @@ const Header = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                Find Freelancers
-                                                            </a>
-                                                        </li>
-                                                        <li
-                                                            className={
-                                                                currentPath ===
-                                                                '/post-job'
-                                                                    ? 'active'
-                                                                    : ''
-                                                            }
-                                                        >
-                                                            <a
-                                                                href="/post-job"
+                                                                <a
+                                                                    href="/freelancer-marketplace"
+                                                                    className={
+                                                                        currentPath ===
+                                                                        '/freelancer-marketplace'
+                                                                            ? 'active'
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    Find
+                                                                    Freelancers
+                                                                </a>
+                                                            </li>
+                                                            <li
                                                                 className={
                                                                     currentPath ===
                                                                     '/post-job'
@@ -301,13 +295,21 @@ const Header = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                Post a Job
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                            )}
-
+                                                                <a
+                                                                    href="/post-job"
+                                                                    className={
+                                                                        currentPath ===
+                                                                        '/post-job'
+                                                                            ? 'active'
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    Post a Job
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                )}
                                             <li
                                                 className={`nav-item ${currentPath === '/jobs' ? 'active' : ''}`}
                                             >
@@ -364,28 +366,37 @@ const Header = () => {
                                         {isLoggedIn && user ? (
                                             <UserMenu>
                                                 <UserInfoWrapper>
-                                                    {user.avatar ? (
-                                                        <Avatar
-                                                            src={user.avatar}
-                                                            alt="Avatar"
-                                                        />
-                                                    ) : (
-                                                        <AvatarFallback>
-                                                            {user.full_name?.charAt(
-                                                                0,
-                                                            ) || 'U'}
-                                                        </AvatarFallback>
+                                                    {user && (
+                                                        <Link
+                                                            to={'/profile'}
+                                                            className="d-flex"
+                                                        >
+                                                            {user.avatar ? (
+                                                                <Avatar
+                                                                    src={
+                                                                        user.avatar
+                                                                    }
+                                                                    alt="Avatar"
+                                                                />
+                                                            ) : (
+                                                                <AvatarFallback>
+                                                                    {user.full_name?.charAt(
+                                                                        0,
+                                                                    ) || 'U'}
+                                                                </AvatarFallback>
+                                                            )}
+                                                            <UserDetails>
+                                                                <FullName>
+                                                                    {user.full_name ||
+                                                                        'User'}
+                                                                </FullName>
+                                                                <Role>
+                                                                    {user.role ||
+                                                                        'Member'}
+                                                                </Role>
+                                                            </UserDetails>
+                                                        </Link>
                                                     )}
-                                                    <UserDetails>
-                                                        <FullName>
-                                                            {user.full_name ||
-                                                                'User'}
-                                                        </FullName>
-                                                        <Role>
-                                                            {user.role ||
-                                                                'Member'}
-                                                        </Role>
-                                                    </UserDetails>
                                                 </UserInfoWrapper>
                                                 <UserDropdown>
                                                     <Email>
@@ -397,7 +408,7 @@ const Header = () => {
                                                         <i className="lni lni-user"></i>{' '}
                                                         Profile
                                                     </DropdownItem>
-                                                    <DropdownItem href="/settings">
+                                                    <DropdownItem href="/profile/change-password">
                                                         <i className="lni lni-cog"></i>{' '}
                                                         Settings
                                                     </DropdownItem>
@@ -431,6 +442,12 @@ const Header = () => {
                                                 >
                                                     Sign Up
                                                 </a>
+                                                <Link
+                                                    to="/register/employer"
+                                                    className="btn bg-success ms-2"
+                                                >
+                                                    Post jobs
+                                                </Link>
                                             </>
                                         )}
                                     </div>

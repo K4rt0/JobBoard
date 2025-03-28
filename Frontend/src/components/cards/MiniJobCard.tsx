@@ -31,7 +31,8 @@ const MiniJobCard: React.FC<MiniJobCardProps> = ({ job }) => {
 
     return (
         <div
-            className="card h-100 shadow-sm border-0 p-3 single-job d-flex flex-column gap-2 hover-shadow-lg hover-bg-light"
+            className="card h-100 shadow-sm border-0 p-3 single-job d-flex flex-column gap-2 hover-shadow-lg hover-bg-light wow fadeInUp"
+            data-wow-delay=".4s"
             style={{ cursor: 'pointer' }}
         >
             {/* Tiêu đề và nút heart */}

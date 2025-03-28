@@ -71,6 +71,7 @@ export interface UserAuth {
     access_token_admin?: string
     access_token: string
     refresh_token: string
+    company_name?: string // Add company_name for employers
 }
 
 // Skill object
@@ -170,6 +171,8 @@ export interface UserRequestDTO {
     full_name: string
     email: string
     password: string
+    role?: string
+    company_name?: string
 }
 
 /** ========== JOB RELATED INTERFACES ========== **/
