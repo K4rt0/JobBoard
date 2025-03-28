@@ -81,27 +81,61 @@ const get_all_projects = async () => {
 
 const get_all_projects_pagination = async (query) => {
   try {
-    const { page, limit, search, location, salary_min, salary_max, job_type, experience, category_id } = query;
+    const { page, limit, search, location, salary_min, salary_max, job_type, experience, category_id, status } = query;
 
     const filter = {};
 
-    if (search) filter.title = { $regex: search, $options: "i" };
+    // Tìm kiếm trên nhiều trường
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { requirements: { $regex: search, $options: "i" } },
+        { benefits: { $regex: search, $options: "i" } },
+        { "contact.full_name": { $regex: search, $options: "i" } },
+        { "contact.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
     if (location) filter.location = { $regex: location, $options: "i" };
+
     if (salary_min !== undefined || salary_max !== undefined) {
-      if (salary_min !== undefined) filter["salary.min"] = { $gte: Number(salary_min) };
-      if (salary_max !== undefined) filter["salary.max"] = { $lte: Number(salary_max) };
-      if (salary_min !== undefined && salary_max !== undefined && salary_min > salary_max) {
-        throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+      if (salary_min !== undefined && salary_max !== undefined) {
+        if (salary_min > salary_max) {
+          throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+        }
+        filter.$and = [{ "salary.max": { $gte: Number(salary_min) } }, { "salary.min": { $lte: Number(salary_max) } }];
+      } else if (salary_min !== undefined) {
+        filter["salary.max"] = { $gte: Number(salary_min) };
+      } else if (salary_max !== undefined) {
+        filter["salary.min"] = { $lte: Number(salary_max) };
       }
     }
-    if (category_id) filter.category_id = category_id;
+
+    if (category_id) {
+      if (!/^[0-9a-fA-F]{24}$/.test(category_id)) {
+        throw new Error("category_id không hợp lệ!");
+      }
+      filter.category_id = category_id;
+    }
+
     if (job_type) {
+      const validJobTypes = ["full-time", "part-time", "remote", "internship"];
       const job_type_array = Array.isArray(job_type) ? job_type : [job_type];
       if (job_type_array.length > 0) {
+        if (!job_type_array.every((type) => validJobTypes.includes(type))) {
+          throw new Error("Loại công việc không hợp lệ!");
+        }
         filter.job_type = { $in: job_type_array };
       }
     }
-    if (experience !== undefined) filter.experience = { $lte: experience };
+
+    if (experience !== undefined) filter.experience = { $lte: Number(experience) };
+
+    if (status && ["opening", "closed"].includes(status)) {
+      filter.status = status;
+    }
 
     const projects = await project_model.find_all_projects_pagination(page, limit, filter);
     return projects;
