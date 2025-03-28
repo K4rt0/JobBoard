@@ -240,38 +240,31 @@ const Header = () => {
                                                     Home
                                                 </a>
                                             </li>
-                                            <li
-                                                className={`nav-item ${
-                                                    currentPath ===
-                                                        '/freelancer-marketplace' ||
-                                                    currentPath === '/post-job'
-                                                        ? 'active'
-                                                        : ''
-                                                }`}
-                                            >
-                                                <a
-                                                    className={
+                                            {user?.role === 'Employer' && (
+                                                <li
+                                                    className={`nav-item ${
                                                         currentPath ===
                                                             '/freelancer-marketplace' ||
                                                         currentPath ===
                                                             '/post-job'
                                                             ? 'active'
                                                             : ''
-                                                    }
+                                                    }`}
                                                 >
-                                                    Hire Freelancers
-                                                </a>
-                                                <ul className="sub-menu">
-                                                    <li
+                                                    <a
                                                         className={
                                                             currentPath ===
-                                                            '/freelancer-marketplace'
+                                                                '/freelancer-marketplace' ||
+                                                            currentPath ===
+                                                                '/post-job'
                                                                 ? 'active'
                                                                 : ''
                                                         }
                                                     >
-                                                        <a
-                                                            href="/freelancer-marketplace"
+                                                        Hire Freelancers
+                                                    </a>
+                                                    <ul className="sub-menu">
+                                                        <li
                                                             className={
                                                                 currentPath ===
                                                                 '/freelancer-marketplace'
@@ -279,19 +272,19 @@ const Header = () => {
                                                                     : ''
                                                             }
                                                         >
-                                                            Find Freelancers
-                                                        </a>
-                                                    </li>
-                                                    <li
-                                                        className={
-                                                            currentPath ===
-                                                            '/post-job'
-                                                                ? 'active'
-                                                                : ''
-                                                        }
-                                                    >
-                                                        <a
-                                                            href="/post-job"
+                                                            <a
+                                                                href="/freelancer-marketplace"
+                                                                className={
+                                                                    currentPath ===
+                                                                    '/freelancer-marketplace'
+                                                                        ? 'active'
+                                                                        : ''
+                                                                }
+                                                            >
+                                                                Find Freelancers
+                                                            </a>
+                                                        </li>
+                                                        <li
                                                             className={
                                                                 currentPath ===
                                                                 '/post-job'
@@ -299,11 +292,22 @@ const Header = () => {
                                                                     : ''
                                                             }
                                                         >
-                                                            Post a Job
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </li>
+                                                            <a
+                                                                href="/post-job"
+                                                                className={
+                                                                    currentPath ===
+                                                                    '/post-job'
+                                                                        ? 'active'
+                                                                        : ''
+                                                                }
+                                                            >
+                                                                Post a Job
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            )}
+
                                             <li
                                                 className={`nav-item ${currentPath === '/jobs' ? 'active' : ''}`}
                                             >
