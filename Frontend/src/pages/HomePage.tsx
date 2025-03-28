@@ -1,19 +1,44 @@
+import React, { useEffect, useState } from 'react'
 import SingleFreelancerCard from '@/components/cards/SingleFreelancerCard'
 import SingleJobCard from '@/components/cards/SingleJobCard'
+import CustomPagination from '@/components/CustomPagination'
 import JobSearchBar from '@/components/JobSearchBar'
 import { Category, Job, JobFilters, PaginationInfo } from '@/interfaces'
 import { fetchCategories, getAllCategories } from '@/services/categoryService'
 import { getJobs, getJobsPagination } from '@/services/jobSearchService'
-import { useEffect, useState } from 'react'
-import { Button } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
+import { Heart } from 'react-bootstrap-icons'
+import MiniJobCard from '@/components/cards/MiniJobCard'
 
 const Home = () => {
     const [jobs, setJobs] = useState<Job[]>([])
+    const [suggestedJobs, setSuggestedJobs] = useState<Job[]>([])
     const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
+
+    const locations = [
+        { value: '', label: 'Random' },
+        { value: 'Hà Nội', label: 'Hà Nội' },
+        { value: 'Thành phố Hồ Chí Minh', label: 'Thành phố Hồ Chí Minh' },
+        { value: 'Nha Trang', label: 'Nha Trang' },
+        { value: 'Cần Thơ', label: 'Cần Thơ' },
+    ]
+
+    const [suggestionFilters, setSuggestionFilters] = useState<JobFilters>({
+        search: '',
+        location: '',
+        job_type: [],
+        category_id: '',
+        experience: '',
+        salary_min: '',
+        salary_max: '',
+        page: 1,
+        limit: 8,
+    })
+    const [totalSuggestionResults, setTotalSuggestionResults] =
+        useState<number>(0)
 
     const [filters, setFilters] = useState<JobFilters>({
         search: '',
@@ -27,35 +52,40 @@ const Home = () => {
         limit: 8,
     })
 
+    // Fetch data on mount and when suggestionFilters change
     useEffect(() => {
-        const fetchJobs = async () => {
+        const fetchInitialData = async () => {
             setIsLoading(true)
             setError(null)
             try {
-                const response = await getJobs()
-                const jobs = response.data.slice(0, 6)
-                setJobs(jobs)
+                // Fetch recent jobs
+                const jobsResponse = await getJobs()
+                setJobs(jobsResponse.data.slice(0, 6))
+
+                // Fetch categories
+                const categoriesResponse = await getAllCategories()
+                setCategories(categoriesResponse.slice(0, 8))
+
+                // Fetch suggested jobs
+                const suggestedResponse = await getJobsPagination(
+                    suggestionFilters.page,
+                    suggestionFilters.limit,
+                    suggestionFilters,
+                )
+                setSuggestedJobs(suggestedResponse.data)
+                setTotalSuggestionResults(suggestedResponse.pagination.total)
             } catch (err) {
-                setError('Failed to fetch jobs. Please try again later.')
+                setError('Failed to load data. Please try again later.')
                 console.error(err)
             } finally {
                 setIsLoading(false)
             }
         }
 
-        const fetchDropdownCategories = async () => {
-            try {
-                const response = await getAllCategories()
-                setCategories(response.slice(0, 8))
-            } catch (err) {
-                console.error('Failed to fetch categories:', err)
-            }
-        }
+        fetchInitialData()
+    }, [suggestionFilters])
 
-        fetchJobs()
-        fetchDropdownCategories()
-    }, [])
-
+    // Handlers
     const handleSearch = (searchQuery: {
         position: string
         location: string
@@ -69,27 +99,24 @@ const Home = () => {
         navigate('/jobs', { state: { filters: newFilters } })
     }
 
-    const handleToJobSearch = () => {
-        navigate('/jobs')
-    }
+    const handleToJobSearch = () => navigate('/jobs')
 
     const handleCategoryClick = (categoryId: string) => {
-        const newFilters = {
-            ...filters,
-            category_id: categoryId,
-            page: 1,
-        }
+        const newFilters = { ...filters, category_id: categoryId, page: 1 }
         navigate('/jobs', { state: { filters: newFilters } })
     }
 
-    // Xử lý khi click vào keyword
     const handleKeywordClick = (keyword: string) => {
-        const newFilters = {
-            ...filters,
-            search: keyword,
-            page: 1,
-        }
+        const newFilters = { ...filters, search: keyword, page: 1 }
         navigate('/jobs', { state: { filters: newFilters } })
+    }
+
+    const handleLocationChange = (location: string) => {
+        setSuggestionFilters((prev) => ({ ...prev, location, page: 1 }))
+    }
+
+    const handleSuggestionPageChange = (page: number) => {
+        setSuggestionFilters((prev) => ({ ...prev, page }))
     }
 
     return (
@@ -97,8 +124,8 @@ const Home = () => {
             <section className="hero-area">
                 <div className="hero-inner">
                     <div className="container">
-                        <div className="row ">
-                            <div className="col-lg-6 co-12">
+                        <div className="row">
+                            <div className="col-lg-6 col-12">
                                 <div className="inner-content">
                                     <div className="hero-text">
                                         <h1
@@ -114,8 +141,8 @@ const Home = () => {
                                         >
                                             Creating a beautiful job website is
                                             not easy <br /> always. To make your
-                                            life easier, we are
-                                            <br /> introducing Jobcamp template.
+                                            life easier, we are <br />{' '}
+                                            introducing Jobcamp template.
                                         </p>
                                     </div>
                                     <div
@@ -194,8 +221,7 @@ const Home = () => {
                                     </div>
                                 </div>
                             </div>
-                            {/* Rest of hero section remains the same */}
-                            <div className="col-lg-6 co-12">
+                            <div className="col-lg-6 col-12">
                                 <div
                                     className="hero-video-head wow fadeInRight"
                                     data-wow-delay=".5s"
@@ -225,6 +251,7 @@ const Home = () => {
                     </div>
                 </div>
             </section>
+
             <section className="apply-process section">
                 <div className="container">
                     <div className="row">
@@ -259,6 +286,88 @@ const Home = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
+            {/* Suggestions Section */}
+            <section className="section find-job">
+                <div className="container">
+                    <div className="d-flex row justify-content-between align-items-center mb-4">
+                        <div className="section-title">
+                            <span
+                                className="wow fadeInDown"
+                                data-wow-delay=".2s"
+                            >
+                                Excellent Works
+                            </span>
+                            <h2 className="wow fadeInUp" data-wow-delay=".4s">
+                                Recommended Jobs For You
+                            </h2>
+                        </div>
+                    </div>
+
+                    {/* Location Buttons */}
+                    <div className="d-flex flex-wrap justify-content-center gap-2 mb-5">
+                        {locations.map((loc) => (
+                            <button
+                                key={loc.value}
+                                onClick={() => handleLocationChange(loc.value)}
+                                className={`btn rounded-pill px-4 py-2 fw-medium ${
+                                    suggestionFilters.location === loc.value
+                                        ? 'btn-primary text-white'
+                                        : 'btn-outline-secondary text-dark hover-bg-primary hover-text-white'
+                                }`}
+                            >
+                                {loc.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Suggested Jobs */}
+                    {isLoading ? (
+                        <div className="text-center py-5">
+                            <div
+                                className="spinner-border text-primary"
+                                role="status"
+                            >
+                                <span className="visually-hidden">
+                                    Loading...
+                                </span>
+                            </div>
+                            <p className="text-muted mt-2">Loading jobs...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-5 text-danger">
+                            <i className="lni lni-warning fs-1"></i>
+                            <p className="mt-2">{error}</p>
+                        </div>
+                    ) : suggestedJobs.length === 0 ? (
+                        <div className="text-center py-5 text-muted">
+                            <i className="lni lni-emoji-sad fs-1"></i>
+                            <p className="mt-2">
+                                No jobs found for this location.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 justify-content-start">
+                            {suggestedJobs.map((job) => (
+                                <div key={job._id} className="col">
+                                    <MiniJobCard job={job} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {!isLoading && !error && suggestedJobs.length > 0 && (
+                        <div className="d-flex justify-content-center mt-5">
+                            <CustomPagination
+                                currentPage={suggestionFilters.page ?? 1}
+                                setCurrentPage={handleSuggestionPageChange}
+                                totalResults={totalSuggestionResults}
+                                resultsPerPage={suggestionFilters.limit ?? 8}
+                            />
+                        </div>
+                    )}
                 </div>
             </section>
             <section className="job-category section">
@@ -305,8 +414,7 @@ const Home = () => {
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <div className="icon">
-                                            <i className="lni lni-cog"></i>{' '}
-                                            {/* Có thể thay icon động theo category */}
+                                            <i className="lni lni-cog"></i>
                                         </div>
                                         <h3>
                                             {category.name.split(' ').length >
@@ -334,6 +442,7 @@ const Home = () => {
                     </div>
                 </div>
             </section>
+
             <section className="find-job section">
                 <div className="container">
                     <div className="row">
@@ -365,7 +474,7 @@ const Home = () => {
                     <div className="single-head">
                         <div className="row">
                             {jobs
-                                .filter((job) => job) // Thay thế điều kiện lọc phù hợp, ví dụ: job.active === true
+                                .filter((job) => job)
                                 .map((job) => (
                                     <div
                                         className="col-lg-6 col-12"
@@ -376,18 +485,16 @@ const Home = () => {
                                 ))}
                         </div>
 
-                        {/* <!-- Pagination --> */}
                         <div className="d-flex justify-content-center py-4">
                             <div className="button">
-                                <Button
+                                <button
                                     onClick={handleToJobSearch}
-                                    className="btn-sm"
+                                    className="btn btn-sm"
                                 >
                                     Show more
-                                </Button>
+                                </button>
                             </div>
                         </div>
-                        {/* <!--/ End Pagination --> */}
                     </div>
                 </div>
             </section>
