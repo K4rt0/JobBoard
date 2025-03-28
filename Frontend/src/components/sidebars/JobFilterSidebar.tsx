@@ -28,7 +28,6 @@ const JobFilterSidebar: React.FC<JobFilterSidebarProps> = ({
             try {
                 setLoading(true)
                 setError(null)
-                const token = 'your-auth-token-here' // Thay bằng token thực tế từ hệ thống của bạn
                 const data = await fetchCategories(1, 10, 'all', '') // Gọi hàm fetchCategories với các tham số cần thiết
                 setCategories(data.data || []) // Giả định response.data.data chứa danh sách categories
             } catch (error) {

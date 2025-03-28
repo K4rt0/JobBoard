@@ -128,36 +128,95 @@ const update_project_status = async (project_id, project_status) => {
   }
 };
 
-const apply_project = async (user_id, project_id) => {
+/* const apply_projects = async (user_id, project_id) => {
   try {
     const project = await validate_project(project_id, false);
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
 
     if (user.cv_url === null) throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
     if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
-    if (project.applicants.some((applicant) => applicant._id.toString() === user_id)) throw new Error("Bạn đã ứng tuyển vào dự án này !");
 
+    const existing_application = project.applicants.find((applicant) => applicant._id.toString() === user_id);
     const date = Date.now();
 
-    project.applicants.push({
-      _id: user._id,
-      applied_at: date,
-      status: "pending",
-    });
+    if (existing_application) {
+      if (existing_application.status === "rejected") {
+        project.applicants.push({
+          _id: user._id,
+          applied_at: date,
+          status: "pending",
+        });
+      } else {
+        throw new Error("Bạn đã ứng tuyển vào dự án này !");
+      }
+    } else {
+      const pending_application = user.projects_applied.find((p) => p.status === "pending");
+      if (pending_application) {
+        throw new Error("Bạn đã có một dự án đang chờ xử lý, không thể ứng tuyển thêm !");
+      }
+      project.applicants.push({
+        _id: user._id,
+        applied_at: date,
+        status: "pending",
+      });
+    }
+
     project.updated_at = date;
 
-    user.projects_applied.push({
-      _id: project._id,
-      applied_at: date,
-      expired_at: null,
-      status: "pending",
-    });
+    const user_application = user.projects_applied.find((p) => p._id.toString() === project_id);
+
+    if (user_application) {
+      if (user_application.status === "rejected") {
+        user_application.applied_at = date;
+        user_application.status = "pending";
+      }
+    } else {
+      user.projects_applied.push({
+        _id: project._id,
+        applied_at: date,
+        expired_at: null,
+        status: "pending",
+      });
+    }
 
     await user_model.update_user(user_id, { projects_applied: user.projects_applied });
     return await project_model.update_project(project_id, project);
   } catch (error) {
     throw error;
   }
+}; */
+
+const apply_project = async (user_id, project_id) => {
+  const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+  if (!user) throw new Error("Người dùng không tồn tại !");
+
+  const project = await validate_project(project_id, false);
+  if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
+  if (user.cv_url === null) throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
+
+  const existing_applications = project.applicants.filter((applicant) => applicant._id.toString() === user_id);
+
+  if (existing_applications) {
+    const pending_application = existing_applications.find((application) => application.status === "pending");
+    if (pending_application) throw new Error("Bạn đã có một ứng tuyển đang chờ xử lý !");
+  }
+
+  const date = Date.now();
+  project.applicants.push({
+    _id: user._id,
+    applied_at: date,
+    status: "pending",
+  });
+
+  user.projects_applied.push({
+    _id: project._id,
+    applied_at: date,
+    expired_at: project.expired_at,
+    status: "pending",
+  });
+
+  await user_model.update_user(user_id, { projects_applied: user.projects_applied });
+  return await project_model.update_project(project_id, project);
 };
 
 const get_all_applicants = async (project_id) => {
@@ -235,17 +294,19 @@ const update_applicant_status = async (project_id, applicant_id, status) => {
     if (!user) throw new Error("Người dùng không tồn tại !");
 
     const date = Date.now();
+
+    const pending_application = project.applicants.find((app) => app._id.toString() === applicant_id && app.status === "pending");
+    if (pending_application) {
+      pending_application.status = status;
+      pending_application.updated_at = date;
+    }
+
     applicant.status = status;
     applicant.updated_at = date;
     project.updated_at = date;
 
-    if (status === "finished") {
-      const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id);
-      if (applied_project) {
-        applied_project.status = "finished";
-        applied_project.finished_at = date;
-      }
-    }
+    const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id && p.status === "pending");
+    if (applied_project) applied_project.status = status;
 
     await user_model.update_user(applicant_id, {
       projects_applied: user.projects_applied,
@@ -257,10 +318,36 @@ const update_applicant_status = async (project_id, applicant_id, status) => {
   }
 };
 
+const get_all_my_projects = async (user_id) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const projects = await project_model.find_all_projects({ employer_id: user_id });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const get_all_my_projects_pagination = async (user_id, page, limit, filtered = {}) => {
+  try {
+    const user = await user_model.find_user({ _id: new ObjectId(user_id) });
+    if (!user) throw new Error("Người dùng không tồn tại !");
+
+    const projects = await project_model.find_all_projects_pagination(page, limit, { employer_id: user_id, ...filtered });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const project_service = {
   create_project,
   update_project,
   get_all_projects,
+  get_all_my_projects,
+  get_all_my_projects_pagination,
   get_all_projects_pagination,
   update_project_status,
   get_project,

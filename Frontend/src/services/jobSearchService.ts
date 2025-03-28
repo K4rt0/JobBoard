@@ -4,22 +4,19 @@ import {
     Job,
     JobApiResponse,
     JobFilters,
-    JobsResponse,
-    Skill,
     ProjectApiResponse,
     PaginationInfo,
+    Skill,
 } from '@/interfaces'
 import { getSkillById } from './skillService'
 
 const BASE_URL = `${process.env.REACT_APP_BASE_API_URL}`
 
-// Get all jobs with filters
 export async function getJobsPagination(
     page = 1,
     limit = 6,
     filters: JobFilters = {},
 ): Promise<{ data: Job[]; pagination: PaginationInfo }> {
-    // Đổi kiểu trả về
     try {
         const params = new URLSearchParams()
         params.append('page', (filters.page || page).toString())
@@ -77,7 +74,7 @@ export async function getJobs(): Promise<ApiResponse<Job[]>> {
         throw error
     }
 }
-// Get a job by project ID
+
 export async function getJobByProjectId(projectId: string): Promise<Job> {
     try {
         const response = await axios.get<{
@@ -86,7 +83,6 @@ export async function getJobByProjectId(projectId: string): Promise<Job> {
         }>(`${BASE_URL}/project/${projectId}`)
         const apiProject = response.data.data as JobApiResponse
 
-        // Fetch skill details for each skill ID
         const skills = apiProject.skills
             ? await Promise.all(
                   apiProject.skills.map(async (skillId: string) => {
@@ -106,10 +102,9 @@ export async function getJobByProjectId(projectId: string): Promise<Job> {
               )
             : []
 
-        // Map the API response to the Job interface
         return {
             ...apiProject,
-            skills: skills, // Use the fetched skill objects
+            skills,
         }
     } catch (error) {
         console.error(`Error fetching job with project ID ${projectId}:`, error)
@@ -117,7 +112,6 @@ export async function getJobByProjectId(projectId: string): Promise<Job> {
     }
 }
 
-// Get a job by slug
 export async function getJobBySlug(slug: string): Promise<Job> {
     try {
         const response = await axios.get<{ message: string; data: Job }>(
@@ -126,6 +120,21 @@ export async function getJobBySlug(slug: string): Promise<Job> {
         return response.data.data
     } catch (error) {
         console.error(`Error fetching job with slug ${slug}:`, error)
+        throw error
+    }
+}
+
+export async function getProjectSuggestions(
+    search: string,
+): Promise<{ _id: string; title: string }[]> {
+    try {
+        const response = await axios.get<{
+            message: string
+            data: { _id: string; title: string }[]
+        }>(`${BASE_URL}/project/suggestions`, { params: { search } })
+        return response.data.data
+    } catch (error) {
+        console.error('Error fetching project suggestions:', error)
         throw error
     }
 }

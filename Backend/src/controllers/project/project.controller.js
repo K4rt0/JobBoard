@@ -155,11 +155,48 @@ const update_applicant_status = async (req, res, next) => {
   }
 };
 
+const get_all_my_projects = async (req, res, next) => {
+  try {
+    const result = await project_service.get_all_my_projects(req._id);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách dự án của bạn thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const get_all_my_projects_pagination = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const { status, sort, search } = req.query;
+    const filtered = {};
+    if (status && ["all", "opening", "closed"].includes(status)) filtered.status = status;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (search) filtered.search = search;
+
+    const result = await project_service.get_all_my_projects_pagination(req._id, page, limit, filtered);
+
+    res.status(StatusCodes.OK).json({
+      message: "Lấy danh sách dự án của bạn thành công !",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const project_controller = {
   create_project,
   update_project,
   get_all_projects,
+  get_all_my_projects,
   get_all_projects_pagination,
+  get_all_my_projects_pagination,
   get_project,
   update_project_status,
   apply_project,

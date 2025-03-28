@@ -14,7 +14,7 @@ const JobSearchPage: React.FC = () => {
     const initialFilters: JobFilters = location.state?.filters || {
         search: '',
         location: '',
-        job_type: ['full-time', 'part-time', 'remote', 'internship'], // Bao gồm tất cả job_type có thể
+        job_type: [], // Bao gồm tất cả job_type có thể
         category_id: '',
         experience: '',
         salary_min: '',

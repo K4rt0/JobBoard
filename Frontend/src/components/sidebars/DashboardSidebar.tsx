@@ -34,11 +34,6 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ role }) => {
             icon: 'lni lni-envelope',
         },
         {
-            label: 'Manage Resumes',
-            link: '/profile/manage-resumes',
-            icon: 'lni lni-files',
-        },
-        {
             label: 'Change Password',
             link: '/profile/change-password',
             icon: 'lni lni-lock',

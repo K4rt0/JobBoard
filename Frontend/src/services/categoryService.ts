@@ -1,7 +1,10 @@
 // src/services/categoryService.ts
+import { Category } from '@/interfaces'
+import { handleApiError } from '@/utils/apiHandlerError'
 import axios, { AxiosError } from 'axios'
+import axiosInstance from './axiosInstance'
 
-const API_BASE_URL = 'http://localhost:3000/api/v1'
+const API_BASE_URL = process.env.REACT_APP_BASE_API_URL
 
 interface ErrorResponse {
     statusCode: number
@@ -20,7 +23,7 @@ export const fetchCategories = async (
         if (sort !== 'all') url += `&sort=${sort}`
         if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`
 
-        const response = await axios.get(url, { timeout: 10000 })
+        const response = await axiosInstance.get(url, { timeout: 10000 })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ErrorResponse>
@@ -29,10 +32,21 @@ export const fetchCategories = async (
         )
     }
 }
+export const getAllCategories = async (): Promise<Category[]> => {
+    try {
+        const response = await axiosInstance.get(
+            `${API_BASE_URL}/category/get-all`,
+        )
+        return response.data.data
+    } catch (error) {
+        handleApiError(error, 'Failed to fetch categories')
+        throw error
+    }
+}
 
 export const createCategory = async (data: any) => {
     try {
-        const response = await axios.post(
+        const response = await axiosInstance.post(
             `${API_BASE_URL}/category/create`,
             data,
         )
@@ -47,7 +61,7 @@ export const createCategory = async (data: any) => {
 
 export const updateCategory = async (id: string, data: any) => {
     try {
-        const response = await axios.patch(
+        const response = await axiosInstance.patch(
             `${API_BASE_URL}/category/update/${id}`,
             data,
         )
@@ -62,7 +76,7 @@ export const updateCategory = async (id: string, data: any) => {
 
 export const deleteCategory = async (id: string) => {
     try {
-        const response = await axios.delete(
+        const response = await axiosInstance.delete(
             `${API_BASE_URL}/category/delete/${id}`,
         )
         return response.data

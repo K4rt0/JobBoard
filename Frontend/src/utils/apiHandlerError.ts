@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 /**
  * Centralized API error handling utility
@@ -20,6 +21,7 @@ export const handleApiError = (
                 ? error.response.data
                 : null) ||
             defaultMessage
+        toast.error(errorMessage.message)
 
         throw new Error(errorMessage)
     }

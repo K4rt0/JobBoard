@@ -21,10 +21,14 @@ import CategoryPage from '@/pages/admin-pages/CategoryPage' // Thêm CategoryPag
 import ProtectedRoute from '@/components/protected/ProtectedRoute' // Import ProtectedRoute
 import ApplicationManagementEmployerPage from '@/pages/employer/ApplicationManagementEmployerPage'
 import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
+import UserProfilePage from '@/pages/user/UserProfilePage'
+import ScrollToTop from '@/components/ScrollToTop'
+import FAQPage from '@/pages/FAQPage'
 
 const AppRoutes = () => {
     return (
         <Router>
+            <ScrollToTop />
             <Routes>
                 {/* Auth routes - without layout */}
                 <Route path="/login" element={<LoginPage />} />
@@ -34,12 +38,17 @@ const AppRoutes = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/jobs/:jobId" element={<JobDetailPage />} />
                     <Route path="/jobs" element={<JobSearchPage />} />
+                    <Route path="/faq" element={<FAQPage />} />
                     <Route
                         path="/freelancer-marketplace"
                         element={<FreelancerMarketplacePage />}
                     />
 
                     <Route element={<ProtectedUserRoute />}>
+                        <Route
+                            path="/profile/:userId"
+                            element={<UserProfilePage />}
+                        />
                         <Route path="/profile" element={<ProfilePage />} />
 
                         <Route path="/post-job" element={<PostJobPage />} />
