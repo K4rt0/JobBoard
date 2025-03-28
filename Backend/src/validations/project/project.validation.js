@@ -98,6 +98,7 @@ const get_all_projects_pagination = async (req, res, next) => {
     category_id: Joi.string().hex().length(24),
     job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
     experience: Joi.number().min(0),
+    status: Joi.string().valid("all", "opening", "closed"),
   });
 
   try {
