@@ -45,14 +45,10 @@ export async function getJobsPagination(
         if (filters.category_id) {
             params.append('category_id', filters.category_id)
         }
-        console.log('Query parameters gửi lên server:', params.toString())
-
         const response = await axios.get<ProjectApiResponse>(
             `${BASE_URL}/project/get-all-pagination`,
             { params },
         )
-        console.log('Dữ liệu từ server:', response.data)
-
         const jobsData = Array.isArray(response.data.data.projects)
             ? response.data.data.projects
             : []

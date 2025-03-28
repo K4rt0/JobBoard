@@ -8,7 +8,7 @@ import {
 } from '@/services/authService'
 import axios from 'axios'
 import { TokenResponse } from '@react-oauth/google'
-import { UserAuth } from '@/interfaces'
+import { Employer, UserAuth } from '@/interfaces'
 import { refresh_token } from '@/services/axiosInstance'
 import { getCurrentUser } from '@/services/userService'
 import { toast } from 'react-toastify'
@@ -22,6 +22,12 @@ interface AuthState {
         full_name: string,
         email: string,
         password: string,
+    ) => Promise<boolean>
+    registerEmployer: (
+        full_name: string,
+        email: string,
+        password: string,
+        company_name: string,
     ) => Promise<boolean>
     loginWithGoogle: (tokenResponse: TokenResponse) => Promise<boolean>
     refreshAccessToken: () => Promise<void>
@@ -61,11 +67,9 @@ export const useAuthStore = create<AuthState>()(
                     setAuthHeader(userData.access_token)
 
                     await get().fetchUserProfile()
-                    return true // Đăng nhập thành công
+                    return true
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        console.log(error)
-
                         const errorMessage =
                             error.response?.data?.message ||
                             'Invalid email or password!'
@@ -75,6 +79,10 @@ export const useAuthStore = create<AuthState>()(
                     return false
                 }
             },
+
+            /**
+             * Đăng nhập admin
+             */
             loginAdmin: async (username, password) => {
                 try {
                     const response = await loginAdminApi(username, password)
@@ -89,11 +97,9 @@ export const useAuthStore = create<AuthState>()(
                     set({ user: userData })
                     setAuthHeader(userData.access_token)
 
-                    return true // Đăng nhập thành công
+                    return true
                 } catch (error) {
                     if (axios.isAxiosError(error)) {
-                        console.log(error)
-
                         const errorMessage =
                             error.response?.data?.message ||
                             'Invalid email or password!'
@@ -103,8 +109,9 @@ export const useAuthStore = create<AuthState>()(
                     return false
                 }
             },
+
             /**
-             * Đăng ký tài khoản mới
+             * Đăng ký tài khoản thường (Freelancer/Member)
              */
             register: async (full_name, email, password) => {
                 try {
@@ -121,6 +128,43 @@ export const useAuthStore = create<AuthState>()(
                         toast.error(
                             error.response?.data?.message ||
                                 'Registration failed',
+                        )
+                    } else {
+                        toast.error('An unexpected error occurred')
+                    }
+                    return false
+                }
+            },
+
+            /**
+             * Đăng ký tài khoản nhà tuyển dụng (Employer)
+             */
+            registerEmployer: async (
+                full_name,
+                email,
+                password,
+                company_name,
+            ) => {
+                try {
+                    // Assuming registerApi accepts company_name and sets role as 'Employer'
+                    await registerApi({
+                        full_name,
+                        email,
+                        password,
+                        role: 'Employer', // Explicitly set role
+                    })
+
+                    const success = await get().login(email, password)
+                    if (success) {
+                        toast.success('Employer account created successfully!')
+                        return true
+                    }
+                    return false
+                } catch (error) {
+                    if (axios.isAxiosError(error)) {
+                        toast.error(
+                            error.response?.data?.message ||
+                                'Employer registration failed',
                         )
                     } else {
                         toast.error('An unexpected error occurred')
@@ -156,7 +200,6 @@ export const useAuthStore = create<AuthState>()(
 
                     await get().fetchUserProfile()
                     toast.success('Google login successful!')
-
                     return true
                 } catch (error) {
                     toast.error('Google login failed. Please try again.')
@@ -179,7 +222,7 @@ export const useAuthStore = create<AuthState>()(
                 } catch (error) {
                     console.error('Refresh token failed:', error)
                     toast.error('Session expired. Please log in again.')
-                    get().logout() // Tự động logout nếu refresh token thất bại
+                    get().logout()
                 }
             },
 
@@ -204,6 +247,9 @@ export const useAuthStore = create<AuthState>()(
                                   email: profileData.email,
                                   avatar: profileData.avatar ?? undefined,
                                   role: profileData.role,
+                                  company_name:
+                                      (profileData as Employer).companyName ??
+                                      undefined, // Add company_name
                               }
                             : null,
                     }))
