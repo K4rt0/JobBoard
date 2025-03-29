@@ -168,7 +168,7 @@ const get_all_projects_pagination = async (req, res, next) => {
 
     res.status(StatusCodes.OK).json({
       message: "Lấy danh sách dự án thành công !",
-      data: result,
+      data: result.data,
       pagination: result.pagination,
     });
   } catch (error) {

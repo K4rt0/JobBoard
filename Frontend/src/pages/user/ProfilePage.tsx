@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
     addUserSkills,
     getCurrentUser,
@@ -28,6 +28,7 @@ import {
     SocialFormFields,
 } from '@/components/forms/ProfileFormFields'
 import ErrorPage from '../ErrorPage'
+import { useAuthStore } from '@/store/authStore'
 
 // Modal types và config giữ nguyên
 type ModalType =
@@ -150,12 +151,13 @@ const ProfilePage: React.FC = () => {
     const [cvUrl, setCvUrl] = useState<string>(
         (userData as Freelancer).cvUrl || '',
     )
-    const { user } = useAuth()
+
+    const { user } = useAuthStore()
     const accessToken = user?.access_token
 
-    const fetchUserProfile = async () => {
-        if (!accessToken) {
-            setError('No access token available')
+    const fetchUserProfile = useCallback(async () => {
+        if (!accessToken || !user?.id) {
+            setError('Please log in to view your profile')
             setLoading(false)
             return
         }
@@ -164,6 +166,7 @@ const ProfilePage: React.FC = () => {
             setLoading(true)
             const data = await getCurrentUser(user.id)
             setUserData(data)
+            setCvUrl((data as Freelancer).cvUrl || '')
         } catch (err) {
             const errorMessage =
                 err instanceof Error
@@ -172,12 +175,33 @@ const ProfilePage: React.FC = () => {
             setError(errorMessage)
         } finally {
             setLoading(false)
+            console.log('Loading set to false in finally')
         }
-    }
+    }, [accessToken, user?.id])
 
     useEffect(() => {
-        fetchUserProfile()
-    }, [accessToken])
+        let isMounted = true
+        let hasFetched = false // Prevent multiple fetches
+
+        const loadProfile = async () => {
+            if (hasFetched || !isMounted) return
+            hasFetched = true
+
+            if (!accessToken) {
+                setLoading(false)
+                setError('No access token available')
+                return
+            }
+
+            await fetchUserProfile()
+        }
+
+        loadProfile()
+
+        return () => {
+            isMounted = false
+        }
+    }, [fetchUserProfile]) // Single trigger based on fetchUserProfile
 
     const handleOpenModal = (
         modalType: ModalType,

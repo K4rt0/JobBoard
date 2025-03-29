@@ -15,9 +15,9 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
 
         if (diffDays === 0) return 'Today'
         if (diffDays === 1) return 'Yesterday'
-        if (diffDays < 7) return `${diffDays} days ago`
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-        return `${Math.floor(diffDays / 30)} months ago`
+        if (diffDays < 7) return `${diffDays}d ago`
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+        return `${Math.floor(diffDays / 30)}m ago`
     }
 
     const formatDeadline = (dateString: string) => {
@@ -31,13 +31,13 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
             const diffTime = Math.abs(date.getTime() - now.getTime())
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-            if (diffDays === 0) return 'Expires today'
-            if (diffDays === 1) return 'Expires tomorrow'
-            if (diffDays < 7) return `${diffDays} days left`
-            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks left`
-            return `Until ${date.toLocaleDateString()}`
+            if (diffDays === 0) return 'Today'
+            if (diffDays === 1) return 'Tomorrow'
+            if (diffDays < 7) return `${diffDays}d left`
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)}w left`
+            return date.toLocaleDateString()
         } catch (e) {
-            return 'No deadline specified'
+            return 'N/A'
         }
     }
 
@@ -51,60 +51,69 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
 
     return (
         <div className="single-job mt-1 wow fadeInUp" data-wow-delay=".3s">
-            <div className="row align-items-start">
-                <div className="job-image">
+            <div className="row align-items-start g-3 justify-content-around">
+                <div className="job-image col-12 col-md-12 col-lg-12">
                     <img
                         src={getCompanyImage()}
                         alt={`${job.employer_id || job.title} logo`}
                         className="img-fluid rounded-circle"
+                        style={{ maxWidth: '60px' }}
                     />
                 </div>
-                <div className="job-content row ps-4">
-                    <div className="col-8">
+                <div className="job-content row ps-4 col-12 col-md-12 col-lg-12 ">
+                    <div className="col-12 col-lg-8">
                         <h4 className="pb-0 pe-0 text-bold">
                             <Link
                                 to={`/jobs/${job._id}`}
-                                className="text-dark text-decoration-none"
+                                className="text-dark text-decoration-none d-block text-truncate"
                             >
                                 {job.title}
                             </Link>
                         </h4>
-                        <p className="text-muted mb-3">
+                        <p
+                            className="text-muted mb-3"
+                            style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                            }}
+                        >
                             {job.description ||
                                 'We are looking for talented professionals to join our team.'}
                         </p>
                         <ul className="list-unstyled d-flex flex-wrap gap-3">
-                            <li className="text-muted">
+                            <li className="text-muted text-nowrap">
                                 <i className="lni lni-dollar text-primary me-1"></i>
                                 {job.salary && job.salary.min
                                     ? formatSalary(
                                           job.salary.min,
                                           job.salary.max,
                                       )
-                                    : 'Competitive salary'}
+                                    : 'Competitive'}
                             </li>
-                            <li className="text-muted">
+                            <li className="text-muted text-nowrap">
                                 <i className="lni lni-map-marker text-primary me-1"></i>
                                 {job.location || 'Remote'}
                             </li>
                             {job.experience && (
-                                <li className="text-muted">
+                                <li className="text-muted text-nowrap">
                                     <i className="lni lni-briefcase text-primary me-1"></i>
-                                    {job.experience} years experience
+                                    {job.experience} yrs
                                 </li>
                             )}
                         </ul>
                     </div>
-                    <div className="col-4">
+                    <div className="col-12 col-lg-4">
                         <div className="d-flex flex-column h-100">
-                            <div className="d-flex flex-column align-items-end">
+                            <div className="d-flex flex-column align-items-end gap-2">
                                 <Link
                                     to={`/jobs/${job._id}`}
-                                    className="btn btn-primary mb-2 px-4"
+                                    className="btn btn-primary mb-2 px-4 w-100 w-lg-auto"
                                 >
                                     Apply
                                 </Link>
-                                <div>
+                                <div className="d-flex flex-wrap gap-1 justify-content-end">
                                     {Array.isArray(job.job_type) &&
                                     job.job_type.length > 0 ? (
                                         job.job_type.map((type, index) => (

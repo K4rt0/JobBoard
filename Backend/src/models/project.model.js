@@ -91,7 +91,7 @@ const find_all_projects_pagination = async (page = 1, limit = 10, filtered = {})
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filtered.status && filtered.status !== "all" && ["active", "deleted", "blocked"].includes(filtered.status)) query.status = filtered.status;
+    if (filtered.status && filtered.status !== "all" && ["opening", "closed"].includes(filtered.status)) query.status = filtered.status;
     if (filtered.search) query.$or = [{ full_name: { $regex: filtered.search, $options: "i" } }, { email: { $regex: filtered.search, $options: "i" } }, { phone_number: { $regex: filtered.search, $options: "i" } }];
 
     let sort = {};

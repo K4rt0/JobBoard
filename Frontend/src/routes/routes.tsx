@@ -24,6 +24,7 @@ import ProtectedUserRoute from '@/components/protected/ProtectedUserRoute'
 import UserProfilePage from '@/pages/user/UserProfilePage'
 import ScrollToTop from '@/components/ScrollToTop'
 import FAQPage from '@/pages/FAQPage'
+import EmployerRegistationPage from '@/pages/EmployerRegistationPage'
 
 const AppRoutes = () => {
     return (
@@ -33,6 +34,10 @@ const AppRoutes = () => {
                 {/* Auth routes - without layout */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/admin/login" element={<LoginPage />} />
+                <Route
+                    path="/register/employer"
+                    element={<EmployerRegistationPage />}
+                />
                 {/* User routes with MainLayout */}
                 <Route element={<MainLayout />}>
                     <Route path="/" element={<HomePage />} />
