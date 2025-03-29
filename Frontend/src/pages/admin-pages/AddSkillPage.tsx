@@ -4,7 +4,12 @@ import axios, { AxiosError } from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { debounce } from 'lodash'
-import axiosInstance from '@/services/axiosInstance'
+import {
+    fetchSkills,
+    createSkill,
+    updateSkill,
+    deleteSkill,
+} from '@/services/skillService'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
@@ -844,37 +849,22 @@ const SkillsPage: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const fetchSkills = useCallback(
+    const fetchSkillsData = useCallback(
         async (page = 1, limit = 10, search = '', sort = 'all') => {
             try {
                 setIsLoading(true)
-
-                let url = `${API_BASE_URL}/skill/get-all-pagination?page=${page}&limit=${limit}`
-                if (search.trim())
-                    url += `&search=${encodeURIComponent(search.trim())}`
-                if (sort !== 'all') url += `&sort=${sort}`
-
-                const response = await axiosInstance.get<{
-                    data: Skill[]
-                    pagination: Pagination
-                }>(url, {})
-                setSkills(response.data.data || [])
+                const response = await fetchSkills(page, limit, sort, search)
+                setSkills(response.data || [])
                 setPagination(
-                    response.data.pagination || {
+                    response.pagination || {
                         total: 0,
                         current_page: 1,
                         total_pages: 1,
                         limit,
                     },
                 )
-            } catch (error) {
-                const axiosError = error as AxiosError
-                if (axiosError.response?.status === 401) {
-                    toast.error('Session expired. Redirecting to login...')
-                    setTimeout(() => (window.location.href = '/login'), 1500)
-                } else {
-                    toast.error('Failed to fetch skills. Please try again.')
-                }
+            } catch (error: any) {
+                toast.error(`Failed to fetch skills: ${error.message}`)
                 setSkills([])
                 setPagination({
                     total: 0,
@@ -890,13 +880,8 @@ const SkillsPage: React.FC = () => {
     )
 
     const fetchSkillsDebounced = useMemo(
-        () =>
-            debounce(
-                (page, limit, search, sort) =>
-                    fetchSkills(page, limit, search, sort),
-                300,
-            ),
-        [fetchSkills],
+        () => debounce(fetchSkillsData, 300),
+        [fetchSkillsData],
     )
 
     useEffect(() => {
@@ -963,24 +948,16 @@ const SkillsPage: React.FC = () => {
         try {
             const skillData = { name: newSkill.trim(), is_disabled: isDisabled }
             if (editingId) {
-                await axiosInstance.patch(
-                    `${API_BASE_URL}/skill/update/${editingId}`,
-                    skillData,
-                )
+                await updateSkill(editingId, skillData)
                 toast.success('Skill updated successfully!')
             } else {
-                await axiosInstance.post(
-                    `${API_BASE_URL}/skill/create`,
-                    skillData,
-                    {},
-                )
+                await createSkill(skillData)
                 toast.success('Skill created successfully!')
             }
-            fetchSkills(currentPage, itemsPerPage, searchQuery, sortType)
+            fetchSkillsData(currentPage, itemsPerPage, searchQuery, sortType)
             handleCloseModal()
-        } catch (error) {
-            const axiosError = error as AxiosError
-            toast.error(`Failed to save skill: ${axiosError.message}`)
+        } catch (error: any) {
+            toast.error(`Failed to save skill: ${error.message}`)
         } finally {
             setIsSaving(false)
         }
@@ -1008,30 +985,25 @@ const SkillsPage: React.FC = () => {
     const confirmDelete = useCallback(async () => {
         if (!skillToDelete) return
 
-        const token = localStorage.getItem('access-token')
-        if (!token) {
-            toast.error('Please log in to delete a skill.')
-            window.location.href = '/login'
-            return
-        }
-
         setIsDeleting(true)
         try {
-            await axiosInstance.delete(
-                `${API_BASE_URL}/skill/delete/${skillToDelete._id}`,
-            )
+            await deleteSkill(skillToDelete._id)
             toast.success('Skill deleted successfully!')
             const isLastItemOnPage =
                 filteredSkills.length === 1 && currentPage > 1
             if (isLastItemOnPage) {
                 setCurrentPage((prev) => prev - 1)
             } else {
-                fetchSkills(currentPage, itemsPerPage, searchQuery, sortType)
+                fetchSkillsData(
+                    currentPage,
+                    itemsPerPage,
+                    searchQuery,
+                    sortType,
+                )
             }
             closeDeleteModal()
-        } catch (error) {
-            const axiosError = error as AxiosError
-            toast.error(`Failed to delete skill: ${axiosError.message}`)
+        } catch (error: any) {
+            toast.error(`Failed to delete skill: ${error.message}`)
         } finally {
             setIsDeleting(false)
         }
@@ -1058,11 +1030,11 @@ const SkillsPage: React.FC = () => {
         (e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
                 setCurrentPage(1)
-                fetchSkills(1, itemsPerPage, searchQuery, sortType)
+                fetchSkillsData(1, itemsPerPage, searchQuery, sortType)
             } else if (e.key === 'Escape') {
                 setSearchQuery('')
                 setCurrentPage(1)
-                fetchSkills(1, itemsPerPage, '', sortType)
+                fetchSkillsData(1, itemsPerPage, '', sortType)
             }
         },
         [itemsPerPage, searchQuery, sortType],
@@ -1071,7 +1043,7 @@ const SkillsPage: React.FC = () => {
     const handleClearSearch = useCallback(() => {
         setSearchQuery('')
         setCurrentPage(1)
-        fetchSkills(1, itemsPerPage, '', sortType)
+        fetchSkillsData(1, itemsPerPage, '', sortType)
     }, [itemsPerPage, sortType])
 
     const handleStatusFilter = useCallback((status: string | null) => {

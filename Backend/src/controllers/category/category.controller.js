@@ -28,10 +28,15 @@ const get_all_categories_pagination = async (req, res, next) => {
 
     const { sort, search } = req.query;
     const filtered = {};
-    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase()))
+      filtered.sort = sort;
     if (search) filtered.search = search;
 
-    const result = await category_service.get_all_categories_pagination(page, limit, filtered);
+    const result = await category_service.get_all_categories_pagination(
+      page,
+      limit,
+      filtered,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Đã lấy dữ liệu danh sách danh mục thành công !",
@@ -71,7 +76,10 @@ const get_category = async (req, res, next) => {
 
 const update_category = async (req, res, next) => {
   try {
-    const result = await category_service.update_category(req.params.id, req.body);
+    const result = await category_service.update_category(
+      req.params.id,
+      req.body,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Đã cập nhật dữ liệu danh mục thành công !",

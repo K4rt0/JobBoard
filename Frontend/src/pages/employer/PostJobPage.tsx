@@ -3,28 +3,24 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import axiosInstance, { proactiveTokenRefresh } from '@/services/axiosInstance'
-import { fetchCategories } from '@/services/categoryService' // Đã có sẵn trong code
+import { fetchCategories } from '@/services/categoryService'
 import { getSkillsList } from '@/services/skillService'
 import { useAuthStore } from '@/store/authStore'
 import { useNavigate } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import { Helmet } from 'react-helmet'
 import sanitizeHtml from 'sanitize-html'
 
 interface Province {
     name: string
     code: number
-    division_type: string
-    phone_code: number
     codename: string
     districts: Array<{
         name: string
         code: number
         codename: string
-        division_type: string
-        province_code: number
         wards: null | any[]
     }> | null
 }
@@ -34,8 +30,9 @@ interface Category {
     name: string
 }
 
-interface ErrorResponse {
-    message?: string
+interface Skill {
+    _id: string
+    name: string
 }
 
 const jobFormSchema = yup.object().shape({
@@ -60,9 +57,6 @@ const jobFormSchema = yup.object().shape({
         })
         .required(),
     description: yup.string().max(1000).required('Job description is required'),
-    companyName: yup.string().required('Company name is required'),
-    industry: yup.string(),
-    companyDescription: yup.string(),
     recruiterName: yup.string().required('Recruiter name is required'),
     recruiterEmail: yup
         .string()
@@ -81,9 +75,10 @@ const jobFormSchema = yup.object().shape({
         .string()
         .oneOf(['Male', 'Female', 'Any'])
         .required('Gender is required'),
-    location: yup.string().required('Location is required'),
+    province: yup.string().required('Province/City is required'),
+    district: yup.string().required('District is required'),
     benefits: yup.string().required('At least one benefit is required'),
-    quantity: yup.number().min(1).required('Number of vacancies is required'),
+    quantity: yup.number().min(1).required('Number of positions is required'),
     experience: yup.number().min(0).required('Experience is required'),
 })
 
@@ -91,13 +86,14 @@ type JobFormData = yup.InferType<typeof jobFormSchema>
 
 const useJobFormData = (authToken: string | null) => {
     const [categories, setCategories] = useState<Category[]>([])
-    const [skills, setSkills] = useState<{ _id: string; name: string }[]>([])
+    const [skills, setSkills] = useState<Skill[]>([])
     const [provinces, setProvinces] = useState<Province[]>([])
     const [loading, setLoading] = useState({
         categories: false,
         skills: false,
         provinces: false,
     })
+    const [error, setError] = useState<string | null>(null)
 
     const fetchData = useCallback(async () => {
         const cached = JSON.parse(localStorage.getItem('jobFormData') || '{}')
@@ -128,9 +124,14 @@ const useJobFormData = (authToken: string | null) => {
                             setLoading((l) => ({ ...l, provinces: false })),
                         ),
                 ])
-            const newCategories = categoryData.data || [] // Lấy mảng categories từ response
+
+            const newCategories = categoryData.data || []
             const newSkills = skillData || []
             const newProvinces = provinceResponse.data || []
+
+            if (!newProvinces.length)
+                throw new Error('Failed to load provinces.')
+
             setCategories(newCategories)
             setSkills(newSkills)
             setProvinces(newProvinces)
@@ -143,25 +144,29 @@ const useJobFormData = (authToken: string | null) => {
                 }),
             )
         } catch (error) {
-            toast.error('Error fetching data.')
+            setError('Failed to load data. Please try again.')
+            toast.error('Failed to load data.')
             console.error(error)
         }
     }, [authToken])
 
-    return { categories, skills, provinces, fetchData, loading }
+    return { categories, skills, provinces, fetchData, loading, error }
 }
 
 const PostJobPage = () => {
     const [authUser, setAuthUser] = useState(useAuthStore.getState().user)
-    const { categories, skills, provinces, fetchData, loading } =
+    const { categories, skills, provinces, fetchData, loading, error } =
         useJobFormData(authUser?.access_token || null)
     const navigate = useNavigate()
     const [showConfirm, setShowConfirm] = useState(false)
+    const [skillSearch, setSkillSearch] = useState('')
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
+        watch,
+        setValue,
     } = useForm<JobFormData>({
         resolver: yupResolver(jobFormSchema),
         mode: 'onChange',
@@ -172,21 +177,27 @@ const PostJobPage = () => {
             deadline: '',
             salary: { min: 0, max: 0 },
             description: '',
-            companyName: '',
-            industry: '',
-            companyDescription: '',
             recruiterName: authUser?.full_name || '',
             recruiterEmail: authUser?.email || '',
             phoneNumber: '',
             termsAgreed: false,
             skills: [],
             gender: 'Any',
-            location: '',
+            province: '',
+            district: '',
             benefits: '',
             quantity: 1,
             experience: 0,
         },
     })
+
+    const provinceValue = watch('province')
+    const selectedSkills = watch('skills')
+
+    // Get districts based on selected province
+    const selectedProvinceData =
+        provinces.find((p) => p.code === parseInt(provinceValue)) || null
+    const districts = selectedProvinceData?.districts || []
 
     useEffect(() => {
         const unsubscribe = useAuthStore.subscribe((state) =>
@@ -203,6 +214,26 @@ const PostJobPage = () => {
         }
     }, [fetchData])
 
+    const filteredSkills = skills.filter((skill) =>
+        skill.name.toLowerCase().includes(skillSearch.toLowerCase()),
+    )
+
+    const handleSkillChange = (skillId: string) => {
+        const currentSkills = selectedSkills || []
+        setValue(
+            'skills',
+            currentSkills.includes(skillId)
+                ? currentSkills.filter((id) => id !== skillId)
+                : [...currentSkills, skillId],
+        )
+    }
+
+    const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newProvince = e.target.value
+        setValue('province', newProvince)
+        setValue('district', '') // Reset district when province changes
+    }
+
     const onSubmit = async (data: JobFormData) => {
         try {
             await proactiveTokenRefresh()
@@ -214,14 +245,19 @@ const PostJobPage = () => {
 
             const benefitsArray = sanitizedData.benefits
                 .split('\n')
-                .map((benefit: string) => benefit.trim())
-                .filter((benefit: string) => benefit.length > 0)
-            const selectedProvince = provinces.find(
-                (p) => p.code === parseInt(sanitizedData.location),
+                .map((b) => b.trim())
+                .filter((b) => b.length > 0)
+            const selectedProvinceData = provinces.find(
+                (p) => p.code === parseInt(sanitizedData.province),
             )
-            const locationName = selectedProvince
-                ? selectedProvince.name
-                : sanitizedData.location
+            const selectedDistrictData = selectedProvinceData?.districts?.find(
+                (d) => d.code === parseInt(sanitizedData.district),
+            )
+
+            const locationName =
+                selectedDistrictData && selectedProvinceData
+                    ? `${selectedDistrictData.name}, ${selectedProvinceData.name}`
+                    : selectedProvinceData?.name || 'Not specified'
 
             const payload = {
                 title: sanitizedData.title,
@@ -239,36 +275,29 @@ const PostJobPage = () => {
                 gender: sanitizedData.gender,
                 requirements: sanitizedData.description
                     .split('\n')
-                    .map((req: string) => req.trim())
-                    .filter((req: string) => req.length > 0),
+                    .map((r) => r.trim())
+                    .filter((r) => r.length > 0),
                 benefits: benefitsArray,
                 contact: {
                     full_name: sanitizedData.recruiterName,
                     email: sanitizedData.recruiterEmail,
                     phone_number: sanitizedData.phoneNumber,
                 },
-                job_type: [sanitizedData.jobType.toLowerCase()], // Đảm bảo định dạng đúng
-                status: 'opening', // Xác nhận giá trị này có phù hợp không
+                job_type: [sanitizedData.jobType.toLowerCase()],
+                status: 'opening',
             }
-            console.log(
-                'Payload gửi lên server:',
-                JSON.stringify(payload, null, 2),
-            ) // Thêm log
-            const response = await axiosInstance.post(
-                '/project/create',
-                payload,
-                {
-                    timeout: 15000,
-                },
-            )
+
+            await axiosInstance.post('/project/create', payload, {
+                timeout: 15000,
+            })
             toast.success('Job posted successfully!')
             navigate('/jobs')
         } catch (error) {
-            const axiosError = error as AxiosError<ErrorResponse>
+            const axiosError = error as any
             const errorMessage =
                 axiosError.response?.data?.message ||
-                'Failed to post job. Please check your input or try again.'
-            console.error('Lỗi từ server:', axiosError.response?.data)
+                'Failed to post job. Please check your input.'
+            console.error('Server error:', axiosError.response?.data)
             toast.error(errorMessage)
         }
     }
@@ -292,19 +321,20 @@ const PostJobPage = () => {
                 <div className="container pt-5">
                     <div className="row justify-content-center pt-3">
                         <div className="col-lg-10 col-12">
-                            <div className="card shadow-sm p-4 job-infomation">
+                            <div className="card shadow-sm p-4 job-information">
                                 <div className="text-center mb-5">
                                     <h2 className="fw-bold text-primary">
                                         Post a New Job
                                     </h2>
                                     <p className="text-muted">
-                                        Fill in the details below to create your
-                                        job listing
+                                        Fill out the details below to create
+                                        your job listing
                                     </p>
                                 </div>
 
+                                {/* Loading Indicator */}
                                 {Object.values(loading).some((l) => l) && (
-                                    <div className="text-center">
+                                    <div className="text-center mb-4">
                                         <div
                                             className="spinner-border text-primary"
                                             role="status"
@@ -313,7 +343,17 @@ const PostJobPage = () => {
                                                 Loading...
                                             </span>
                                         </div>
-                                        <p>Loading data...</p>
+                                        <p>Loading data, please wait...</p>
+                                    </div>
+                                )}
+
+                                {/* Error Message */}
+                                {error && (
+                                    <div
+                                        className="alert alert-danger"
+                                        role="alert"
+                                    >
+                                        {error}
                                     </div>
                                 )}
 
@@ -324,7 +364,7 @@ const PostJobPage = () => {
                                 >
                                     <fieldset className="mb-4">
                                         <h3 className="p-2 rounded">
-                                            <i className="lni lni-briefcase mr-2"></i>
+                                            <i className="lni lni-briefcase me-2"></i>
                                             Job Information
                                         </h3>
                                         <div className="row g-3">
@@ -333,15 +373,19 @@ const PostJobPage = () => {
                                                     htmlFor="title"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Job Title*
+                                                    Job Title*{' '}
+                                                    <small className="text-muted">
+                                                        (e.g., Senior React
+                                                        Developer)
+                                                    </small>
                                                 </label>
                                                 <input
                                                     {...register('title')}
                                                     id="title"
                                                     className={`form-control ${errors.title ? 'is-invalid' : ''}`}
                                                     type="text"
-                                                    placeholder="e.g. Senior React Developer"
-                                                    aria-label="Job Title"
+                                                    placeholder="Enter job title"
+                                                    aria-label="Job title"
                                                 />
                                                 {errors.title && (
                                                     <div className="invalid-feedback">
@@ -364,7 +408,7 @@ const PostJobPage = () => {
                                                     aria-label="Category"
                                                 >
                                                     <option value="">
-                                                        Select Category
+                                                        Select a category
                                                     </option>
                                                     {categories.map((cat) => (
                                                         <option
@@ -396,16 +440,16 @@ const PostJobPage = () => {
                                                     {...register('jobType')}
                                                     id="jobType"
                                                     className={`form-select ${errors.jobType ? 'is-invalid' : ''}`}
-                                                    aria-label="Job Type"
+                                                    aria-label="Job type"
                                                 >
                                                     <option value="">
-                                                        Select Job Type
+                                                        Select job type
                                                     </option>
                                                     <option value="full-time">
-                                                        Full Time
+                                                        Full-time
                                                     </option>
                                                     <option value="part-time">
-                                                        Part Time
+                                                        Part-time
                                                     </option>
                                                     <option value="remote">
                                                         Remote
@@ -434,6 +478,11 @@ const PostJobPage = () => {
                                                     type="date"
                                                     className={`form-control ${errors.deadline ? 'is-invalid' : ''}`}
                                                     aria-label="Deadline"
+                                                    min={
+                                                        new Date()
+                                                            .toISOString()
+                                                            .split('T')[0]
+                                                    } // Prevent past dates
                                                 />
                                                 {errors.deadline && (
                                                     <div className="invalid-feedback">
@@ -450,7 +499,10 @@ const PostJobPage = () => {
                                                     htmlFor="salaryMin"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Min Salary*
+                                                    Minimum Salary*{' '}
+                                                    <small className="text-muted">
+                                                        (VND)
+                                                    </small>
                                                 </label>
                                                 <input
                                                     {...register('salary.min')}
@@ -458,8 +510,8 @@ const PostJobPage = () => {
                                                     type="number"
                                                     min="0"
                                                     className={`form-control ${errors.salary?.min ? 'is-invalid' : ''}`}
-                                                    placeholder="e.g. 20000"
-                                                    aria-label="Minimum Salary"
+                                                    placeholder="e.g., 10000000"
+                                                    aria-label="Minimum salary"
                                                 />
                                                 {errors.salary?.min && (
                                                     <div className="invalid-feedback">
@@ -476,7 +528,10 @@ const PostJobPage = () => {
                                                     htmlFor="salaryMax"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Max Salary*
+                                                    Maximum Salary*{' '}
+                                                    <small className="text-muted">
+                                                        (VND)
+                                                    </small>
                                                 </label>
                                                 <input
                                                     {...register('salary.max')}
@@ -484,8 +539,8 @@ const PostJobPage = () => {
                                                     type="number"
                                                     min="0"
                                                     className={`form-control ${errors.salary?.max ? 'is-invalid' : ''}`}
-                                                    placeholder="e.g. 30000"
-                                                    aria-label="Maximum Salary"
+                                                    placeholder="e.g., 15000000"
+                                                    aria-label="Maximum salary"
                                                 />
                                                 {errors.salary?.max && (
                                                     <div className="invalid-feedback">
@@ -499,19 +554,26 @@ const PostJobPage = () => {
 
                                             <div className="col-md-6">
                                                 <label
-                                                    htmlFor="location"
+                                                    htmlFor="province"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Location*
+                                                    Province/City*
                                                 </label>
                                                 <select
-                                                    {...register('location')}
-                                                    id="location"
-                                                    className={`form-select ${errors.location ? 'is-invalid' : ''}`}
-                                                    aria-label="Location"
+                                                    {...register('province')}
+                                                    id="province"
+                                                    className={`form-select ${errors.province ? 'is-invalid' : ''}`}
+                                                    onChange={
+                                                        handleProvinceChange
+                                                    }
+                                                    aria-label="Province"
+                                                    disabled={
+                                                        loading.provinces ||
+                                                        provinces.length === 0
+                                                    }
                                                 >
                                                     <option value="">
-                                                        Select Location
+                                                        Select Province/City
                                                     </option>
                                                     {provinces.map(
                                                         (province) => (
@@ -528,14 +590,71 @@ const PostJobPage = () => {
                                                         ),
                                                     )}
                                                 </select>
-                                                {errors.location && (
+                                                {errors.province && (
                                                     <div className="invalid-feedback">
                                                         {
-                                                            errors.location
+                                                            errors.province
                                                                 .message
                                                         }
                                                     </div>
                                                 )}
+                                                {loading.provinces && (
+                                                    <small className="text-muted">
+                                                        Loading provinces...
+                                                    </small>
+                                                )}
+                                            </div>
+
+                                            <div className="col-md-6">
+                                                <label
+                                                    htmlFor="district"
+                                                    className="form-label fw-semibold"
+                                                >
+                                                    District*
+                                                </label>
+                                                <select
+                                                    {...register('district')}
+                                                    id="district"
+                                                    className={`form-select ${errors.district ? 'is-invalid' : ''}`}
+                                                    disabled={
+                                                        !provinceValue ||
+                                                        districts.length === 0
+                                                    }
+                                                    aria-label="District"
+                                                >
+                                                    <option value="">
+                                                        Select District
+                                                    </option>
+                                                    {districts.map(
+                                                        (district) => (
+                                                            <option
+                                                                key={
+                                                                    district.code
+                                                                }
+                                                                value={
+                                                                    district.code
+                                                                }
+                                                            >
+                                                                {district.name}
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </select>
+                                                {errors.district && (
+                                                    <div className="invalid-feedback">
+                                                        {
+                                                            errors.district
+                                                                .message
+                                                        }
+                                                    </div>
+                                                )}
+                                                {!provinceValue &&
+                                                    !errors.district && (
+                                                        <small className="text-muted">
+                                                            Please select a
+                                                            province first
+                                                        </small>
+                                                    )}
                                             </div>
 
                                             <div className="col-md-6">
@@ -543,7 +662,7 @@ const PostJobPage = () => {
                                                     htmlFor="gender"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Gender*
+                                                    Gender Requirement*
                                                 </label>
                                                 <select
                                                     {...register('gender')}
@@ -552,7 +671,7 @@ const PostJobPage = () => {
                                                     aria-label="Gender"
                                                 >
                                                     <option value="">
-                                                        Select Gender
+                                                        Select gender
                                                     </option>
                                                     <option value="Male">
                                                         Male
@@ -576,7 +695,7 @@ const PostJobPage = () => {
                                                     htmlFor="quantity"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Number of Vacancies*
+                                                    Number of Positions*
                                                 </label>
                                                 <input
                                                     {...register('quantity')}
@@ -584,8 +703,8 @@ const PostJobPage = () => {
                                                     type="number"
                                                     min="1"
                                                     className={`form-control ${errors.quantity ? 'is-invalid' : ''}`}
-                                                    placeholder="e.g. 1"
-                                                    aria-label="Number of Vacancies"
+                                                    placeholder="e.g., 1"
+                                                    aria-label="Quantity"
                                                 />
                                                 {errors.quantity && (
                                                     <div className="invalid-feedback">
@@ -610,8 +729,8 @@ const PostJobPage = () => {
                                                     type="number"
                                                     min="0"
                                                     className={`form-control ${errors.experience ? 'is-invalid' : ''}`}
-                                                    placeholder="e.g. 2"
-                                                    aria-label="Years of Experience"
+                                                    placeholder="e.g., 2"
+                                                    aria-label="Experience"
                                                 />
                                                 {errors.experience && (
                                                     <div className="invalid-feedback">
@@ -628,28 +747,87 @@ const PostJobPage = () => {
                                                     htmlFor="skills"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Skills*
+                                                    Skills*{' '}
+                                                    <small className="text-muted">
+                                                        (Select multiple)
+                                                    </small>
                                                 </label>
-                                                <select
-                                                    {...register('skills')}
-                                                    id="skills"
-                                                    multiple
-                                                    className={`form-select ${errors.skills ? 'is-invalid' : ''}`}
-                                                    aria-label="Skills"
+                                                <input
+                                                    type="text"
+                                                    className="form-control mb-2"
+                                                    placeholder="Search skills..."
+                                                    value={skillSearch}
+                                                    onChange={(e) =>
+                                                        setSkillSearch(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        loading.skills ||
+                                                        skills.length === 0
+                                                    }
+                                                />
+                                                <div
+                                                    className="border rounded p-2"
+                                                    style={{
+                                                        maxHeight: '200px',
+                                                        overflowY: 'auto',
+                                                    }}
                                                 >
-                                                    {skills.map((skill) => (
-                                                        <option
-                                                            key={skill._id}
-                                                            value={skill._id}
-                                                        >
-                                                            {skill.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    {filteredSkills.length >
+                                                    0 ? (
+                                                        filteredSkills.map(
+                                                            (skill) => (
+                                                                <div
+                                                                    key={
+                                                                        skill._id
+                                                                    }
+                                                                    className="form-check"
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="form-check-input"
+                                                                        id={`skill-${skill._id}`}
+                                                                        value={
+                                                                            skill._id
+                                                                        }
+                                                                        checked={selectedSkills?.includes(
+                                                                            skill._id,
+                                                                        )}
+                                                                        onChange={() =>
+                                                                            handleSkillChange(
+                                                                                skill._id,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                    <label
+                                                                        className="form-check-label"
+                                                                        htmlFor={`skill-${skill._id}`}
+                                                                    >
+                                                                        {
+                                                                            skill.name
+                                                                        }
+                                                                    </label>
+                                                                </div>
+                                                            ),
+                                                        )
+                                                    ) : (
+                                                        <p className="text-muted">
+                                                            {skillSearch
+                                                                ? 'No skills found'
+                                                                : 'Start typing to search skills'}
+                                                        </p>
+                                                    )}
+                                                </div>
                                                 {errors.skills && (
-                                                    <div className="invalid-feedback">
+                                                    <div className="invalid-feedback d-block">
                                                         {errors.skills.message}
                                                     </div>
+                                                )}
+                                                {loading.skills && (
+                                                    <small className="text-muted">
+                                                        Loading skills...
+                                                    </small>
                                                 )}
                                             </div>
 
@@ -658,15 +836,17 @@ const PostJobPage = () => {
                                                     htmlFor="benefits"
                                                     className="form-label fw-semibold"
                                                 >
-                                                    Benefits* (Enter each
-                                                    benefit on a new line)
+                                                    Benefits*{' '}
+                                                    <small className="text-muted">
+                                                        (One per line)
+                                                    </small>
                                                 </label>
                                                 <textarea
                                                     {...register('benefits')}
                                                     id="benefits"
                                                     className={`form-control ${errors.benefits ? 'is-invalid' : ''}`}
                                                     rows={3}
-                                                    placeholder="e.g. Competitive salary\nHealth insurance\nRemote work"
+                                                    placeholder="e.g., Competitive salary\nHealth insurance\nRemote work option"
                                                     aria-label="Benefits"
                                                 />
                                                 {errors.benefits && (
@@ -691,8 +871,8 @@ const PostJobPage = () => {
                                                     id="description"
                                                     className={`form-control ${errors.description ? 'is-invalid' : ''}`}
                                                     rows={5}
-                                                    placeholder="Describe job responsibilities, requirements, benefits, etc."
-                                                    aria-label="Job Description"
+                                                    placeholder="Describe responsibilities, requirements, benefits, etc."
+                                                    aria-label="Description"
                                                 />
                                                 {errors.description && (
                                                     <div className="invalid-feedback">
@@ -707,77 +887,8 @@ const PostJobPage = () => {
                                     </fieldset>
 
                                     <fieldset className="mb-4">
-                                        <h3 className="text-success p-2 rounded">
-                                            <i className="lni lni-apartment mr-2"></i>
-                                            Company Information
-                                        </h3>
-                                        <div className="row g-3">
-                                            <div className="col-12">
-                                                <label
-                                                    htmlFor="companyName"
-                                                    className="form-label fw-semibold"
-                                                >
-                                                    Company Name*
-                                                </label>
-                                                <input
-                                                    {...register('companyName')}
-                                                    id="companyName"
-                                                    className={`form-control ${errors.companyName ? 'is-invalid' : ''}`}
-                                                    type="text"
-                                                    placeholder="Your company name"
-                                                    aria-label="Company Name"
-                                                />
-                                                {errors.companyName && (
-                                                    <div className="invalid-feedback">
-                                                        {
-                                                            errors.companyName
-                                                                .message
-                                                        }
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                <label
-                                                    htmlFor="industry"
-                                                    className="form-label fw-semibold"
-                                                >
-                                                    Company Industry
-                                                </label>
-                                                <input
-                                                    {...register('industry')}
-                                                    id="industry"
-                                                    className="form-control"
-                                                    type="text"
-                                                    placeholder="e.g. Information Technology"
-                                                    aria-label="Industry"
-                                                />
-                                            </div>
-
-                                            <div className="col-12">
-                                                <label
-                                                    htmlFor="companyDescription"
-                                                    className="form-label fw-semibold"
-                                                >
-                                                    Company Description
-                                                </label>
-                                                <textarea
-                                                    {...register(
-                                                        'companyDescription',
-                                                    )}
-                                                    id="companyDescription"
-                                                    className="form-control"
-                                                    rows={5}
-                                                    placeholder="Tell candidates about your company and culture"
-                                                    aria-label="Company Description"
-                                                />
-                                            </div>
-                                        </div>
-                                    </fieldset>
-
-                                    <fieldset className="mb-4">
                                         <h3 className="text-info p-2 rounded">
-                                            <i className="lni lni-user mr-2"></i>
+                                            <i className="lni lni-user me-2"></i>
                                             Recruiter Information
                                         </h3>
                                         <div className="row g-3">
@@ -796,7 +907,7 @@ const PostJobPage = () => {
                                                     className={`form-control ${errors.recruiterName ? 'is-invalid' : ''}`}
                                                     type="text"
                                                     placeholder="Your full name"
-                                                    aria-label="Recruiter Name"
+                                                    aria-label="Recruiter name"
                                                 />
                                                 {errors.recruiterName && (
                                                     <div className="invalid-feedback">
@@ -823,7 +934,7 @@ const PostJobPage = () => {
                                                     className={`form-control ${errors.recruiterEmail ? 'is-invalid' : ''}`}
                                                     type="email"
                                                     placeholder="your@email.com"
-                                                    aria-label="Recruiter Email"
+                                                    aria-label="Recruiter email"
                                                 />
                                                 {errors.recruiterEmail && (
                                                     <div className="invalid-feedback">
@@ -848,8 +959,8 @@ const PostJobPage = () => {
                                                     id="phoneNumber"
                                                     className={`form-control ${errors.phoneNumber ? 'is-invalid' : ''}`}
                                                     type="text"
-                                                    placeholder="e.g. 0912345678"
-                                                    aria-label="Phone Number"
+                                                    placeholder="e.g., 0912345678"
+                                                    aria-label="Phone number"
                                                 />
                                                 {errors.phoneNumber && (
                                                     <div className="invalid-feedback">
@@ -870,7 +981,7 @@ const PostJobPage = () => {
                                                         type="checkbox"
                                                         className={`form-check-input ${errors.termsAgreed ? 'is-invalid' : ''}`}
                                                         id="termsAgreed"
-                                                        aria-label="Terms Agreement"
+                                                        aria-label="Agree to terms"
                                                     />
                                                     <label
                                                         className="form-check-label"
@@ -918,6 +1029,7 @@ const PostJobPage = () => {
                                     </div>
                                 </form>
 
+                                {/* Confirmation Modal */}
                                 {showConfirm && (
                                     <div
                                         className="modal fade show d-block"
@@ -930,7 +1042,7 @@ const PostJobPage = () => {
                                             <div className="modal-content">
                                                 <div className="modal-header">
                                                     <h5 className="modal-title">
-                                                        Confirm Posting
+                                                        Confirm Job Posting
                                                     </h5>
                                                     <button
                                                         type="button"

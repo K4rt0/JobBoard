@@ -12,7 +12,8 @@ const admin_login = (data) => {
     const username = env.ADMIN_USER;
     const password = env.ADMIN_PWD;
 
-    if (data.username !== username || data.password !== password) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
+    if (data.username !== username || data.password !== password)
+      throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
 
     const access_token = jwt.sign({}, env.JWT_SECRET, { expiresIn: "7d" });
     return { access_token };
@@ -25,16 +26,26 @@ const admin_login = (data) => {
 const login_user = async ({ email, password }) => {
   try {
     const user = await user_model.find_user({ email }, false);
-    if (!user) throw new Error("Không tìm thấy người dùng này trong hệ thống !");
+    if (!user)
+      throw new Error("Không tìm thấy người dùng này trong hệ thống !");
     const is_password_valid = await bcrypt.compare(password, user.password);
 
-    if (!is_password_valid) throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
+    if (!is_password_valid)
+      throw new Error("Tài khoản hoặc mật khẩu không hợp lệ !");
 
-    if (user.status === "Deleted" || user.status === "Blocked") throw new ApiError(StatusCodes.FORBIDDEN, `Tài khoản này đã ${user.status === "Deleted" ? "bị xóa" : "bị khóa"} !`);
+    if (user.status === "Deleted" || user.status === "Blocked")
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        `Tài khoản này đã ${user.status === "Deleted" ? "bị xóa" : "bị khóa"} !`,
+      );
 
     const _id = user._id.toString();
-    const access_token = jwt.sign({ _id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
-    const refresh_token = jwt.sign({ _id }, env.JWT_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
+    const access_token = jwt.sign({ _id, role: user.role }, env.JWT_SECRET, {
+      expiresIn: env.JWT_ACCESS_EXPIRES_IN,
+    });
+    const refresh_token = jwt.sign({ _id }, env.JWT_SECRET, {
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+    });
 
     await user_model.update_user(_id, { refresh_token: refresh_token });
 
@@ -58,10 +69,18 @@ const refresh_token = async (refresh_token) => {
     const decoded = jwt.verify(refresh_token, env.JWT_SECRET);
     const user_id = decoded._id;
 
-    const user = await user_model.find_user({ _id: new ObjectId(user_id) }, false);
-    if (!user || user.refresh_token !== refresh_token) throw new Error("Refresh Token không hợp lệ !");
+    const user = await user_model.find_user(
+      { _id: new ObjectId(user_id) },
+      false,
+    );
+    if (!user || user.refresh_token !== refresh_token)
+      throw new Error("Refresh Token không hợp lệ !");
 
-    const new_access_token = jwt.sign({ _id: user_id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
+    const new_access_token = jwt.sign(
+      { _id: user_id, role: user.role },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_ACCESS_EXPIRES_IN },
+    );
 
     return { access_token: new_access_token };
   } catch (error) {

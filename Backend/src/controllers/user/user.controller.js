@@ -44,12 +44,19 @@ const get_all_users_pagination = async (req, res, next) => {
 
     const { status, role, sort, search } = req.query;
     const filtered = {};
-    if (status && ["Active", "Deleted", "Blocked"].includes(status)) filtered.status = status;
-    if (role && ["All", "Freelancer", "Employer"].includes(role)) filtered.role = role;
-    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (status && ["Active", "Deleted", "Blocked"].includes(status))
+      filtered.status = status;
+    if (role && ["All", "Freelancer", "Employer"].includes(role))
+      filtered.role = role;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase()))
+      filtered.sort = sort;
     if (search) filtered.search = search;
 
-    const result = await user_service.get_all_users_pagination(page, limit, filtered);
+    const result = await user_service.get_all_users_pagination(
+      page,
+      limit,
+      filtered,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Lấy dữ liệu người dùng thành công !",
@@ -92,7 +99,12 @@ const create_user = async (req, res, next) => {
 const change_user_password = async (req, res, next) => {
   try {
     const { old_password, new_password, retype_new_password } = req.body;
-    const result = await user_service.change_user_password(req._id, old_password, new_password, retype_new_password);
+    const result = await user_service.change_user_password(
+      req._id,
+      old_password,
+      new_password,
+      retype_new_password,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Đổi mật khẩu thành công !",
@@ -105,7 +117,11 @@ const change_user_password = async (req, res, next) => {
 
 const update_user = async (req, res, next) => {
   try {
-    const result = await user_service.update_user(req._id, req.body, req.files && req.files.avatar ? req.files.avatar : null);
+    const result = await user_service.update_user(
+      req._id,
+      req.body,
+      req.files && req.files.avatar ? req.files.avatar : null,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Cập nhật thông tin người dùng thành công !",
@@ -160,11 +176,21 @@ const get_all_projects_pagination = async (req, res, next) => {
 
     const { status, sort, search } = req.query;
     const filtered = {};
-    if (status && ["all", "pending", "accepted", "rejected", "finished"].includes(status)) filtered.status = status;
-    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase())) filtered.sort = sort;
+    if (
+      status &&
+      ["all", "pending", "accepted", "rejected", "finished"].includes(status)
+    )
+      filtered.status = status;
+    if (sort && ["all", "oldest", "newest"].includes(sort.toLowerCase()))
+      filtered.sort = sort;
     if (search) filtered.search = search;
 
-    const result = await user_service.get_all_projects_pagination(req._id, page, limit, filtered);
+    const result = await user_service.get_all_projects_pagination(
+      req._id,
+      page,
+      limit,
+      filtered,
+    );
 
     res.status(StatusCodes.OK).json({
       message: "Lấy danh sách dự án thành công !",
