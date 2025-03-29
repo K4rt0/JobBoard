@@ -2,6 +2,7 @@ import React from 'react'
 import { Job } from '@/interfaces'
 import { Link } from 'react-router-dom'
 import { Heart } from 'react-bootstrap-icons'
+import { formatDate, formatSalary } from '@/utils/handleFormat'
 
 // Thêm CSS inline hoặc trong file CSS riêng
 const styles = `
@@ -88,27 +89,6 @@ interface MiniJobCardProps {
 }
 
 const MiniJobCard: React.FC<MiniJobCardProps> = ({ job }) => {
-    // Hàm định dạng ngày đăng
-    const formatDate = (timestamp: number) => {
-        const date = new Date(timestamp)
-        const now = new Date()
-        const diffTime = Math.abs(now.getTime() - date.getTime())
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays === 0) return 'Today'
-        if (diffDays === 1) return 'Yesterday'
-        if (diffDays < 7) return `${diffDays}d ago`
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
-        return `${Math.floor(diffDays / 30)}m ago`
-    }
-
-    // Hàm định dạng lương (rút gọn)
-    const formatSalary = (min: number, max: string) => {
-        const minInMillions = min / 1_000_000 // Chuyển từ số tiền sang triệu
-        const maxInMillions = parseFloat(max) / 1_000_000
-        return `${minInMillions} - ${maxInMillions} triệu`
-    }
-
     return (
         <div className="card h-100 border-0 p-3 mini-job-card d-flex flex-column gap-2">
             <style>{styles}</style> {/* Thêm CSS inline */}

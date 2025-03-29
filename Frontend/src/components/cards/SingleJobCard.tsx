@@ -1,50 +1,13 @@
 import React from 'react'
 import { Job } from '@/interfaces'
 import { Link } from 'react-router-dom'
+import { formatDate, formatDeadline, formatSalary } from '@/utils/handleFormat'
 
 interface SingleJobCardProps {
     job: Job
 }
 
 const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
-    const formatDate = (timestamp: number) => {
-        const date = new Date(timestamp)
-        const now = new Date()
-        const diffTime = Math.abs(now.getTime() - date.getTime())
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays === 0) return 'Today'
-        if (diffDays === 1) return 'Yesterday'
-        if (diffDays < 7) return `${diffDays}d ago`
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
-        return `${Math.floor(diffDays / 30)}m ago`
-    }
-
-    const formatDeadline = (dateString: string) => {
-        try {
-            const date = new Date(dateString)
-            const now = new Date()
-            if (isNaN(date.getTime())) throw new Error('Invalid date')
-
-            if (date < now) return 'Expired'
-
-            const diffTime = Math.abs(date.getTime() - now.getTime())
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-            if (diffDays === 0) return 'Today'
-            if (diffDays === 1) return 'Tomorrow'
-            if (diffDays < 7) return `${diffDays}d left`
-            if (diffDays < 30) return `${Math.floor(diffDays / 7)}w left`
-            return date.toLocaleDateString()
-        } catch (e) {
-            return 'N/A'
-        }
-    }
-
-    const formatSalary = (min: number, max: string) => {
-        return `$${min.toLocaleString()} - $${parseFloat(max).toLocaleString()}`
-    }
-
     const getCompanyImage = () => {
         return 'assets/images/jobs/img1.png'
     }
@@ -96,10 +59,15 @@ const SingleJobCard: React.FC<SingleJobCardProps> = ({ job }) => {
                                 <i className="lni lni-map-marker text-primary me-1"></i>
                                 {job.location || 'Remote'}
                             </li>
-                            {job.experience && (
+                            {job.experience && job.experience ? (
                                 <li className="text-muted text-nowrap">
                                     <i className="lni lni-briefcase text-primary me-1"></i>
                                     {job.experience} yrs
+                                </li>
+                            ) : (
+                                <li className="text-muted text-nowrap">
+                                    <i className="lni lni-briefcase text-primary me-1"></i>
+                                    Not required exp
                                 </li>
                             )}
                         </ul>

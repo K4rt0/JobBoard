@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form' // Thêm Controller
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import axiosInstance, { proactiveTokenRefresh } from '@/services/axiosInstance'
-import { fetchCategories } from '@/services/categoryService' // Đã có sẵn trong code
+import { fetchCategories } from '@/services/categoryService'
 import { getSkillsList } from '@/services/skillService'
 import { useAuthStore } from '@/store/authStore'
 import { useNavigate } from 'react-router-dom'
@@ -12,6 +12,9 @@ import 'react-toastify/dist/ReactToastify.css'
 import axios, { AxiosError } from 'axios'
 import { Helmet } from 'react-helmet'
 import sanitizeHtml from 'sanitize-html'
+import { jobFormPostSchema } from '@/schemas/jobSchema'
+import Select, { MultiValue } from 'react-select' // Thêm react-select
+import { Badge } from 'react-bootstrap' // Thêm Badge để hiển thị kỹ năng
 
 interface Province {
     name: string
@@ -34,64 +37,20 @@ interface Category {
     name: string
 }
 
+interface Skill {
+    _id: string
+    name: string
+}
+
 interface ErrorResponse {
     message?: string
 }
 
-const jobFormSchema = yup.object().shape({
-    title: yup.string().min(3).max(100).required('Job title is required'),
-    category: yup.string().required('Category is required'),
-    jobType: yup.string().required('Job type is required'),
-    deadline: yup.string().required('Application deadline is required'),
-    salary: yup
-        .object({
-            min: yup.number().min(0).required('Minimum salary is required'),
-            max: yup
-                .number()
-                .min(0)
-                .required('Maximum salary is required')
-                .test(
-                    'max-greater-than-min',
-                    'Maximum salary must be greater than minimum salary',
-                    function (value) {
-                        return value >= (this.parent.min || 0)
-                    },
-                ),
-        })
-        .required(),
-    description: yup.string().max(1000).required('Job description is required'),
-    companyName: yup.string().required('Company name is required'),
-    industry: yup.string(),
-    companyDescription: yup.string(),
-    recruiterName: yup.string().required('Recruiter name is required'),
-    recruiterEmail: yup
-        .string()
-        .email()
-        .required('Recruiter email is required'),
-    phoneNumber: yup
-        .string()
-        .matches(/^[0-9]{10,11}$/, 'Phone number must be 10-11 digits')
-        .required('Phone number is required'),
-    termsAgreed: yup.boolean().oneOf([true], 'You must agree to the terms'),
-    skills: yup
-        .array()
-        .of(yup.string())
-        .min(1, 'At least one skill is required'),
-    gender: yup
-        .string()
-        .oneOf(['Male', 'Female', 'Any'])
-        .required('Gender is required'),
-    location: yup.string().required('Location is required'),
-    benefits: yup.string().required('At least one benefit is required'),
-    quantity: yup.number().min(1).required('Number of vacancies is required'),
-    experience: yup.number().min(0).required('Experience is required'),
-})
-
-type JobFormData = yup.InferType<typeof jobFormSchema>
+type JobFormData = yup.InferType<typeof jobFormPostSchema>
 
 const useJobFormData = (authToken: string | null) => {
     const [categories, setCategories] = useState<Category[]>([])
-    const [skills, setSkills] = useState<{ _id: string; name: string }[]>([])
+    const [skills, setSkills] = useState<Skill[]>([])
     const [provinces, setProvinces] = useState<Province[]>([])
     const [loading, setLoading] = useState({
         categories: false,
@@ -100,18 +59,6 @@ const useJobFormData = (authToken: string | null) => {
     })
 
     const fetchData = useCallback(async () => {
-        const cached = JSON.parse(localStorage.getItem('jobFormData') || '{}')
-        if (
-            cached.categories?.length &&
-            cached.skills?.length &&
-            cached.provinces?.length
-        ) {
-            setCategories(cached.categories)
-            setSkills(cached.skills)
-            setProvinces(cached.provinces)
-            return
-        }
-
         setLoading({ categories: true, skills: true, provinces: true })
         try {
             const [categoryData, skillData, provinceResponse] =
@@ -128,20 +75,12 @@ const useJobFormData = (authToken: string | null) => {
                             setLoading((l) => ({ ...l, provinces: false })),
                         ),
                 ])
-            const newCategories = categoryData.data || [] // Lấy mảng categories từ response
+            const newCategories = categoryData.data || []
             const newSkills = skillData || []
             const newProvinces = provinceResponse.data || []
             setCategories(newCategories)
             setSkills(newSkills)
             setProvinces(newProvinces)
-            localStorage.setItem(
-                'jobFormData',
-                JSON.stringify({
-                    categories: newCategories,
-                    skills: newSkills,
-                    provinces: newProvinces,
-                }),
-            )
         } catch (error) {
             toast.error('Error fetching data.')
             console.error(error)
@@ -162,8 +101,9 @@ const PostJobPage = () => {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
+        control, // Thêm control để tích hợp react-select
     } = useForm<JobFormData>({
-        resolver: yupResolver(jobFormSchema),
+        resolver: yupResolver(jobFormPostSchema),
         mode: 'onChange',
         defaultValues: {
             title: '',
@@ -247,13 +187,13 @@ const PostJobPage = () => {
                     email: sanitizedData.recruiterEmail,
                     phone_number: sanitizedData.phoneNumber,
                 },
-                job_type: [sanitizedData.jobType.toLowerCase()], // Đảm bảo định dạng đúng
-                status: 'opening', // Xác nhận giá trị này có phù hợp không
+                job_type: [sanitizedData.jobType.toLowerCase()],
+                status: 'opening',
             }
             console.log(
                 'Payload gửi lên server:',
                 JSON.stringify(payload, null, 2),
-            ) // Thêm log
+            )
             const response = await axiosInstance.post(
                 '/project/create',
                 payload,
@@ -623,6 +563,7 @@ const PostJobPage = () => {
                                                 )}
                                             </div>
 
+                                            {/* Thay đổi trường skills */}
                                             <div className="col-12">
                                                 <label
                                                     htmlFor="skills"
@@ -630,24 +571,181 @@ const PostJobPage = () => {
                                                 >
                                                     Skills*
                                                 </label>
-                                                <select
-                                                    {...register('skills')}
-                                                    id="skills"
-                                                    multiple
-                                                    className={`form-select ${errors.skills ? 'is-invalid' : ''}`}
-                                                    aria-label="Skills"
-                                                >
-                                                    {skills.map((skill) => (
-                                                        <option
-                                                            key={skill._id}
-                                                            value={skill._id}
-                                                        >
-                                                            {skill.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                <Controller
+                                                    name="skills"
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <>
+                                                            <Select
+                                                                isMulti
+                                                                options={skills.map(
+                                                                    (
+                                                                        skill,
+                                                                    ) => ({
+                                                                        value: skill._id,
+                                                                        label: skill.name,
+                                                                    }),
+                                                                )}
+                                                                value={(
+                                                                    field.value ||
+                                                                    []
+                                                                )
+                                                                    .map(
+                                                                        (
+                                                                            skillId,
+                                                                        ) => {
+                                                                            const skill =
+                                                                                skills.find(
+                                                                                    (
+                                                                                        s,
+                                                                                    ) =>
+                                                                                        s._id ===
+                                                                                        skillId,
+                                                                                )
+                                                                            return skill
+                                                                                ? {
+                                                                                      value: skill._id,
+                                                                                      label: skill.name,
+                                                                                  }
+                                                                                : null
+                                                                        },
+                                                                    )
+                                                                    .filter(
+                                                                        (
+                                                                            option,
+                                                                        ): option is {
+                                                                            value: string
+                                                                            label: string
+                                                                        } =>
+                                                                            option !==
+                                                                            null,
+                                                                    )} // Filter out null values
+                                                                onChange={(
+                                                                    newValue: MultiValue<{
+                                                                        value: string
+                                                                        label: string
+                                                                    } | null>,
+                                                                    actionMeta,
+                                                                ) => {
+                                                                    // Filter out null values and map to skill IDs
+                                                                    const selectedSkillIds =
+                                                                        newValue
+                                                                            .filter(
+                                                                                (
+                                                                                    option,
+                                                                                ): option is {
+                                                                                    value: string
+                                                                                    label: string
+                                                                                } =>
+                                                                                    option !==
+                                                                                    null,
+                                                                            )
+                                                                            .map(
+                                                                                (
+                                                                                    option,
+                                                                                ) =>
+                                                                                    option.value,
+                                                                            )
+                                                                    field.onChange(
+                                                                        selectedSkillIds,
+                                                                    )
+                                                                }}
+                                                                placeholder="Search and select skills..."
+                                                                classNamePrefix="react-select"
+                                                                maxMenuHeight={
+                                                                    200
+                                                                }
+                                                                menuPortalTarget={
+                                                                    document.body
+                                                                }
+                                                                styles={{
+                                                                    menuPortal:
+                                                                        (
+                                                                            base,
+                                                                        ) => ({
+                                                                            ...base,
+                                                                            zIndex: 9999,
+                                                                        }),
+                                                                    menu: (
+                                                                        base,
+                                                                    ) => ({
+                                                                        ...base,
+                                                                        zIndex: 9999,
+                                                                    }),
+                                                                    control: (
+                                                                        base,
+                                                                    ) => ({
+                                                                        ...base,
+                                                                        zIndex: 1,
+                                                                        borderColor:
+                                                                            errors.skills
+                                                                                ? '#dc3545'
+                                                                                : base.borderColor,
+                                                                        boxShadow:
+                                                                            errors.skills
+                                                                                ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)'
+                                                                                : base.boxShadow,
+                                                                    }),
+                                                                }}
+                                                            />
+                                                            <div className="mt-3">
+                                                                {(
+                                                                    field.value ||
+                                                                    []
+                                                                ).map(
+                                                                    (
+                                                                        skillId,
+                                                                    ) => {
+                                                                        const skill =
+                                                                            skills.find(
+                                                                                (
+                                                                                    s,
+                                                                                ) =>
+                                                                                    s._id ===
+                                                                                    skillId,
+                                                                            )
+                                                                        return skill ? (
+                                                                            <Badge
+                                                                                key={
+                                                                                    skill._id
+                                                                                }
+                                                                                pill
+                                                                                bg="primary"
+                                                                                className="me-2 mb-2"
+                                                                                style={{
+                                                                                    cursor: 'pointer',
+                                                                                }}
+                                                                                onClick={() => {
+                                                                                    const updatedSkills =
+                                                                                        (
+                                                                                            field.value ||
+                                                                                            []
+                                                                                        ).filter(
+                                                                                            (
+                                                                                                id,
+                                                                                            ) =>
+                                                                                                id !==
+                                                                                                skill._id,
+                                                                                        )
+                                                                                    field.onChange(
+                                                                                        updatedSkills,
+                                                                                    )
+                                                                                }}
+                                                                            >
+                                                                                {
+                                                                                    skill.name
+                                                                                }{' '}
+                                                                                ✕
+                                                                            </Badge>
+                                                                        ) : null
+                                                                    },
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                />
                                                 {errors.skills && (
-                                                    <div className="invalid-feedback">
+                                                    <div className="invalid-feedback d-block">
                                                         {errors.skills.message}
                                                     </div>
                                                 )}

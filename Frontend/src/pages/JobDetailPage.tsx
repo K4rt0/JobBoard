@@ -5,6 +5,7 @@ import { ApiResponse, Job, Skill } from '@/interfaces'
 import { getJobByProjectId } from '@/services/jobSearchService'
 import { applyJob } from '@/services/jobService'
 import { toast } from 'react-toastify'
+import { formatDeadline, formatSalary } from '@/utils/handleFormat'
 
 const JobDetailPage = () => {
     const [job, setJob] = useState<Job | null>(null)
@@ -82,9 +83,12 @@ const JobDetailPage = () => {
                                 </div>
                                 <div className="salary-type col-auto order-sm-3">
                                     <span className="salary-range">
-                                        ${job.salary.min} - $
-                                        {Number(job.salary.max)}{' '}
-                                        {/* Chuyển max thành số */}
+                                        {job.salary && job.salary.min
+                                            ? formatSalary(
+                                                  job.salary.min,
+                                                  job.salary.max,
+                                              )
+                                            : 'Competitive'}
                                     </span>
                                     <div>
                                         {job.job_type &&
@@ -224,9 +228,13 @@ const JobDetailPage = () => {
                                             {job.location}
                                         </li>
                                         <li>
-                                            <strong>Salary:</strong> $
-                                            {job.salary.min} - $
-                                            {Number(job.salary.max)}
+                                            <strong>Salary:</strong>
+                                            {job.salary && job.salary.min
+                                                ? formatSalary(
+                                                      job.salary.min,
+                                                      job.salary.max,
+                                                  )
+                                                : 'Competitive'}
                                         </li>
                                         <li>
                                             <strong>Gender:</strong>{' '}
@@ -237,9 +245,9 @@ const JobDetailPage = () => {
                                                 Application Deadline:
                                             </strong>{' '}
                                             {job.expired_at
-                                                ? new Date(
-                                                      job.expired_at,
-                                                  ).toLocaleDateString()
+                                                ? formatDeadline(
+                                                      job.expired_at.toLocaleString(),
+                                                  )
                                                 : 'Not specified'}
                                         </li>
                                     </ul>
