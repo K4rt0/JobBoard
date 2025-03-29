@@ -248,7 +248,7 @@ export const useAuthStore = create<AuthState>()(
                                   avatar: profileData.avatar ?? undefined,
                                   role: profileData.role,
                                   company_name:
-                                      (profileData as Employer).companyName ??
+                                      (profileData as Employer).company?.name ??
                                       undefined, // Add company_name
                               }
                             : null,

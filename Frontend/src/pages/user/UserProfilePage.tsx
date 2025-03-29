@@ -296,13 +296,13 @@ const UserProfilePage: React.FC = () => {
                                             <h4>Company Info</h4>
                                             <p>
                                                 Company Name:{' '}
-                                                {(userData as Employer)
-                                                    .companyName || 'N/A'}
+                                                {(userData as Employer).company
+                                                    ?.name || 'N/A'}
                                             </p>
                                             <p>
                                                 Description:{' '}
-                                                {(userData as Employer)
-                                                    .companyDescription ||
+                                                {(userData as Employer).company
+                                                    ?.description ||
                                                     'No description available'}
                                             </p>
                                         </div>

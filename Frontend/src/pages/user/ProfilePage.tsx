@@ -26,6 +26,7 @@ import {
     ExperienceFormFields,
     EducationFormFields,
     SocialFormFields,
+    CompanyFormFields,
 } from '@/components/forms/ProfileFormFields'
 import ErrorPage from '../ErrorPage'
 import { useAuthStore } from '@/store/authStore'
@@ -110,13 +111,13 @@ const SIDEBAR_MENU_ITEMS = [
 ]
 
 // Initial user data
-const initialUserData: BaseUserInfo = {
+const initialUserData: BaseUserInfo | Employer = {
     id: '',
     fullName: '',
     email: '',
     phoneNumber: '',
     birthDate: null,
-    role: '',
+    role: 'Employer', // Đặt role là 'Employer'
     bio: null,
     avatar: '',
     status: '',
@@ -125,6 +126,10 @@ const initialUserData: BaseUserInfo = {
     location: '',
     website: '',
     socials: [],
+    company: { name: '', description: '' }, // Hợp lệ vì Employer có company
+    hourlyRate: 0,
+    currency: '',
+    rating: 0,
 }
 
 const SOCIAL_PLATFORMS = {
@@ -836,14 +841,22 @@ const ProfilePage: React.FC = () => {
                                                         handleOpenModal(
                                                             'company',
                                                             {
-                                                                companyName: (
-                                                                    userData as Employer
-                                                                ).companyName,
-                                                                companyDescription:
-                                                                    (
-                                                                        userData as Employer
-                                                                    )
-                                                                        .companyDescription,
+                                                                company: {
+                                                                    name:
+                                                                        (
+                                                                            userData as Employer
+                                                                        )
+                                                                            .company
+                                                                            ?.name ||
+                                                                        '',
+                                                                    description:
+                                                                        (
+                                                                            userData as Employer
+                                                                        )
+                                                                            .company
+                                                                            ?.description ||
+                                                                        '',
+                                                                },
                                                             },
                                                         )
                                                     }
@@ -853,13 +866,13 @@ const ProfilePage: React.FC = () => {
                                             </h4>
                                             <p>
                                                 Company Name:{' '}
-                                                {(userData as Employer)
-                                                    .companyName || 'N/A'}
+                                                {(userData as Employer).company
+                                                    ?.name || 'N/A'}
                                             </p>
                                             <p>
                                                 Description:{' '}
-                                                {(userData as Employer)
-                                                    .companyDescription ||
+                                                {(userData as Employer).company
+                                                    ?.description ||
                                                     'No description available'}
                                             </p>
                                         </div>
@@ -918,7 +931,7 @@ const ProfilePage: React.FC = () => {
                         />
                     )}
                     {showModal === 'company' && (
-                        <ContactFormFields
+                        <CompanyFormFields
                             formData={formData as BaseUserInfo}
                             handleInputChange={handleInputChange}
                         />
