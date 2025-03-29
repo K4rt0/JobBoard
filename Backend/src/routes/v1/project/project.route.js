@@ -13,6 +13,8 @@ project_route
   .get("/get-all-my-project", auth_middleware.jwt_auth(), project_controller.get_all_my_projects)
   .get("/get-all-my-project-pagination", [auth_middleware.jwt_auth(), project_validation.get_all_my_projects_pagination], project_controller.get_all_my_projects_pagination)
 
+  .get("/suggestions", project_controller.get_project_suggestions)
+  
   .post("/apply/:project_id", [auth_middleware.jwt_auth(), project_validation.apply_project], project_controller.apply_project)
   .get("/:project_id", project_validation.get_project, project_controller.get_project)
   .get("/get-all-applicants/:project_id", [auth_middleware.jwt_auth(), project_validation.get_all_applicants, project_middleware], project_controller.get_all_applicants)

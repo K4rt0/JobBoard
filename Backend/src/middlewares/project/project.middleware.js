@@ -8,7 +8,8 @@ const project_middleware = async (req, res, next) => {
 
     if (user.role !== "Employer") {
       return res.status(StatusCodes.FORBIDDEN).json({
-        message: "Chỉ người dùng có quyền là nhà tuyển dụng mới có thể tạo dự án !",
+        message:
+          "Chỉ người dùng có quyền là nhà tuyển dụng mới có thể tạo dự án !",
       });
     }
 

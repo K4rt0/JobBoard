@@ -28,8 +28,10 @@ const USER_COLLECTION_SCHEMA = Joi.object({
         _id: Joi.string().hex().length(24).required(),
         applied_at: Joi.date().timestamp("javascript").default(Date.now),
         expired_at: Joi.date().timestamp("javascript").default(null),
-        status: Joi.string().valid("pending", "accepted", "rejected", "finished").default("pending"),
-      })
+        status: Joi.string()
+          .valid("pending", "accepted", "rejected", "finished")
+          .default("pending"),
+      }),
     )
     .default([]),
 
@@ -39,7 +41,7 @@ const USER_COLLECTION_SCHEMA = Joi.object({
         name: Joi.string().max(50).default(null),
         icon: Joi.string().default(null),
         url: Joi.string().uri().default(null),
-      })
+      }),
     )
     .default([]),
 
@@ -68,7 +70,9 @@ const create_user = async (data) => {
       stripUnknown: true,
     });
 
-    const user = await GET_DB().collection(USER_COLLECTION_NAME).insertOne(validatedData);
+    const user = await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .insertOne(validatedData);
     return user;
   } catch (error) {
     throw new Error(error);
@@ -77,20 +81,37 @@ const create_user = async (data) => {
 
 const find_all_users = async (query = {}) => {
   try {
-    const users = await GET_DB().collection(USER_COLLECTION_NAME).find(query).toArray();
+    const users = await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .find(query)
+      .toArray();
     return users;
   } catch (error) {
     throw new Error(`Failed to fetch users: ${error.message}`);
   }
 };
 
-const find_all_with_pagination = async (page = 1, limit = 10, filtered = {}) => {
+const find_all_with_pagination = async (
+  page = 1,
+  limit = 10,
+  filtered = {},
+) => {
   try {
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filtered.role && filtered.role !== "All" && ["Freelancer", "Employer"].includes(filtered.role)) query.role = filtered.role;
-    if (filtered.search) query.$or = [{ full_name: { $regex: filtered.search, $options: "i" } }, { email: { $regex: filtered.search, $options: "i" } }, { phone_number: { $regex: filtered.search, $options: "i" } }];
+    if (
+      filtered.role &&
+      filtered.role !== "All" &&
+      ["Freelancer", "Employer"].includes(filtered.role)
+    )
+      query.role = filtered.role;
+    if (filtered.search)
+      query.$or = [
+        { full_name: { $regex: filtered.search, $options: "i" } },
+        { email: { $regex: filtered.search, $options: "i" } },
+        { phone_number: { $regex: filtered.search, $options: "i" } },
+      ];
 
     let sort = {};
     const sort_type = filtered.sort || "all";
@@ -140,7 +161,9 @@ const find_all_with_pagination = async (page = 1, limit = 10, filtered = {}) => 
 const find_user = async (query, protect = true) => {
   try {
     const projection = protect ? { password: 0, refresh_token: 0 } : {};
-    const user = await GET_DB().collection(USER_COLLECTION_NAME).findOne(query, { projection });
+    const user = await GET_DB()
+      .collection(USER_COLLECTION_NAME)
+      .findOne(query, { projection });
 
     return user;
   } catch (error) {
@@ -176,9 +199,14 @@ const find_all_projects = async (user_id) => {
   try {
     const user = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(user_id) }, { projection: { projects_applied: 1 } });
+      .findOne(
+        { _id: new ObjectId(user_id) },
+        { projection: { projects_applied: 1 } },
+      );
 
-    const project_ids = user.projects_applied.map((project) => new ObjectId(project._id));
+    const project_ids = user.projects_applied.map(
+      (project) => new ObjectId(project._id),
+    );
     const projects = await GET_DB()
       .collection("projects")
       .find({ _id: { $in: project_ids } }, { projection: { applicants: 0 } })
@@ -190,7 +218,12 @@ const find_all_projects = async (user_id) => {
   }
 };
 
-const find_all_projects_pagination = async (user_id, page = 1, limit = 10, filtered = {}) => {
+const find_all_projects_pagination = async (
+  user_id,
+  page = 1,
+  limit = 10,
+  filtered = {},
+) => {
   try {
     if (!user_id || page < 1 || limit < 1) {
       throw new Error("Invalid input parameters");
@@ -198,7 +231,10 @@ const find_all_projects_pagination = async (user_id, page = 1, limit = 10, filte
 
     const user = await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(user_id) }, { projection: { projects_applied: 1 } });
+      .findOne(
+        { _id: new ObjectId(user_id) },
+        { projection: { projects_applied: 1 } },
+      );
 
     if (!user?.projects_applied?.length) {
       return {
@@ -210,12 +246,17 @@ const find_all_projects_pagination = async (user_id, page = 1, limit = 10, filte
     let filtered_projects = [...user.projects_applied];
 
     if (filtered.status && filtered.status !== "all") {
-      filtered_projects = filtered_projects.filter((project) => project.status === filtered.status);
+      filtered_projects = filtered_projects.filter(
+        (project) => project.status === filtered.status,
+      );
     }
 
     if (filtered.search) {
       const searchRegex = new RegExp(filtered.search, "i");
-      filtered_projects = filtered_projects.filter((project) => searchRegex.test(project.title) || searchRegex.test(project.location));
+      filtered_projects = filtered_projects.filter(
+        (project) =>
+          searchRegex.test(project.title) || searchRegex.test(project.location),
+      );
     }
 
     const total = filtered_projects.length;

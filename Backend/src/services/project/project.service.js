@@ -7,7 +7,10 @@ import { slugify } from "~/utils/formatters";
 
 const validate_project = async (project_id, protect = true) => {
   try {
-    const project = await project_model.find_project({ _id: new ObjectId(project_id) }, protect);
+    const project = await project_model.find_project(
+      { _id: new ObjectId(project_id) },
+      protect,
+    );
     if (!project) throw new Error("Dự án không tồn tại !");
 
     return project;
@@ -18,7 +21,8 @@ const validate_project = async (project_id, protect = true) => {
 
 const validate_data = async (skills, category_id) => {
   try {
-    if (!skills || skills.length === 0) throw new Error("Dự án cần ít nhất một kỹ năng !");
+    if (!skills || skills.length === 0)
+      throw new Error("Dự án cần ít nhất một kỹ năng !");
     if (!category_id) throw new Error("Dự án cần một danh mục !");
 
     const all_skills = await skill_model.find_all_skills();
@@ -30,7 +34,9 @@ const validate_data = async (skills, category_id) => {
       return found_skill._id.toString();
     });
 
-    const category = all_categories.find((c) => c._id.toString() === category_id);
+    const category = all_categories.find(
+      (c) => c._id.toString() === category_id,
+    );
     if (!category) throw new Error("Danh mục không tồn tại !");
 
     return { skill_ids, category_id: category._id.toString() };
@@ -58,7 +64,9 @@ const update_project = async (project_id, data) => {
     await validate_project(project_id);
     await validate_data(data.skills, data.category_id);
 
-    const user = await user_model.find_user({ _id: new ObjectId(data.employer_id) });
+    const user = await user_model.find_user({
+      _id: new ObjectId(data.employer_id),
+    });
     if (!user) throw new Error("Người dùng không tồn tại !");
 
     if (data.title) data.slug = slugify(data.title);
@@ -81,7 +89,18 @@ const get_all_projects = async () => {
 
 const get_all_projects_pagination = async (query) => {
   try {
-    const { page, limit, search, location, salary_min, salary_max, job_type, experience, category_id, status } = query;
+    const {
+      page,
+      limit,
+      search,
+      location,
+      salary_min,
+      salary_max,
+      job_type,
+      experience,
+      category_id,
+      status,
+    } = query;
 
     const filter = {};
 
@@ -98,14 +117,25 @@ const get_all_projects_pagination = async (query) => {
       ];
     }
 
-    if (location) filter.location = { $regex: location, $options: "i" };
+    if (location) {
+      const locationsArray = location.split(',').map((loc) => loc.trim()).filter(Boolean);
+      if (locationsArray.length > 0) {
+        filter.$or = locationsArray.map((loc) => ({
+          location: { $regex: loc, $options: "i" }
+        }));
+      }
+    }
+    
 
     if (salary_min !== undefined || salary_max !== undefined) {
       if (salary_min !== undefined && salary_max !== undefined) {
         if (salary_min > salary_max) {
           throw new Error("Lương tối thiểu phải nhỏ hơn lương tối đa !");
         }
-        filter.$and = [{ "salary.max": { $gte: Number(salary_min) } }, { "salary.min": { $lte: Number(salary_max) } }];
+        filter.$and = [
+          { "salary.max": { $gte: Number(salary_min) } },
+          { "salary.min": { $lte: Number(salary_max) } },
+        ];
       } else if (salary_min !== undefined) {
         filter["salary.max"] = { $gte: Number(salary_min) };
       } else if (salary_max !== undefined) {
@@ -131,13 +161,18 @@ const get_all_projects_pagination = async (query) => {
       }
     }
 
-    if (experience !== undefined) filter.experience = { $lte: Number(experience) };
+    if (experience !== undefined)
+      filter.experience = { $lte: Number(experience) };
 
     if (status && ["opening", "closed"].includes(status)) {
       filter.status = status;
     }
 
-    const projects = await project_model.find_all_projects_pagination(page, limit, filter);
+    const projects = await project_model.find_all_projects_pagination(
+      page,
+      limit,
+      filter,
+    );
     return projects;
   } catch (error) {
     throw error;
@@ -146,7 +181,10 @@ const get_all_projects_pagination = async (query) => {
 
 const get_project = async (project_id, protect = true) => {
   try {
-    return await project_model.find_project({ _id: new ObjectId(project_id) }, protect);
+    return await project_model.find_project(
+      { _id: new ObjectId(project_id) },
+      protect,
+    );
   } catch (error) {
     throw error;
   }
@@ -156,7 +194,9 @@ const update_project_status = async (project_id, project_status) => {
   try {
     await validate_project(project_id);
 
-    return await project_model.update_project(project_id, { status: project_status });
+    return await project_model.update_project(project_id, {
+      status: project_status,
+    });
   } catch (error) {
     throw error;
   }
@@ -225,14 +265,21 @@ const apply_project = async (user_id, project_id) => {
   if (!user) throw new Error("Người dùng không tồn tại !");
 
   const project = await validate_project(project_id, false);
-  if (project.employer_id.toString() === user_id) throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
-  if (user.cv_url === null) throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
+  if (project.employer_id.toString() === user_id)
+    throw new Error("Không thể ứng tuyển vào dự án của chính mình !");
+  if (user.cv_url === null)
+    throw new Error("Vui lòng tải lên CV trước khi ứng tuyển !");
 
-  const existing_applications = project.applicants.filter((applicant) => applicant._id.toString() === user_id);
+  const existing_applications = project.applicants.filter(
+    (applicant) => applicant._id.toString() === user_id,
+  );
 
   if (existing_applications) {
-    const pending_application = existing_applications.find((application) => application.status === "pending");
-    if (pending_application) throw new Error("Bạn đã có một ứng tuyển đang chờ xử lý !");
+    const pending_application = existing_applications.find(
+      (application) => application.status === "pending",
+    );
+    if (pending_application)
+      throw new Error("Bạn đã có một ứng tuyển đang chờ xử lý !");
   }
 
   const date = Date.now();
@@ -249,7 +296,9 @@ const apply_project = async (user_id, project_id) => {
     status: "pending",
   });
 
-  await user_model.update_user(user_id, { projects_applied: user.projects_applied });
+  await user_model.update_user(user_id, {
+    projects_applied: user.projects_applied,
+  });
   return await project_model.update_project(project_id, project);
 };
 
@@ -260,9 +309,11 @@ const get_all_applicants = async (project_id) => {
 
     const all_applicants = await Promise.all(
       applicants.map(async (applicant) => {
-        const user = await user_model.find_user({ _id: new ObjectId(applicant._id) });
+        const user = await user_model.find_user({
+          _id: new ObjectId(applicant._id),
+        });
         return { applicant, user };
-      })
+      }),
     );
 
     return all_applicants;
@@ -271,22 +322,39 @@ const get_all_applicants = async (project_id) => {
   }
 };
 
-const get_all_applicants_pagination = async (project_id, page, limit, filtered) => {
+const get_all_applicants_pagination = async (
+  project_id,
+  page,
+  limit,
+  filtered,
+) => {
   try {
     const project = await validate_project(project_id, false);
     let applicants = project.applicants || [];
 
     applicants = await Promise.all(
       applicants.map(async (applicant) => {
-        const user = await user_model.find_user({ _id: new ObjectId(applicant._id) });
+        const user = await user_model.find_user({
+          _id: new ObjectId(applicant._id),
+        });
         return { ...applicant, user };
-      })
+      }),
     );
-    if (filtered.status && filtered.status !== "all") applicants = applicants.filter((app) => app.status === filtered.status);
+    if (filtered.status && filtered.status !== "all")
+      applicants = applicants.filter((app) => app.status === filtered.status);
 
     if (filtered.search) {
       const search_term = filtered.search.toLowerCase();
-      applicants = applicants.filter((app) => app.user && ((app.user.full_name && app.user.full_name.toLowerCase().includes(search_term)) || (app.user.email && app.user.email.toLowerCase().includes(search_term)) || (app.user.phone_number && app.user.phone_number.includes(search_term))));
+      applicants = applicants.filter(
+        (app) =>
+          app.user &&
+          ((app.user.full_name &&
+            app.user.full_name.toLowerCase().includes(search_term)) ||
+            (app.user.email &&
+              app.user.email.toLowerCase().includes(search_term)) ||
+            (app.user.phone_number &&
+              app.user.phone_number.includes(search_term))),
+      );
     }
 
     switch (filtered.sort?.toLowerCase()) {
@@ -321,15 +389,21 @@ const get_all_applicants_pagination = async (project_id, page, limit, filtered) 
 const update_applicant_status = async (project_id, applicant_id, status) => {
   try {
     const project = await validate_project(project_id, false);
-    const applicant = project.applicants.find((app) => app._id.toString() === applicant_id);
+    const applicant = project.applicants.find(
+      (app) => app._id.toString() === applicant_id,
+    );
     if (!applicant) throw new Error("Người ứng tuyển không tồn tại !");
 
-    const user = await user_model.find_user({ _id: new ObjectId(applicant_id) });
+    const user = await user_model.find_user({
+      _id: new ObjectId(applicant_id),
+    });
     if (!user) throw new Error("Người dùng không tồn tại !");
 
     const date = Date.now();
 
-    const pending_application = project.applicants.find((app) => app._id.toString() === applicant_id && app.status === "pending");
+    const pending_application = project.applicants.find(
+      (app) => app._id.toString() === applicant_id && app.status === "pending",
+    );
     if (pending_application) {
       pending_application.status = status;
       pending_application.updated_at = date;
@@ -339,7 +413,9 @@ const update_applicant_status = async (project_id, applicant_id, status) => {
     applicant.updated_at = date;
     project.updated_at = date;
 
-    const applied_project = user.projects_applied.find((p) => p._id.toString() === project_id && p.status === "pending");
+    const applied_project = user.projects_applied.find(
+      (p) => p._id.toString() === project_id && p.status === "pending",
+    );
     if (applied_project) applied_project.status = status;
 
     await user_model.update_user(applicant_id, {
@@ -357,24 +433,56 @@ const get_all_my_projects = async (user_id) => {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user) throw new Error("Người dùng không tồn tại !");
 
-    const projects = await project_model.find_all_projects({ employer_id: user_id });
+    const projects = await project_model.find_all_projects({
+      employer_id: user_id,
+    });
     return projects;
   } catch (error) {
     throw error;
   }
 };
 
-const get_all_my_projects_pagination = async (user_id, page, limit, filtered = {}) => {
+const get_all_my_projects_pagination = async (
+  user_id,
+  page,
+  limit,
+  filtered = {},
+) => {
   try {
     const user = await user_model.find_user({ _id: new ObjectId(user_id) });
     if (!user) throw new Error("Người dùng không tồn tại !");
 
-    const projects = await project_model.find_all_projects_pagination(page, limit, { employer_id: user_id, ...filtered });
+    const projects = await project_model.find_all_projects_pagination(
+      page,
+      limit,
+      { employer_id: user_id, ...filtered },
+    );
     return projects;
   } catch (error) {
     throw error;
   }
 };
+
+const get_project_suggestions = async (search) => {
+  if (!search || typeof search !== "string" || search.trim() === "") return []
+
+  const regex = new RegExp(search, "i")
+
+  const result = await project_model.find_project_suggestions(regex)
+
+  return result.map((project) => ({
+    _id: project._id,
+    title: project.title,
+    salary: {
+      min: project.salary?.min || 0,
+      max: project.salary?.max || 0,
+    },
+    contact: {
+      full_name: project.contact?.full_name || 'Unknown'
+    }
+  }))
+}
+
 
 export const project_service = {
   create_project,
@@ -389,4 +497,5 @@ export const project_service = {
   get_all_applicants,
   get_all_applicants_pagination,
   update_applicant_status,
+  get_project_suggestions,
 };

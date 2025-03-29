@@ -9,6 +9,7 @@ import {
     Skill,
 } from '@/interfaces'
 import { getSkillById } from './skillService'
+import { JobSuggestion } from '@/interfaces'
 
 const BASE_URL = `${process.env.REACT_APP_BASE_API_URL}`
 
@@ -119,18 +120,31 @@ export async function getJobBySlug(slug: string): Promise<Job> {
         throw error
     }
 }
-
+// jobSearchService.ts
 export async function getProjectSuggestions(
     search: string,
-): Promise<{ _id: string; title: string }[]> {
+): Promise<JobSuggestion[]> {
     try {
         const response = await axios.get<{
             message: string
-            data: { _id: string; title: string }[]
+            data: JobSuggestion[]
         }>(`${BASE_URL}/project/suggestions`, { params: { search } })
         return response.data.data
     } catch (error) {
         console.error('Error fetching project suggestions:', error)
         throw error
     }
+}
+
+export async function getRelatedJobs(
+    keyword: string,
+    location: string,
+): Promise<JobSuggestion[]> {
+    const response = await axios.get(`${BASE_URL}/project/get-all`, {
+        params: {
+            search: keyword,
+            location: location,
+        },
+    })
+    return response.data.data
 }

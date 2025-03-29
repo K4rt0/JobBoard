@@ -336,6 +336,17 @@ export interface ProjectApiResponse {
         pagination: PaginationInfo // Pagination giữ nguyên
     }
 }
+export interface JobSuggestion {
+    _id: string
+    title: string
+    salary: {
+        min: number
+        max: number
+    }
+    contact: {
+        full_name: string
+    }
+}
 
 // Type aliases for API responses
 export type SkillResponse = ApiResponse<Skill>
