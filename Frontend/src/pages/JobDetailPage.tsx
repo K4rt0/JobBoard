@@ -75,7 +75,7 @@ const JobDetailPage = () => {
                                         }}
                                     >
                                         <img
-                                            src="assets/images/universal-image/job-details.png"
+                                            src="/assets/images/universal-image/job-details.png"
                                             alt="Company Logo"
                                         />
                                     </a>

@@ -4,6 +4,56 @@ import React, { useState, useEffect } from 'react'
 import { fetchJobsByUserWithPagination } from '@/services/jobService'
 import { ApplyJob, Pagination } from '@/interfaces'
 import CustomPagination from '@/components/CustomPagination'
+import { Link } from 'react-router-dom' // Import Link từ react-router-dom
+
+// Thêm CSS inline hoặc trong file CSS riêng
+const styles = `
+    .manage-applications .job-items .row {
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .manage-applications .job-items .col-lg-5,
+    .manage-applications .job-items .col-lg-2,
+    .manage-applications .job-items .col-lg-3 {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start; /* Căn trái cho đồng bộ */
+    }
+    .manage-applications .job-items .title-img {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* Khoảng cách giữa logo và thông tin */
+    }
+    .manage-applications .job-items .title-img .can-img img {
+        width: 50px; /* Kích thước logo đồng đều */
+        height: 50px;
+        object-fit: contain;
+    }
+    .manage-applications .job-items .title-img h3 {
+        margin: 0;
+        font-size: 1.1rem; /* Kích thước chữ tiêu đề */
+    }
+    .manage-applications .job-items .title-img h3 span,
+    .manage-applications .job-items .title-img p {
+        font-size: 0.9rem; /* Kích thước chữ phụ */
+        margin: 0;
+    }
+    .manage-applications .job-items .time,
+    .manage-applications .job-items .badge {
+        font-size: 0.9rem; /* Kích thước chữ đồng đều */
+    }
+    .manage-applications .job-items .col-lg-2,
+    .manage-applications .job-items .col-lg-3 {
+        justify-content: center; /* Căn giữa nội dung trong các cột nhỏ */
+    }
+    .manage-applications .job-items .title-img h3 a {
+        color: #007bff; /* Màu liên kết */
+        text-decoration: none; /* Bỏ gạch chân mặc định */
+    }
+    .manage-applications .job-items .title-img h3 a:hover {
+        text-decoration: underline; /* Gạch chân khi hover */
+    }
+`
 
 const ManageApplicationPage = () => {
     const { user } = useAuth()
@@ -21,7 +71,10 @@ const ManageApplicationPage = () => {
         try {
             setLoading(true)
             setError(null)
-            const { jobs: jobData, pagination: paginationData } =
+            const {
+                jobs: jobData,
+                pagination: paginationData,
+            } = // Đã sửa từ "jobs" thành "data" ở lần trước
                 await fetchJobsByUserWithPagination({
                     page,
                     limit: 10,
@@ -92,6 +145,7 @@ const ManageApplicationPage = () => {
 
     return (
         <div className="manage-applications section">
+            <style>{styles}</style> {/* Thêm CSS inline */}
             <div className="container">
                 <div className="alerts-inner">
                     <div className="row">
@@ -111,16 +165,19 @@ const ManageApplicationPage = () => {
                                     <>
                                         {/* Tiêu đề cột */}
                                         <div className="row align-items-center justify-content-center text-muted small fw-semibold mb-2">
-                                            <div className="col-lg-5 col-md-5">
+                                            <div
+                                                className="col-lg-5 col-md-5"
+                                                style={{ textAlign: 'center' }}
+                                            >
                                                 Job
                                             </div>
                                             <div className="col-lg-2 col-md-2">
                                                 Job type
                                             </div>
-                                            <div className="col-lg-3 col-md-3">
+                                            <div className="col-lg-2 col-md-2">
                                                 Apply date
                                             </div>
-                                            <div className="col-lg-2 col-md-2">
+                                            <div className="col-lg-3 col-md-3">
                                                 Status
                                             </div>
                                         </div>
@@ -136,7 +193,7 @@ const ManageApplicationPage = () => {
                                                         <div className="title-img">
                                                             <div className="can-img">
                                                                 <img
-                                                                    src={`assets/images/jobs/manage-job${
+                                                                    src={`/assets/images/jobs/manage-job${
                                                                         (index %
                                                                             6) +
                                                                         1
@@ -145,8 +202,13 @@ const ManageApplicationPage = () => {
                                                                 />
                                                             </div>
                                                             <h3>
-                                                                {job.title}{' '}
-                                                                <span>
+                                                                {/* Thêm Link để chuyển hướng đến trang chi tiết */}
+                                                                <Link
+                                                                    to={`/jobs/${job._id}`}
+                                                                >
+                                                                    {job.title}
+                                                                </Link>{' '}
+                                                                <span className="my-1">
                                                                     {
                                                                         job
                                                                             .contact
@@ -172,7 +234,7 @@ const ManageApplicationPage = () => {
                                                             </span>
                                                         </p>
                                                     </div>
-                                                    <div className="col-lg-3 col-md-3">
+                                                    <div className="col-lg-2 col-md-2">
                                                         <p>
                                                             {new Date(
                                                                 job.applied_at,
@@ -186,7 +248,7 @@ const ManageApplicationPage = () => {
                                                             )}
                                                         </p>
                                                     </div>
-                                                    <div className="col-lg-2 col-md-2">
+                                                    <div className="col-lg-3 col-md-3">
                                                         <span
                                                             className={getStatusTagClass(
                                                                 job.status,

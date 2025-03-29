@@ -69,11 +69,10 @@ export const fetchJobsByUserWithPagination = async ({
             },
         )
         const data: ApplyJobsResponse = response.data
-        console.log(data)
 
         return {
-            jobs: data.data.data, // Danh sách job
-            pagination: data.data.pagination, // Thông tin phân trang
+            jobs: data.data, // Danh sách job
+            pagination: data.pagination, // Thông tin phân trang
         }
     } catch (error) {
         handleApiError(error, 'Fetching jobs with pagination failed')

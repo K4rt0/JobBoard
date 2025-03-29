@@ -24,10 +24,8 @@ export interface PaginatedApiResponse<T> {
 
 export interface PaginatedApplyApiResponse<T> {
     message: string
-    data: {
-        data: T[]
-        pagination: Pagination
-    }
+    data: T[]
+    pagination: Pagination
 }
 /** ========== USER RELATED INTERFACES ========== **/
 // Basic user information shared across user types
