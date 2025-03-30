@@ -24,10 +24,8 @@ export interface PaginatedApiResponse<T> {
 
 export interface PaginatedApplyApiResponse<T> {
     message: string
-    data: {
-        data: T[]
-        pagination: Pagination
-    }
+    data: T[]
+    pagination: Pagination
 }
 /** ========== USER RELATED INTERFACES ========== **/
 // Basic user information shared across user types
@@ -99,8 +97,7 @@ export interface Freelancer extends BaseUserInfo {
 }
 
 export interface Employer extends BaseUserInfo {
-    companyName?: string | null
-    companyDescription?: string | null
+    company?: Company
     hourlyRate?: number
     currency?: string
     rating?: number
@@ -155,9 +152,7 @@ export interface ProfileFormData {
     level?: number | null
     reviews?: number | null
 
-    // Employer specific fields
-    companyName?: string | null
-    companyDescription?: string | null
+    company?: Company
 }
 
 // DTOs for user operations
@@ -166,7 +161,10 @@ export interface UserPasswordRequestDTO {
     new_password: string
     retype_new_password: string
 }
-
+export interface Company {
+    name: string
+    description: string
+}
 export interface UserRequestDTO {
     full_name: string
     email: string

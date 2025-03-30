@@ -70,8 +70,10 @@ export const getCurrentUser = async (
     } else if (apiData.role === 'Employer') {
         return {
             ...baseUserData,
-            companyName: apiData.company_name || null,
-            companyDescription: apiData.company_description || null,
+            company: {
+                name: apiData.company_name || '',
+                description: apiData.company_description || '',
+            },
             hourlyRate: 0,
             currency: 'USD',
             rating: 0,
@@ -120,10 +122,10 @@ export const updateUserProfile = async <
             formData.append('level', String(userData.level))
         if (userData.reviews !== undefined && userData.reviews !== null)
             formData.append('reviews', String(userData.reviews))
-        if (userData.companyName)
-            formData.append('company_name', userData.companyName)
-        if (userData.companyDescription)
-            formData.append('company_description', userData.companyDescription)
+        if (userData.company?.name)
+            formData.append('company_name', userData.company.name)
+        if (userData.company?.description)
+            formData.append('company_description', userData.company.description)
 
         const response = await axiosInstance.patch(
             '/user/change-info',
@@ -177,8 +179,10 @@ export const updateUserProfile = async <
         } else if (apiData.role === 'Employer') {
             return {
                 ...mappedData,
-                companyName: apiData.company_name || null,
-                companyDescription: apiData.company_description || null,
+                company: {
+                    name: apiData.company_name || '',
+                    description: apiData.company_description || '',
+                },
                 hourlyRate: 0, // Giả định nếu API không trả
                 currency: 'USD', // Giả định nếu API không trả
                 rating: 0, // Giả định nếu API không trả
@@ -246,8 +250,10 @@ export const getUserById = async (
     } else if (apiData.role === 'Employer') {
         return {
             ...baseUserData,
-            companyName: apiData.company_name || null,
-            companyDescription: apiData.company_description || null,
+            company: {
+                name: apiData.company_name || '',
+                description: apiData.company_description || '',
+            },
             hourlyRate: 0,
             currency: 'USD',
             rating: 0,

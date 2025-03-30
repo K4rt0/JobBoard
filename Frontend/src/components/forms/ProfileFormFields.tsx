@@ -356,3 +356,67 @@ export const SocialFormFields: React.FC<{
         </div>
     )
 }
+
+/** ========== Company Form Fields ========== **/
+export const CompanyFormFields: React.FC<{
+    formData: ProfileFormData
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => void
+}> = ({ formData, handleInputChange }) => {
+    // Hàm xử lý thay đổi cho các field của company
+    const handleCompanyChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        const { name, value } = e.target
+        // Cập nhật giá trị của company trong formData
+        const updatedCompany = {
+            ...formData.company,
+            [name]: value,
+        }
+        handleInputChange({
+            target: {
+                name: 'company',
+                value: updatedCompany,
+            },
+        } as React.ChangeEvent<HTMLInputElement>)
+    }
+
+    return (
+        <div className="form-group mb-4">
+            <label className="fw-bold mb-2">
+                <i className="lni lni-briefcase me-2"></i>Company Information
+            </label>
+            {/* Tên công ty */}
+            <Form.Group className="mb-3 position-relative">
+                <Form.Label className="fw-bold">
+                    <i className="lni lni-apartment me-2"></i>Company Name
+                </Form.Label>
+                <Form.Control
+                    type="text"
+                    name="name"
+                    value={formData.company?.name || ''}
+                    onChange={handleCompanyChange}
+                    className="py-2 border-1"
+                    placeholder="Enter your company name"
+                />
+            </Form.Group>
+            {/* Mô tả công ty */}
+            <Form.Group className="mb-3 position-relative">
+                <Form.Label className="fw-bold">
+                    <i className="lni lni-text-format me-2"></i>Company
+                    Description
+                </Form.Label>
+                <Form.Control
+                    as="textarea"
+                    rows={4}
+                    name="description"
+                    value={formData.company?.description || ''}
+                    onChange={handleCompanyChange}
+                    className="py-2 border-1"
+                    placeholder="Describe your company"
+                />
+            </Form.Group>
+        </div>
+    )
+}

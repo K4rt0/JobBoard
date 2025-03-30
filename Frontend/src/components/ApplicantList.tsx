@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ApplicantResponse } from '@/interfaces'
 import { updateApplicantStatus } from '@/services/employerService'
+import { formatDateUS } from '@/utils/handleFormat'
 
 interface ApplicantListProps {
     projectId: string
@@ -43,11 +44,6 @@ const ApplicantList: React.FC<ApplicantListProps> = ({
     const [applicantData, setApplicantData] = useState<ApplicantResponse[]>(
         applicants ? JSON.parse(JSON.stringify(applicants)) : defaultApplicants,
     )
-
-    const formatDate = (timestamp: number | null): string => {
-        if (!timestamp) return 'N/A'
-        return new Date(timestamp).toLocaleDateString('en-US')
-    }
 
     const handleApprove = async (applicantId: string) => {
         const updatedApplicant = await updateApplicantStatus(
@@ -148,7 +144,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({
                                             {item.user.phone_number || 'N/A'}
                                         </td>
                                         <td className="text-center">
-                                            {formatDate(
+                                            {formatDateUS(
                                                 item.applicant.applied_at,
                                             )}
                                         </td>
