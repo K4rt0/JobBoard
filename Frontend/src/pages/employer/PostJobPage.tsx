@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form' // Thêm Controller
+import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import axiosInstance, { proactiveTokenRefresh } from '@/services/axiosInstance'
@@ -12,9 +12,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import axios from 'axios'
 import { Helmet } from 'react-helmet'
 import sanitizeHtml from 'sanitize-html'
-import { jobFormPostSchema } from '@/schemas/jobSchema'
-import Select, { MultiValue } from 'react-select' // Thêm react-select
-import { Badge } from 'react-bootstrap' // Thêm Badge để hiển thị kỹ năng
+import Select from 'react-select' // Thêm react-select
 
 interface Province {
     name: string
@@ -99,6 +97,18 @@ const useJobFormData = (authToken: string | null) => {
     const [error, setError] = useState<string | null>(null)
 
     const fetchData = useCallback(async () => {
+        const cached = JSON.parse(localStorage.getItem('jobFormData') || '{}')
+        if (
+            cached.categories?.length &&
+            cached.skills?.length &&
+            cached.provinces?.length
+        ) {
+            setCategories(cached.categories)
+            setSkills(cached.skills)
+            setProvinces(cached.provinces)
+            return
+        }
+
         setLoading({ categories: true, skills: true, provinces: true })
         try {
             const [categoryData, skillData, provinceResponse] =
@@ -115,6 +125,7 @@ const useJobFormData = (authToken: string | null) => {
                             setLoading((l) => ({ ...l, provinces: false })),
                         ),
                 ])
+
             const newCategories = categoryData.data || []
             const newSkills = skillData || []
             const newProvinces = provinceResponse.data || []
@@ -125,6 +136,14 @@ const useJobFormData = (authToken: string | null) => {
             setCategories(newCategories)
             setSkills(newSkills)
             setProvinces(newProvinces)
+            localStorage.setItem(
+                'jobFormData',
+                JSON.stringify({
+                    categories: newCategories,
+                    skills: newSkills,
+                    provinces: newProvinces,
+                }),
+            )
         } catch (error) {
             setError('Failed to load data. Please try again.')
             toast.error('Failed to load data.')
@@ -141,13 +160,13 @@ const PostJobPage = () => {
         useJobFormData(authUser?.access_token || null)
     const navigate = useNavigate()
     const [showConfirm, setShowConfirm] = useState(false)
-    const [skillSearch, setSkillSearch] = useState('')
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
         watch,
+        control,
         setValue,
     } = useForm<JobFormData>({
         resolver: yupResolver(jobFormSchema),
@@ -174,12 +193,17 @@ const PostJobPage = () => {
     })
 
     const provinceValue = watch('province')
-    const selectedSkills = watch('skills')
 
     // Get districts based on selected province
     const selectedProvinceData =
         provinces.find((p) => p.code === parseInt(provinceValue)) || null
     const districts = selectedProvinceData?.districts || []
+
+    // Chuẩn bị options cho react-select
+    const skillOptions = skills.map((skill) => ({
+        value: skill._id,
+        label: skill.name,
+    }))
 
     useEffect(() => {
         const unsubscribe = useAuthStore.subscribe((state) =>
@@ -195,20 +219,6 @@ const PostJobPage = () => {
             clearInterval(interval)
         }
     }, [fetchData])
-
-    const filteredSkills = skills.filter((skill) =>
-        skill.name.toLowerCase().includes(skillSearch.toLowerCase()),
-    )
-
-    const handleSkillChange = (skillId: string) => {
-        const currentSkills = selectedSkills || []
-        setValue(
-            'skills',
-            currentSkills.includes(skillId)
-                ? currentSkills.filter((id) => id !== skillId)
-                : [...currentSkills, skillId],
-        )
-    }
 
     const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newProvince = e.target.value
@@ -724,7 +734,7 @@ const PostJobPage = () => {
                                                 )}
                                             </div>
 
-                                            {/* Thay đổi trường skills */}
+                                            {/* Thay đổi trường skills thành react-select */}
                                             <div className="col-12">
                                                 <label
                                                     htmlFor="skills"
@@ -735,73 +745,45 @@ const PostJobPage = () => {
                                                         (Select multiple)
                                                     </small>
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control mb-2"
-                                                    placeholder="Search skills..."
-                                                    value={skillSearch}
-                                                    onChange={(e) =>
-                                                        setSkillSearch(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        loading.skills ||
-                                                        skills.length === 0
-                                                    }
-                                                />
-                                                <div
-                                                    className="border rounded p-2"
-                                                    style={{
-                                                        maxHeight: '200px',
-                                                        overflowY: 'auto',
-                                                    }}
-                                                >
-                                                    {filteredSkills.length >
-                                                    0 ? (
-                                                        filteredSkills.map(
-                                                            (skill) => (
-                                                                <div
-                                                                    key={
-                                                                        skill._id
-                                                                    }
-                                                                    className="form-check"
-                                                                >
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="form-check-input"
-                                                                        id={`skill-${skill._id}`}
-                                                                        value={
-                                                                            skill._id
-                                                                        }
-                                                                        checked={selectedSkills?.includes(
-                                                                            skill._id,
-                                                                        )}
-                                                                        onChange={() =>
-                                                                            handleSkillChange(
-                                                                                skill._id,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                    <label
-                                                                        className="form-check-label"
-                                                                        htmlFor={`skill-${skill._id}`}
-                                                                    >
-                                                                        {
-                                                                            skill.name
-                                                                        }
-                                                                    </label>
-                                                                </div>
-                                                            ),
-                                                        )
-                                                    ) : (
-                                                        <p className="text-muted">
-                                                            {skillSearch
-                                                                ? 'No skills found'
-                                                                : 'Start typing to search skills'}
-                                                        </p>
+                                                <Controller
+                                                    name="skills"
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <Select
+                                                            {...field}
+                                                            isMulti
+                                                            options={
+                                                                skillOptions
+                                                            }
+                                                            className={`basic-multi-select ${errors.skills ? 'is-invalid' : ''}`}
+                                                            classNamePrefix="select"
+                                                            placeholder="Select skills..."
+                                                            onChange={(
+                                                                selectedOptions,
+                                                            ) =>
+                                                                field.onChange(
+                                                                    selectedOptions.map(
+                                                                        (
+                                                                            option,
+                                                                        ) =>
+                                                                            option.value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            value={skillOptions.filter(
+                                                                (option) =>
+                                                                    field.value?.includes(
+                                                                        option.value,
+                                                                    ),
+                                                            )}
+                                                            isDisabled={
+                                                                loading.skills ||
+                                                                skills.length ===
+                                                                    0
+                                                            }
+                                                        />
                                                     )}
-                                                </div>
+                                                />
                                                 {errors.skills && (
                                                     <div className="invalid-feedback d-block">
                                                         {errors.skills.message}
@@ -964,7 +946,7 @@ const PostJobPage = () => {
                                                         type="checkbox"
                                                         className={`form-check-input ${errors.termsAgreed ? 'is-invalid' : ''}`}
                                                         id="termsAgreed"
-                                                        aria-label="Agree to terms"
+                                                        aria-label=" Agree to terms"
                                                     />
                                                     <label
                                                         className="form-check-label"

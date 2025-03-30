@@ -1,7 +1,7 @@
-// ✅ Đã gộp code của bạn và bổ sung đầy đủ hỗ trợ quận/huyện + multi-select tỉnh
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import styled from 'styled-components'
 import { getProjectSuggestions } from '@/services/jobSearchService'
 import { JobSuggestion } from '@/interfaces'
 
@@ -9,6 +9,81 @@ interface JobSearchBarProps {
     searchQuery: { position: string; location: string }
     onSearch: (query: { position: string; location: string }) => void
 }
+
+// Styled components
+const SuggestionItem = styled.div`
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    &:hover {
+        background-color: #f8f9fa;
+    }
+`
+
+const ProvinceLabel = styled.label`
+    cursor: pointer;
+    margin-left: 0.5rem;
+    &:hover {
+        color: #007bff;
+    }
+`
+
+const DistrictLabel = styled.label`
+    cursor: pointer;
+    margin-left: 0.5rem;
+    &:hover {
+        color: #007bff;
+    }
+`
+
+const DropdownContainer = styled.div`
+    position: absolute;
+    width: 100%;
+    margin-top: 0.5rem;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 0.75rem;
+    z-index: 9999;
+    max-height: 300px;
+    overflow-y: auto;
+    top: 100%;
+    left: 0;
+`
+
+const SearchBarWrapper = styled.div`
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+`
+
+const ClearButton = styled.button`
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    color: #666;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        color: #000;
+    }
+`
+
+const InputWrapper = styled.div`
+    position: relative;
+    width: 100%;
+`
 
 const JobSearchBar: React.FC<JobSearchBarProps> = ({
     searchQuery,
@@ -23,14 +98,16 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
         'position' | 'location' | null
     >(null)
     const [provinces, setProvinces] = useState<any[]>([])
-    const [selectedLocations, setSelectedLocations] = useState<string[]>([])
+    const [selectedProvince, setSelectedProvince] = useState<string | null>(
+        null,
+    )
     const [searchProvince, setSearchProvince] = useState('')
     const [districtsByProvince, setDistrictsByProvince] = useState<
         Record<string, any[]>
     >({})
-    const [selectedDistricts, setSelectedDistricts] = useState<
-        Record<string, string[]>
-    >({})
+    const [selectedDistrict, setSelectedDistrict] = useState<string | null>(
+        null,
+    )
 
     const suggestionRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -60,19 +137,20 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
         }
     }
 
-    const handleSuggestionClick = (projectId: string) => {
+    const handleSuggestionClick = (title: string) => {
+        setFormValues((prev) => ({ ...prev, position: title }))
         setActiveField(null)
-        navigate(`/jobs/${projectId}`)
     }
 
-    const toggleLocation = async (province: string, code: number) => {
-        const updated = selectedLocations.includes(province)
-            ? selectedLocations.filter((p) => p !== province)
-            : [...selectedLocations, province]
-
-        setSelectedLocations(updated)
-
-        if (!districtsByProvince[province]) {
+    const toggleProvince = async (province: string, code: number) => {
+        if (selectedProvince === province) {
+            setSelectedProvince(null)
+            setSelectedDistrict(null)
+            setFormValues((prev) => ({ ...prev, location: '' }))
+        } else {
+            setSelectedProvince(province)
+            setSelectedDistrict(null)
+            setFormValues((prev) => ({ ...prev, location: province }))
             try {
                 const res = await axios.get(
                     `https://provinces.open-api.vn/api/p/${code}?depth=2`,
@@ -85,44 +163,23 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
                 console.error(`Error loading districts for ${province}`, err)
             }
         }
-
-        if (!updated.includes(province)) {
-            const newSelected = { ...selectedDistricts }
-            delete newSelected[province]
-            setSelectedDistricts(newSelected)
-        }
-
-        updateLocationString(updated, selectedDistricts)
     }
 
-    const toggleDistrict = (province: string, districtName: string) => {
-        const updated = selectedDistricts[province] || []
-        const isSelected = updated.includes(districtName)
-        const newDistricts = isSelected
-            ? updated.filter((d) => d !== districtName)
-            : [...updated, districtName]
-
-        const newSelectedDistricts = {
-            ...selectedDistricts,
-            [province]: newDistricts,
-        }
-        setSelectedDistricts(newSelectedDistricts)
-        updateLocationString(selectedLocations, newSelectedDistricts)
+    const toggleDistrict = (districtName: string) => {
+        setSelectedDistrict(districtName)
+        setFormValues((prev) => ({ ...prev, location: districtName }))
+        setActiveField(null)
     }
 
-    const updateLocationString = (
-        provinces: string[],
-        districtsMap: Record<string, string[]>,
-    ) => {
-        const formatted = provinces
-            .map((province) => {
-                const districts = districtsMap[province] || []
-                return districts.length
-                    ? `${province}:${districts.join(',')}`
-                    : province
-            })
-            .join('|')
-        setFormValues((prev) => ({ ...prev, location: formatted }))
+    const clearPosition = () => {
+        setFormValues((prev) => ({ ...prev, position: '' }))
+        setSuggestions([])
+    }
+
+    const clearLocation = () => {
+        setFormValues((prev) => ({ ...prev, location: '' }))
+        setSelectedProvince(null)
+        setSelectedDistrict(null)
     }
 
     useEffect(() => {
@@ -171,28 +228,38 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
     )
 
     return (
-        <div
+        <SearchBarWrapper
             className="job-search-wrap-two mt-50 wow fadeInUp card mb-5 shadow-lg border-0 rounded-3 mt-3"
             data-wow-delay=".7s"
             ref={searchBarRef}
-            style={{ position: 'relative' }}
         >
             <div className="job-search-form">
                 <form onSubmit={handleSubmit}>
                     <div className="single-field-item keyword">
                         <label htmlFor="keyword">What</label>
-                        <input
-                            id="keyword"
-                            name="position"
-                            type="text"
-                            placeholder="What jobs you want?"
-                            value={formValues.position}
-                            onChange={handleSearchChange}
-                            ref={inputRef}
-                            onFocus={() => setActiveField('position')}
-                            autoComplete="off"
-                            className="form-control"
-                        />
+                        <InputWrapper>
+                            <input
+                                id="keyword"
+                                name="position"
+                                type="text"
+                                placeholder="What jobs you want?"
+                                value={formValues.position}
+                                onChange={handleSearchChange}
+                                ref={inputRef}
+                                onFocus={() => setActiveField('position')}
+                                autoComplete="off"
+                                className="form-control"
+                            />
+                            {formValues.position && (
+                                <ClearButton
+                                    type="button"
+                                    onClick={clearPosition}
+                                    aria-label="Clear position"
+                                >
+                                    ×
+                                </ClearButton>
+                            )}
+                        </InputWrapper>
                     </div>
 
                     <div
@@ -201,16 +268,27 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
                         style={{ position: 'relative' }}
                     >
                         <label htmlFor="location">Where</label>
-                        <input
-                            id="location"
-                            name="location"
-                            type="text"
-                            className="form-control input-field-location"
-                            placeholder="Select locations"
-                            value={formValues.location}
-                            readOnly
-                            onClick={() => setActiveField('location')}
-                        />
+                        <InputWrapper>
+                            <input
+                                id="location"
+                                name="location"
+                                type="text"
+                                className="form-control input-field-location"
+                                placeholder="Select a location"
+                                value={formValues.location}
+                                readOnly
+                                onClick={() => setActiveField('location')}
+                            />
+                            {formValues.location && (
+                                <ClearButton
+                                    type="button"
+                                    onClick={clearLocation}
+                                    aria-label="Clear location"
+                                >
+                                    ×
+                                </ClearButton>
+                            )}
+                        </InputWrapper>
                     </div>
 
                     <div className="submit-btn">
@@ -222,45 +300,20 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
             </div>
 
             {activeField === 'position' && suggestions.length > 0 && (
-                <div
-                    ref={suggestionRef}
-                    className="position-absolute w-100 mt-2 bg-white border rounded-3 shadow-lg p-2"
-                    style={{
-                        zIndex: 999,
-                        maxHeight: '300px',
-                        overflowY: 'auto',
-                    }}
-                >
+                <DropdownContainer ref={suggestionRef}>
                     {suggestions.slice(0, 5).map((item) => (
-                        <div
+                        <SuggestionItem
                             key={item._id}
-                            className="p-2 px-3 rounded-2 hover-bg-light cursor-pointer"
-                            onClick={() => handleSuggestionClick(item._id)}
-                            style={{ transition: 'background 0.2s ease' }}
+                            onClick={() => handleSuggestionClick(item.title)}
                         >
-                            <div className="fw-semibold text-dark">
-                                {item.title}
-                            </div>
-                            <div className="text-muted small">
-                                {item.salary.min} - {item.salary.max} USD
-                            </div>
-                            <div className="text-secondary small">
-                                {item.contact?.full_name || 'Unknown company'}
-                            </div>
-                        </div>
+                            <div className="fw-semibold">{item.title}</div>
+                        </SuggestionItem>
                     ))}
-                </div>
+                </DropdownContainer>
             )}
 
             {activeField === 'location' && (
-                <div
-                    className="position-absolute w-100 mt-2 bg-white border rounded-3 shadow-lg p-3"
-                    style={{
-                        zIndex: 999,
-                        maxHeight: '300px',
-                        overflowY: 'auto',
-                    }}
-                >
+                <DropdownContainer>
                     <input
                         type="text"
                         placeholder="Tìm Tỉnh/Thành phố"
@@ -275,25 +328,24 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
                                     <input
                                         className="form-check-input"
                                         type="checkbox"
-                                        checked={selectedLocations.includes(
-                                            province.name,
-                                        )}
+                                        checked={
+                                            selectedProvince === province.name
+                                        }
                                         onChange={() =>
-                                            toggleLocation(
+                                            toggleProvince(
                                                 province.name,
                                                 province.code,
                                             )
                                         }
                                         id={`province-${province.code}`}
                                     />
-                                    <label
-                                        className="form-check-label ms-2"
+                                    <ProvinceLabel
                                         htmlFor={`province-${province.code}`}
                                     >
                                         {province.name}
-                                    </label>
+                                    </ProvinceLabel>
                                 </div>
-                                {selectedLocations.includes(province.name) &&
+                                {selectedProvince === province.name &&
                                     districtsByProvince[province.name] && (
                                         <div className="ms-4 mb-2">
                                             {districtsByProvince[
@@ -307,26 +359,21 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
                                                         className="form-check-input"
                                                         type="checkbox"
                                                         checked={
-                                                            selectedDistricts[
-                                                                province.name
-                                                            ]?.includes(
-                                                                district.name,
-                                                            ) || false
+                                                            selectedDistrict ===
+                                                            district.name
                                                         }
                                                         onChange={() =>
                                                             toggleDistrict(
-                                                                province.name,
                                                                 district.name,
                                                             )
                                                         }
                                                         id={`district-${province.code}-${district.code}`}
                                                     />
-                                                    <label
-                                                        className="form-check-label ms-2"
+                                                    <DistrictLabel
                                                         htmlFor={`district-${province.code}-${district.code}`}
                                                     >
                                                         {district.name}
-                                                    </label>
+                                                    </DistrictLabel>
                                                 </div>
                                             ))}
                                         </div>
@@ -334,9 +381,9 @@ const JobSearchBar: React.FC<JobSearchBarProps> = ({
                             </div>
                         ))}
                     </div>
-                </div>
+                </DropdownContainer>
             )}
-        </div>
+        </SearchBarWrapper>
     )
 }
 
