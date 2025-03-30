@@ -8,18 +8,23 @@ const create_skill = async (data) => {
     if (Array.isArray(data)) {
       const skills = data.map((skill) => ({
         ...skill,
-        is_disabled: skill.is_disabled !== undefined ? skill.is_disabled : false,
+        is_disabled:
+          skill.is_disabled !== undefined ? skill.is_disabled : false,
         slug: slugify(skill.name),
       }));
       for (const skill of skills) {
-        const existing_skill = await skill_model.find_skill({ name: skill.name });
-        if (existing_skill) throw new Error(`Kỹ năng ${skill.name} đã tồn tại!`);
+        const existing_skill = await skill_model.find_skill({
+          name: skill.name,
+        });
+        if (existing_skill)
+          throw new Error(`Kỹ năng ${skill.name} đã tồn tại!`);
       }
       return await skill_model.create_many_skills(skills);
     }
     const existing_skill = await skill_model.find_skill({ name: data.name });
     if (existing_skill) throw new Error(`Kỹ năng ${data.name} đã tồn tại!`);
-    data.is_disabled = data.is_disabled !== undefined ? data.is_disabled : false;
+    data.is_disabled =
+      data.is_disabled !== undefined ? data.is_disabled : false;
     data.slug = slugify(data.name);
 
     return await skill_model.create_skill(data);
@@ -60,11 +65,14 @@ const update_skill = async (id, data) => {
     const skill = await skill_model.find_skill({ _id: new ObjectId(id) });
     if (!skill) throw new Error("Kỹ năng này không tồn tại !");
 
-    data.is_disabled = data.is_disabled !== undefined ? data.is_disabled : skill.is_disabled;
+    data.is_disabled =
+      data.is_disabled !== undefined ? data.is_disabled : skill.is_disabled;
     data.slug = slugify(data.name);
 
     if (data.is_disabled !== skill.is_disabled) {
-      const users_with_skill = await user_model.find_all_users({ skills: { $elemMatch: { _id: new ObjectId(id) } } });
+      const users_with_skill = await user_model.find_all_users({
+        skills: { $elemMatch: { _id: new ObjectId(id) } },
+      });
       for (const user of users_with_skill) {
         const skill_in_user = user.skills.find((s) => s._id.toString() === id);
         if (skill_in_user && skill_in_user.is_disabled !== data.is_disabled) {
@@ -85,7 +93,9 @@ const delete_skill = async (id) => {
     const skill = await skill_model.find_skill({ _id: new ObjectId(id) });
     if (!skill) throw new Error("Kỹ năng này không tồn tại !");
 
-    const users_with_skill = await user_model.find_all_users({ skills: { $elemMatch: { _id: new ObjectId(id) } } });
+    const users_with_skill = await user_model.find_all_users({
+      skills: { $elemMatch: { _id: new ObjectId(id) } },
+    });
     for (const user of users_with_skill) {
       user.skills = user.skills.filter((s) => s._id.toString() !== id);
       await user_model.update_user(user._id, { skills: user.skills });

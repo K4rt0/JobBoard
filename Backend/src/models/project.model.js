@@ -11,7 +11,8 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
   })
     .required()
     .custom((value, helpers) => {
-      if (value.min > value.max) return helpers.message("Lương tối thiểu phải nhỏ hơn lương tối đa !");
+      if (value.min > value.max)
+        return helpers.message("Lương tối thiểu phải nhỏ hơn lương tối đa !");
       return value;
     }),
   location: Joi.string().max(50).required(),
@@ -26,12 +27,21 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
   experience: Joi.number().min(0).required(),
   gender: Joi.string().valid("Male", "Female", "Any").default("Male"),
 
-  job_type: Joi.alternatives().try(Joi.string().valid("full-time", "part-time", "remote", "internship"), Joi.array().items(Joi.string().valid("full-time", "part-time", "remote", "internship"))),
+  job_type: Joi.alternatives().try(
+    Joi.string().valid("full-time", "part-time", "remote", "internship"),
+    Joi.array().items(
+      Joi.string().valid("full-time", "part-time", "remote", "internship"),
+    ),
+  ),
   status: Joi.string().valid("opening", "closed").default("opening"),
   slug: Joi.string().trim().strict().default(null),
 
-  requirements: Joi.array().items(Joi.string().required().max(1000).trim().strict()).required(),
-  benefits: Joi.array().items(Joi.string().required().max(1000).trim().strict()).required(),
+  requirements: Joi.array()
+    .items(Joi.string().required().max(1000).trim().strict())
+    .required(),
+  benefits: Joi.array()
+    .items(Joi.string().required().max(1000).trim().strict())
+    .required(),
 
   contact: Joi.object({
     full_name: Joi.string().max(100).required(),
@@ -44,8 +54,10 @@ const PROJECT_COLLECTION_SCHEMA = Joi.object({
       Joi.object({
         _id: Joi.string().hex().length(24).required(),
         applied_at: Joi.date().timestamp("javascript").default(Date.now),
-        status: Joi.string().valid("pending", "accepted", "rejected", "finished").default("pending"),
-      })
+        status: Joi.string()
+          .valid("pending", "accepted", "rejected", "finished")
+          .default("pending"),
+      }),
     )
     .default([]),
 });
@@ -59,7 +71,9 @@ const create_project = async (data) => {
     validated_data.created_at = Date.now();
     validated_data.updated_at = null;
 
-    const project = await GET_DB().collection(PROJECT_COLLECTION_NAME).insertOne(validated_data);
+    const project = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .insertOne(validated_data);
     return project;
   } catch (error) {
     throw new Error(error);
@@ -69,7 +83,9 @@ const create_project = async (data) => {
 const find_project = async (query, protect = true) => {
   try {
     const projection = protect ? { applicants: 0 } : {};
-    const project = await GET_DB().collection(PROJECT_COLLECTION_NAME).findOne(query, { projection });
+    const project = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .findOne(query, { projection });
     return project;
   } catch (error) {
     throw new Error(error);
@@ -79,20 +95,37 @@ const find_project = async (query, protect = true) => {
 const find_all_projects = async (query = {}, protect = true) => {
   try {
     const projection = !protect ? { applicants: 0 } : {};
-    const projects = await GET_DB().collection(PROJECT_COLLECTION_NAME).find(query, { projection }).toArray();
+    const projects = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .find(query, { projection })
+      .toArray();
     return projects;
   } catch (error) {
     throw new Error(error);
   }
 };
 
-const find_all_projects_pagination = async (page = 1, limit = 10, filtered = {}) => {
+const find_all_projects_pagination = async (
+  page = 1,
+  limit = 10,
+  filtered = {},
+) => {
   try {
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filtered.status && filtered.status !== "all" && ["opening", "closed"].includes(filtered.status)) query.status = filtered.status;
-    if (filtered.search) query.$or = [{ full_name: { $regex: filtered.search, $options: "i" } }, { email: { $regex: filtered.search, $options: "i" } }, { phone_number: { $regex: filtered.search, $options: "i" } }];
+    if (
+      filtered.status &&
+      filtered.status !== "all" &&
+      ["opening", "closed"].includes(filtered.status)
+    )
+      query.status = filtered.status;
+    if (filtered.search)
+      query.$or = [
+        { full_name: { $regex: filtered.search, $options: "i" } },
+        { email: { $regex: filtered.search, $options: "i" } },
+        { phone_number: { $regex: filtered.search, $options: "i" } },
+      ];
 
     let sort = {};
     const sort_type = filtered.sort || "all";
@@ -158,12 +191,41 @@ const delete_project = async (project_id) => {
     const project = await find_project({ _id: project_id });
     if (!project) throw new Error("Dự án không tồn tại !");
 
-    const deleted_project = await GET_DB().collection(PROJECT_COLLECTION_NAME).deleteOne({ _id: project_id });
+    const deleted_project = await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .deleteOne({ _id: project_id });
     return deleted_project;
   } catch (error) {
     throw new Error(error);
   }
 };
+
+const find_project_suggestions = async (regex) => {
+  try {
+    return await GET_DB()
+      .collection(PROJECT_COLLECTION_NAME)
+      .find({
+        $or: [
+          { title: { $regex: regex } },
+          { description: { $regex: regex } },
+          { location: { $regex: regex } },
+          { "contact.full_name": { $regex: regex } }
+        ]
+      })
+      .project({
+        _id: 1,
+        title: 1,
+        salary: 1,
+        contact: { full_name: 1 }
+      })
+      .limit(5)
+      .toArray()
+  } catch (error) {
+    throw new Error(error.message)
+  }
+}
+
+
 
 export const project_model = {
   PROJECT_COLLECTION_NAME,
@@ -174,4 +236,5 @@ export const project_model = {
   update_project,
   delete_project,
   find_all_projects_pagination,
+  find_project_suggestions,
 };
