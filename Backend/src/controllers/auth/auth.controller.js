@@ -57,12 +57,31 @@ const refresh_token = async (req, res, next) => {
   }
 };
 
+const google_login_user = async (req, res, next) => {
+  try {
+    const { id_token } = req.body;
+    const result = await auth_service.google_login_user(id_token);
+
+    res.status(StatusCodes.OK).json({
+      message: "Đăng nhập thành công !",
+      data: {
+        id: result._id,
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const auth_controller = {
   // Admin
   admin_login,
 
   // User
   login_user,
+  google_login_user,
   logout_user,
   refresh_token,
 };

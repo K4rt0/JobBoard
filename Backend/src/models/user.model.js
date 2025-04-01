@@ -1,4 +1,3 @@
-import { application } from "express";
 import Joi from "joi";
 import { ObjectId } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
