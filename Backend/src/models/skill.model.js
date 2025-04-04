@@ -22,7 +22,9 @@ const create_skill = async (data) => {
       updated_at: Date.now(),
     };
 
-    const skill = await GET_DB().collection(SKILL_COLLECTION_NAME).insertOne(skill_data);
+    const skill = await GET_DB()
+      .collection(SKILL_COLLECTION_NAME)
+      .insertOne(skill_data);
 
     return skill;
   } catch (error) {
@@ -32,7 +34,11 @@ const create_skill = async (data) => {
 
 const create_many_skills = async (data) => {
   try {
-    const validated_data = await Promise.all(data.map((item) => SKILL_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true })));
+    const validated_data = await Promise.all(
+      data.map((item) =>
+        SKILL_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true }),
+      ),
+    );
 
     const skills_data = validated_data.map((skill) => ({
       ...skill,
@@ -40,19 +46,29 @@ const create_many_skills = async (data) => {
       updated_at: Date.now(),
     }));
 
-    const result = await GET_DB().collection(SKILL_COLLECTION_NAME).insertMany(skills_data);
+    const result = await GET_DB()
+      .collection(SKILL_COLLECTION_NAME)
+      .insertMany(skills_data);
     return result;
   } catch (error) {
     throw new Error(error);
   }
 };
 
-const find_all_skills_pagination = async (page = 1, limit = 10, filtered = {}) => {
+const find_all_skills_pagination = async (
+  page = 1,
+  limit = 10,
+  filtered = {},
+) => {
   try {
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filtered.search) query.$or = [{ name: { $regex: filtered.search, $options: "i" } }, { slug: { $regex: filtered.search, $options: "i" } }];
+    if (filtered.search)
+      query.$or = [
+        { name: { $regex: filtered.search, $options: "i" } },
+        { slug: { $regex: filtered.search, $options: "i" } },
+      ];
 
     let sort = {};
     const sort_type = filtered.sort || "all";
@@ -100,7 +116,10 @@ const find_all_skills_pagination = async (page = 1, limit = 10, filtered = {}) =
 
 const find_all_skills = async () => {
   try {
-    const skills = await GET_DB().collection(SKILL_COLLECTION_NAME).find().toArray();
+    const skills = await GET_DB()
+      .collection(SKILL_COLLECTION_NAME)
+      .find()
+      .toArray();
 
     return skills;
   } catch (error) {

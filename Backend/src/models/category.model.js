@@ -11,9 +11,12 @@ const CATEGORY_COLLECTION_SCHEMA = Joi.object({
 
 const create_category = async (data) => {
   try {
-    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
-      stripUnknown: true,
-    });
+    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(
+      data,
+      {
+        stripUnknown: true,
+      },
+    );
 
     const category_data = {
       ...validated_data,
@@ -21,7 +24,9 @@ const create_category = async (data) => {
       updated_at: Date.now(),
     };
 
-    const category = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertOne(category_data);
+    const category = await GET_DB()
+      .collection(CATEGORY_COLLECTION_NAME)
+      .insertOne(category_data);
 
     return category;
   } catch (error) {
@@ -31,7 +36,11 @@ const create_category = async (data) => {
 
 const create_many_categories = async (data) => {
   try {
-    const validated_data = await Promise.all(data.map((item) => CATEGORY_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true })));
+    const validated_data = await Promise.all(
+      data.map((item) =>
+        CATEGORY_COLLECTION_SCHEMA.validateAsync(item, { stripUnknown: true }),
+      ),
+    );
 
     const categories_data = validated_data.map((category) => ({
       ...category,
@@ -39,19 +48,29 @@ const create_many_categories = async (data) => {
       updated_at: Date.now(),
     }));
 
-    const result = await GET_DB().collection(CATEGORY_COLLECTION_NAME).insertMany(categories_data);
+    const result = await GET_DB()
+      .collection(CATEGORY_COLLECTION_NAME)
+      .insertMany(categories_data);
     return result;
   } catch (error) {
     throw new Error(error);
   }
 };
 
-const find_all_categories_pagination = async (page = 1, limit = 10, filtered = {}) => {
+const find_all_categories_pagination = async (
+  page = 1,
+  limit = 10,
+  filtered = {},
+) => {
   try {
     const skip = (page - 1) * limit;
     const query = {};
 
-    if (filtered.search) query.$or = [{ name: { $regex: filtered.search, $options: "i" } }, { slug: { $regex: filtered.search, $options: "i" } }];
+    if (filtered.search)
+      query.$or = [
+        { name: { $regex: filtered.search, $options: "i" } },
+        { slug: { $regex: filtered.search, $options: "i" } },
+      ];
 
     let sort = {};
     const sort_type = filtered.sort || "all";
@@ -99,7 +118,10 @@ const find_all_categories_pagination = async (page = 1, limit = 10, filtered = {
 
 const find_all_categories = async () => {
   try {
-    const categories = await GET_DB().collection(CATEGORY_COLLECTION_NAME).find().toArray();
+    const categories = await GET_DB()
+      .collection(CATEGORY_COLLECTION_NAME)
+      .find()
+      .toArray();
 
     return categories;
   } catch (error) {
@@ -108,15 +130,20 @@ const find_all_categories = async () => {
 };
 
 const find_category = async (query) => {
-  const category = await GET_DB().collection(CATEGORY_COLLECTION_NAME).findOne(query);
+  const category = await GET_DB()
+    .collection(CATEGORY_COLLECTION_NAME)
+    .findOne(query);
   return category;
 };
 
 const update_category = async (id, data) => {
   try {
-    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(data, {
-      stripUnknown: true,
-    });
+    const validated_data = await CATEGORY_COLLECTION_SCHEMA.validateAsync(
+      data,
+      {
+        stripUnknown: true,
+      },
+    );
 
     const category_data = {
       ...validated_data,

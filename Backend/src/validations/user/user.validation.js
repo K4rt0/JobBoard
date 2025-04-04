@@ -82,11 +82,17 @@ const update_user = async (req, res, next) => {
       "string.min": "Họ và tên phải có ít nhất {#limit} ký tự !",
       "string.max": "Họ và tên không được vượt quá {#limit} ký tự !",
     }),
-    phone_number: Joi.string().min(10).max(15).trim().strict().default(null).messages({
-      "string.base": "Số điện thoại phải là chuỗi !",
-      "string.min": "Số điện thoại phải có ít nhất {#limit} ký tự !",
-      "string.max": "Số điện thoại không được vượt quá {#limit} ký tự !",
-    }),
+    phone_number: Joi.string()
+      .min(10)
+      .max(15)
+      .trim()
+      .strict()
+      .default(null)
+      .messages({
+        "string.base": "Số điện thoại phải là chuỗi !",
+        "string.min": "Số điện thoại phải có ít nhất {#limit} ký tự !",
+        "string.max": "Số điện thoại không được vượt quá {#limit} ký tự !",
+      }),
     birth_date: Joi.date().default(null).messages({
       "date.base": "Ngày sinh không hợp lệ !",
     }),
@@ -109,9 +115,12 @@ const update_user = async (req, res, next) => {
     cv_url: Joi.string().uri().default(null).messages({
       "string.uri": "CV URL không hợp lệ !",
     }),
-    skills: Joi.array().items(Joi.string().hex().length(24)).default([]).messages({
-      "array.items": "Mã kỹ năng phải là mảng chuỗi hex 24 ký tự !",
-    }),
+    skills: Joi.array()
+      .items(Joi.string().hex().length(24))
+      .default([])
+      .messages({
+        "array.items": "Mã kỹ năng phải là mảng chuỗi hex 24 ký tự !",
+      }),
     website: Joi.string().uri().default(null).messages({
       "string.uri": "Website không hợp lệ !",
     }),
@@ -134,7 +143,9 @@ const update_user = async (req, res, next) => {
 
 const update_skills = async (req, res, next) => {
   const schema = Joi.object({
-    skills: Joi.array().items(Joi.string().hex().length(24).required()).required(),
+    skills: Joi.array()
+      .items(Joi.string().hex().length(24).required())
+      .required(),
   });
 
   try {
@@ -153,7 +164,7 @@ const update_socials = async (req, res, next) => {
           name: Joi.string().max(50).required(),
           icon: Joi.string().required(),
           url: Joi.string().uri().required(),
-        })
+        }),
       )
       .required(),
   });
@@ -171,7 +182,13 @@ const get_all_projects_pagination = async (req, res, next) => {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
     sort: Joi.string().valid("all", "oldest", "newest"),
-    status: Joi.string().valid("all", "pending", "accepted", "rejected", "finished"),
+    status: Joi.string().valid(
+      "all",
+      "pending",
+      "accepted",
+      "rejected",
+      "finished",
+    ),
     search: Joi.string().allow(""),
   });
   try {
