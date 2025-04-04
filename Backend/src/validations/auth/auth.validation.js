@@ -43,11 +43,25 @@ const refresh_token = async (req, res, next) => {
   }
 };
 
+const google_login_user = async (req, res, next) => {
+  const schema = Joi.object({
+    id_token: Joi.string().required(),
+  });
+
+  try {
+    await schema.validateAsync(req.body);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const auth_validation = {
   // Admin
   admin_login,
 
   // User
   login_user,
+  google_login_user,
   refresh_token,
 };
