@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { loginSchema } from '@/schemas/authSchema'
+import { useGoogleLogin } from '@react-oauth/google'
 
 // Định nghĩa interface cho Bootstrap Modal (có thể không cần)
 declare global {
@@ -36,7 +37,7 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
     const { login } = useAuth()
     const navigate = useNavigate()
     const modalRef = useRef<HTMLDivElement>(null)
-
+    const { loginWithGoogle } = useAuth()
     // Hàm để đóng modal một cách an toàn
     const closeModal = () => {
         try {
@@ -82,13 +83,13 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
             const success = await login(data.email, data.password)
 
             if (success) {
-                closeModal() // Đóng modal nếu đăng nhập thành công
+                closeModal()
                 onLoginSuccess()
-                toast.success('Login successful!') // Hiển thị thông báo thành công
+                toast.success('Login successful!')
                 setTimeout(() => navigate('/'), 100)
             } else {
                 // Không đóng modal nếu đăng nhập thất bại
-                setErrorMessage('Invalid email or password') // Nếu muốn hiển thị lỗi ở UI
+                setErrorMessage('Invalid email or password')
             }
         } catch (error) {
             setErrorMessage('An unexpected error occurred')
@@ -96,6 +97,23 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
             setLoading(false)
         }
     }
+
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                console.log('Google Token Response:', tokenResponse)
+
+                await loginWithGoogle(tokenResponse)
+                closeModal()
+                onLoginSuccess()
+                toast.success('Google login successful!')
+                navigate('/')
+            } catch (error) {
+                console.error('Google Login Failed:', error)
+            }
+        },
+        onError: () => console.log('Google Login Failed'),
+    })
 
     // Cập nhật event listener cho nút đóng
     useEffect(() => {
@@ -139,9 +157,13 @@ const LoginModal: React.FC<{ onLoginSuccess: () => void }> = ({
                                     </p>
                                 </div>
                                 <div className="social-login">
-                                    <ul>
-                                        <li>
-                                            <a className="google" href="#">
+                                    <ul className="d-flex justify-content-center">
+                                        <li className="w-100">
+                                            <a
+                                                className="google"
+                                                href="#"
+                                                onClick={() => googleLogin()}
+                                            >
                                                 <i className="lni lni-google"></i>{' '}
                                                 Log in with Google
                                             </a>

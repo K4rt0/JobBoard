@@ -8,11 +8,15 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js' // ✅ Import Bootstrap JS
 import $ from 'jquery'
 import i18n from 'i18next'
 import 'boxicons/css/boxicons.min.css'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || ''
 root.render(
     <React.StrictMode>
-        <App />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <App />
+        </GoogleOAuthProvider>
     </React.StrictMode>,
 )
 

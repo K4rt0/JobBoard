@@ -4,6 +4,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { registerSchema } from '@/schemas/authSchema'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { useGoogleLogin } from '@react-oauth/google'
+import { toast } from 'react-toastify'
 
 // Định nghĩa kiểu dữ liệu form
 type FormData = {
@@ -29,6 +31,7 @@ const SignupModal: React.FC<{ onSignupSuccess?: () => void }> = ({
     const { register: registerUser } = useAuth()
     const navigate = useNavigate()
     const modalRef = useRef<HTMLDivElement>(null)
+    const { loginWithGoogle } = useAuth()
 
     // Hàm để đóng modal một cách an toàn
     const closeModal = () => {
@@ -112,6 +115,24 @@ const SignupModal: React.FC<{ onSignupSuccess?: () => void }> = ({
         }
     }
 
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                console.log('Google Token Response:', tokenResponse)
+
+                await loginWithGoogle(tokenResponse)
+
+                closeModal()
+                if (onSignupSuccess) onSignupSuccess()
+                toast.success('Google login successful!')
+                navigate('/')
+            } catch (error) {
+                console.error('Google Login Failed:', error)
+            }
+        },
+        onError: () => console.log('Google Login Failed'),
+    })
+
     // Cập nhật event listener cho nút đóng modal
     useEffect(() => {
         // Tìm nút đóng trong modal
@@ -164,7 +185,11 @@ const SignupModal: React.FC<{ onSignupSuccess?: () => void }> = ({
                                 <div className="social-login">
                                     <ul>
                                         <li>
-                                            <a className="google" href="#">
+                                            <a
+                                                className="google"
+                                                href="#"
+                                                onClick={() => googleLogin()}
+                                            >
                                                 <i className="lni lni-google"></i>{' '}
                                                 Import from Google
                                             </a>
