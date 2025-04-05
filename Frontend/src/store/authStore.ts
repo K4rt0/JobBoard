@@ -184,7 +184,6 @@ export const useAuthStore = create<AuthState>()(
                         )
                         return false
                     }
-
                     const response = await loginGoogleApi(
                         tokenResponse.access_token,
                     )
