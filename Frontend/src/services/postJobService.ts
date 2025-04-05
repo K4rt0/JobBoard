@@ -2,26 +2,28 @@
 import axiosInstance from './axiosInstance'
 import { AxiosError } from 'axios'
 
-interface JobPayload {
-    title: string
-    salary: { min: number; max: number }
-    location: string
-    description: string
-    expired_at: number
-    category_id: string
-    quantity: number
-    skills: string[]
-    experience: number
-    gender: string
-    requirements: string[]
-    benefits: string[]
-    contact: {
-        full_name: string
-        email: string
-        phone_number: string
+export interface JobPayload {
+    title?: string
+    salary?: { min: number; max: number }
+    location?: string
+    description?: string
+    expired_at?: number
+    category_id?: string
+    quantity?: number
+    skills?: string[]
+    experience?: number
+    gender?: string
+    requirements?: string[]
+    benefits?: string[]
+    contact?: {
+        full_name?: string
+        email?: string
+        phone_number?: string
     }
-    job_type: string[]
-    status: string
+    job_type?: string[]
+    status?: string
+    updated_at?: number
+    employer_id?: string
 }
 
 export const postJob = async (payload: JobPayload): Promise<any> => {
@@ -43,16 +45,14 @@ export const postJob = async (payload: JobPayload): Promise<any> => {
 }
 
 export const updateJob = async (
-    payload: JobPayload,
+    payload: Partial<JobPayload>,
     jobId: string,
 ): Promise<any> => {
     try {
-        console.log('Updating job with payload:', payload)
-        const response = await axiosInstance.put(
+        const response = await axiosInstance.patch(
             `/project/update/${jobId}`,
             payload,
         )
-        console.log('Job updated successfully:', response.data)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError

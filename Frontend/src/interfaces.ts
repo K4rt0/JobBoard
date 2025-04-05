@@ -196,7 +196,7 @@ export interface Job {
     location: string
     description: string
     category_id: string
-    expired_at: number // Sửa từ expiry_date thành expired_at, dùng number
+    expired_at: number
     skills: Skill[]
     requirements: string[]
     benefits: string[]

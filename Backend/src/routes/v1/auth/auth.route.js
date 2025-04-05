@@ -8,6 +8,11 @@ const auth_route = express.Router();
 auth_route
   .post("/login", [auth_validation.login_user], auth_controller.login_user)
   .post(
+    "/google-login",
+    [auth_validation.google_login_user],
+    auth_controller.google_login_user,
+  )
+  .post(
     "/refresh-token",
     [auth_validation.refresh_token],
     auth_controller.refresh_token,

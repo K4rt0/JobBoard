@@ -71,7 +71,14 @@ const update_project = async (project_id, data) => {
 
     if (data.title) data.slug = slugify(data.title);
 
+    // ✅ Sửa ở đây - đảm bảo expired_at là Date object
+    if (data.expired_at && !(data.expired_at instanceof Date)) {
+      data.expired_at = new Date(data.expired_at);
+    }
+
     data.updated_at = new Date();
+
+    console.log(">> expired_at sau ép kiểu:", data.expired_at, typeof data.expired_at);
 
     return await project_model.update_project(project_id, data);
   } catch (error) {
@@ -118,14 +125,16 @@ const get_all_projects_pagination = async (query) => {
     }
 
     if (location) {
-      const locationsArray = location.split(',').map((loc) => loc.trim()).filter(Boolean);
+      const locationsArray = location
+        .split(",")
+        .map((loc) => loc.trim())
+        .filter(Boolean);
       if (locationsArray.length > 0) {
         filter.$or = locationsArray.map((loc) => ({
-          location: { $regex: loc, $options: "i" }
+          location: { $regex: loc, $options: "i" },
         }));
       }
     }
-    
 
     if (salary_min !== undefined || salary_max !== undefined) {
       if (salary_min !== undefined && salary_max !== undefined) {
@@ -464,11 +473,11 @@ const get_all_my_projects_pagination = async (
 };
 
 const get_project_suggestions = async (search) => {
-  if (!search || typeof search !== "string" || search.trim() === "") return []
+  if (!search || typeof search !== "string" || search.trim() === "") return [];
 
-  const regex = new RegExp(search, "i")
+  const regex = new RegExp(search, "i");
 
-  const result = await project_model.find_project_suggestions(regex)
+  const result = await project_model.find_project_suggestions(regex);
 
   return result.map((project) => ({
     _id: project._id,
@@ -478,11 +487,10 @@ const get_project_suggestions = async (search) => {
       max: project.salary?.max || 0,
     },
     contact: {
-      full_name: project.contact?.full_name || 'Unknown'
-    }
-  }))
-}
-
+      full_name: project.contact?.full_name || "Unknown",
+    },
+  }));
+};
 
 export const project_service = {
   create_project,

@@ -232,18 +232,16 @@ const get_all_my_projects_pagination = async (req, res, next) => {
 
 const get_project_suggestions = async (req, res, next) => {
   try {
-    const { search = "" } = req.query
-    const result = await project_service.get_project_suggestions(search)
+    const { search = "" } = req.query;
+    const result = await project_service.get_project_suggestions(search);
     res.status(200).json({
       message: "Gợi ý công việc thành công!",
-      data: result
-    })
+      data: result,
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
-
-
+};
 
 export const project_controller = {
   create_project,
@@ -258,5 +256,5 @@ export const project_controller = {
   get_all_applicants,
   get_all_applicants_pagination,
   update_applicant_status,
-  get_project_suggestions
+  get_project_suggestions,
 };
