@@ -25,6 +25,8 @@ import UserProfilePage from '@/pages/user/UserProfilePage'
 import ScrollToTop from '@/components/ScrollToTop'
 import FAQPage from '@/pages/FAQPage'
 import EmployerRegistationPage from '@/pages/EmployerRegistationPage'
+import ManageJobsPage from '@/pages/employer/JobManagementPage'
+import JobManagementPage from '@/pages/employer/JobManagementPage'
 
 const AppRoutes = () => {
     return (
@@ -69,6 +71,10 @@ const AppRoutes = () => {
                         <Route
                             path="/manage/applications"
                             element={<ApplicationManagementEmployerPage />}
+                        />
+                        <Route
+                            path="/profile/manage-jobs"
+                            element={<JobManagementPage />}
                         />
                     </Route>
                 </Route>

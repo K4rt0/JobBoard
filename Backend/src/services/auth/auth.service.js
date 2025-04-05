@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 import ApiError from "~/utils/ApiError";
 import { StatusCodes } from "http-status-codes";
+import axios from "axios";
 
 // Admin
 const admin_login = (data) => {

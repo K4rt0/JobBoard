@@ -1,5 +1,5 @@
-export const formatSalary = (min: number, max: string) => {
-    return `$${min.toLocaleString()} - $${parseFloat(max).toLocaleString()}`
+export const formatSalary = (min: number, max: number) => {
+    return `$${min.toLocaleString()} - $${min.toLocaleString()}`
 }
 
 export const formatDate = (timestamp: number) => {

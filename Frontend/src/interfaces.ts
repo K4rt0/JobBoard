@@ -177,7 +177,7 @@ export interface UserRequestDTO {
 // Salary range
 export interface Salary {
     min: number
-    max: string // Giữ nguyên string như trong file bạn cung cấp
+    max: number // Giữ nguyên string như trong file bạn cung cấp
 }
 
 // Contact information
@@ -239,7 +239,7 @@ export interface JobApiResponse {
     title: string
     salary: {
         min: number
-        max: string
+        max: number
     }
     quantity: number
     location: string

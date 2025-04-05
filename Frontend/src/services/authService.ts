@@ -47,11 +47,11 @@ export const registerApi = async (userData: UserRequestDTO) => {
 }
 
 // ✅ API đăng nhập bằng Google
-export const loginGoogleApi = async (access_token: string) => {
+export const loginGoogleApi = async (id_token: string) => {
     try {
         const response = await axiosInstance.post(
-            `${API_URL}/auth/google`,
-            { access_token: access_token },
+            `${API_URL}/auth/google-login`,
+            { id_token: id_token },
             {
                 headers: { 'Content-Type': 'application/json' },
             },
