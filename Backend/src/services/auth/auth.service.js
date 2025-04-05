@@ -75,7 +75,11 @@ const refresh_token = async (refresh_token) => {
 
 const google_login_user = async (id_token) => {
   try {
-    const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
+    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: {
+        Authorization: `Bearer ${id_token}`,
+      },
+    });
     const { email, name } = response.data;
 
     let user = await user_model.find_user({ email }, false);
