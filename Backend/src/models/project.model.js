@@ -209,23 +209,21 @@ const find_project_suggestions = async (regex) => {
           { title: { $regex: regex } },
           { description: { $regex: regex } },
           { location: { $regex: regex } },
-          { "contact.full_name": { $regex: regex } }
-        ]
+          { "contact.full_name": { $regex: regex } },
+        ],
       })
       .project({
         _id: 1,
         title: 1,
         salary: 1,
-        contact: { full_name: 1 }
+        contact: { full_name: 1 },
       })
       .limit(5)
-      .toArray()
+      .toArray();
   } catch (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
-}
-
-
+};
 
 export const project_model = {
   PROJECT_COLLECTION_NAME,

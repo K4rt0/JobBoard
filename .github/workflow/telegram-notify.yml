@@ -2,9 +2,9 @@ name: Notify Telegram on Git Actions
 
 on:
   push:
-    branches: ["*"]  # Lắng nghe tất cả branch
+    branches: ["*"] # Lắng nghe tất cả branch
   pull_request:
-    types: [opened, closed]  # Gửi thông báo khi PR mở hoặc đóng
+    types: [opened, closed] # Gửi thông báo khi PR mở hoặc đóng
 
 jobs:
   notify:
@@ -17,7 +17,7 @@ jobs:
         run: |
           ACTION_TYPE=""
           MESSAGE_TEXT=""
-          
+
           # Kiểm tra loại sự kiện
           if [[ "${{ github.event_name }}" == "push" ]]; then
             ACTION_TYPE="**Commit**"
@@ -37,7 +37,7 @@ jobs:
 
           MESSAGE=$(cat <<EOF
           🔊 **NOTIFICATION FROM GITHUB**
-          
+
           📌 **GitHub Repository:** **${{ github.repository }}** - [View Repo](https://github.com/${{ github.repository }})
           👤 **User:** **${{ github.actor }}** - [View User](https://github.com/${{ github.actor }})
 

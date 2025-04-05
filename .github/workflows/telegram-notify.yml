@@ -17,7 +17,7 @@ jobs:
         run: |
           ACTION_TYPE=""
           MESSAGE_TEXT=""
-          
+
           # Kiểm tra loại sự kiện
           if [[ "${{ github.event_name }}" == "push" ]]; then
             ACTION_TYPE="**Commit**"
@@ -37,7 +37,7 @@ jobs:
 
           MESSAGE=$(cat <<EOF
           🔊 **NOTIFICATION FROM GITHUB**
-          
+
           📌 **GitHub Repository:** **${{ github.repository }}** - [View Repo](https://github.com/${{ github.repository }})
           👤 **User:** **${{ github.actor }}** - [View User](https://github.com/${{ github.actor }})
 

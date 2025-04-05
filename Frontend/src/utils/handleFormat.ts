@@ -15,7 +15,7 @@ export const formatDate = (timestamp: number) => {
     return `${Math.floor(diffDays / 30)}m ago`
 }
 
-export const formatDeadline = (dateString: string) => {
+export const formatDeadline = (dateString: string | number) => {
     try {
         const date = new Date(dateString)
         const now = new Date()
